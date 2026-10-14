@@ -855,18 +855,38 @@ def backtest_tab(T):
         included = st.multiselect("Strategies / Стратегии", MODES,
                                    default=["breakout", "retest", "vcp"],
                                    format_func=lambda m: T[f"mode_{m}"])
+        end_rule = st.radio("Open positions at the end / Позиции в конце периода",
+                            ["mark", "liquidate", "skip"], horizontal=True,
+                            format_func=lambda v: {"mark": "mark-to-market",
+                                                   "liquidate": "sell at last close",
+                                                   "skip": "skip (v3)"}[v])
         if included:
-            combined = pd.concat([trades[m].assign(mode=m) for m in included], ignore_index=True)
+            # Portfolio owns the tickers: every valid signal is a candidate (no hypothetical
+            # one-trade-per-ticker suppression), unfinished trades stay open (Task 6).
+            def raw_trades(m):
+                if entry == "stop":
+                    if m not in core.PENDING_MODES:
+                        return pd.DataFrame()
+                    return bt.simulate_stop(pend, data, m, hold, stop_buf, min_rs, max_risk,
+                                            market_ok, one_per_ticker=False, include_open=True)
+                return bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk,
+                                   market_ok, entry_at=entry, one_per_ticker=False,
+                                   include_open=True)
+            parts = [raw_trades(m).assign(mode=m) for m in included]
+            parts = [p for p in parts if not p.empty]
+            combined = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
             if not combined.empty:
                 curve, executed, metrics = portfolio_bt.replay(
                     combined, data, capital, risk_percent/100., int(max_positions),
-                    int(max_daily), max_size/100., cost)
+                    int(max_daily), max_size/100., cost, open_at_end=end_rule)
                 q1, q2, q3 = st.columns(3)
                 q1.metric("Return", f"{metrics['return_pct']:+.1f}%")
                 q2.metric("Max drawdown", f"{metrics['max_drawdown_pct']:.1f}%")
                 q3.metric("CAGR", f"{metrics['cagr_pct']:.1f}%")
                 st.caption(f"Executed {metrics['executed_trades']} / {metrics['candidate_trades']} "
-                           f"signals · Max simultaneous positions {metrics['max_open_positions']}")
+                           f"signals · Max simultaneous positions {metrics['max_open_positions']} · "
+                           f"open at end {metrics['open_positions_end']} · "
+                           f"cash-limited entries {metrics['cash_limited_entries']}")
                 st.line_chart(curve.set_index("date")["equity"])
                 st.download_button("Download equity CSV", curve.to_csv(index=False),
                                    "portfolio_equity.csv", "text/csv")

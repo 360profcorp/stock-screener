@@ -175,13 +175,92 @@ def find_pending(frames: dict, data: dict, lookback=3, near_pct=2.0) -> pd.DataF
                                        "stop_base", "rs"])
 
 
+LEGACY_COLS = ["ticker", "date", "exit_date", "days", "rs", "vol_ratio", "entry", "stop",
+               "exit", "risk_pct", "ret_pct", "r", "reason", "max_up_pct"]
+FULL_COLS = LEGACY_COLS + ["signal_date", "entry_at", "status", "window_complete",
+                           "mark_date", "mark", "mark_r"]
+
+
+def _trade(x, ticker, rs, vol_ratio, sig_i, e, entry, stop, risk, hold, first, entry_at,
+           same_day_stop=None, up_from=None):
+    """
+    One trade outcome, independent of any other trade (no position ownership here).
+    e = entry bar, first = first bar the stop can trigger on.
+    status "closed": exited by stop or after `hold` bars.
+    status "open":   neither happened before the last bar — no exit price is invented;
+                     the position is described by its last close (mark) instead.
+    """
+    last = len(x["C"]) - 1
+    up_from = first if up_from is None else up_from      # first bar of the max-up window
+    exit_i = exit_px = reason = None
+    if same_day_stop is not None:                         # buy-stop: stop on the entry bar
+        exit_i, exit_px, reason = e, same_day_stop, "stop"
+    else:
+        for j in range(first, min(e + hold, last) + 1):
+            if x["L"][j] <= stop:                         # gap below the stop → open price
+                exit_i, exit_px, reason = j, (stop if j == e else min(x["O"][j], stop)), "stop"
+                break
+    if exit_i is None and e + hold <= last:
+        exit_i, exit_px, reason = e + hold, x["C"][e + hold], "time"
+    row = {"ticker": ticker, "date": x["dates"][e], "rs": rs, "vol_ratio": vol_ratio,
+           "entry": entry, "stop": stop, "risk_pct": risk * 100,
+           "signal_date": x["dates"][sig_i], "entry_at": entry_at,
+           "window_complete": e + hold <= last,
+           "_sig_i": sig_i, "_e": e}
+    if exit_i is None:                                    # still open at the end of the data
+        mark = float(x["C"][last])
+        row.update({"exit_date": pd.NaT, "days": last - e, "exit": np.nan, "ret_pct": np.nan,
+                    "r": np.nan, "reason": "open", "status": "open",
+                    "mark_date": x["dates"][last], "mark": mark,
+                    "mark_r": (mark / entry - 1) / risk,
+                    "max_up_pct": (x["H"][up_from:last + 1].max() / entry - 1) * 100
+                    if last >= up_from else np.nan, "_x": last})
+    else:
+        ret = exit_px / entry - 1
+        row.update({"exit_date": x["dates"][exit_i], "days": exit_i - e, "exit": exit_px,
+                    "ret_pct": ret * 100, "r": ret / risk, "reason": reason, "status": "closed",
+                    "mark_date": pd.NaT, "mark": np.nan, "mark_r": np.nan,
+                    "max_up_pct": (x["H"][up_from:exit_i + 1].max() / entry - 1) * 100
+                    if exit_i >= up_from else (x["H"][e] / entry - 1) * 100, "_x": exit_i})
+    return row
+
+
+def _finish(rows, chk_key, one_per_ticker, include_open):
+    """
+    Position ownership (optional) + output shape.
+    one_per_ticker=True reproduces the original signal-level rule: while a hypothetical trade
+    on a ticker is open, later signals on that ticker are ignored (checked on `chk_key`).
+    Portfolio replays should use one_per_ticker=False: the portfolio decides ownership, so a
+    trade it rejects can never hide a later valid signal.
+    """
+    out = []
+    if one_per_ticker:
+        busy = {}
+        for r in rows:                                    # rows are in (ticker, signal) order
+            if r[chk_key] <= busy.get(r["ticker"], -1):
+                continue
+            busy[r["ticker"]] = r["_x"]
+            out.append(r)
+    else:
+        out = list(rows)
+    if not include_open:
+        out = [r for r in out if r["status"] == "closed"]
+    full = include_open or not one_per_ticker
+    df = pd.DataFrame(out, columns=FULL_COLS if full else LEGACY_COLS)
+    if full and len(df):
+        df["window_complete"] = df["window_complete"].astype(bool)
+    return df
+
+
 def simulate_stop(pend: pd.DataFrame, data: dict, mode: str, hold=20, stop_buf=3.0,
-                  min_rs=85, max_risk=0.0, market_ok=None, limit_pct=1.0) -> pd.DataFrame:
+                  min_rs=85, max_risk=0.0, market_ok=None, limit_pct=1.0,
+                  one_per_ticker=True, include_open=False) -> pd.DataFrame:
     """
     Buy-stop entry: order placed after the close of day i at stop_trigger(pivot) with a limit
     `limit_pct` above. Day i+1: fills only if the high reaches the trigger; a gap above the
     trigger fills at the open, a gap above the limit fills only if price comes back to the limit.
     Same-day stop: if day i+1 also trades down to the stop, the trade is stopped (worst case).
+    one_per_ticker / include_open: see _finish() and simulate().
     """
     s = pend[pend["mode"] == mode]
     if min_rs:
@@ -190,11 +269,9 @@ def simulate_stop(pend: pd.DataFrame, data: dict, mode: str, hold=20, stop_buf=3
         days = pd.to_datetime(s["date"]).dt.normalize()
         s = s[days.map(market_ok).fillna(True).astype(bool).values]
     s = s.sort_values(["ticker", "i"])
-    trades, busy_until = [], {}
+    rows = []
     for r in s.itertuples(index=False):
         j = r.i + 1
-        if j <= busy_until.get(r.ticker, -1):
-            continue
         x = data[r.ticker]
         if j >= len(x["C"]):
             continue
@@ -215,42 +292,28 @@ def simulate_stop(pend: pd.DataFrame, data: dict, mode: str, hold=20, stop_buf=3
         risk = (entry - stop) / entry
         if max_risk and risk * 100 > max_risk:
             continue
-        last = len(x["C"]) - 1
-        exit_i = exit_px = reason = None
-        if L <= stop:                                   # stopped on the entry day
-            exit_i, exit_px, reason = j, stop, "stop"
-        else:
-            for k in range(j + 1, min(j + hold, last) + 1):
-                if x["L"][k] <= stop:
-                    exit_i, exit_px, reason = k, min(x["O"][k], stop), "stop"
-                    break
-        if exit_i is None:
-            if j + hold > last:
-                busy_until[r.ticker] = last
-                continue
-            exit_i, exit_px, reason = j + hold, x["C"][j + hold], "time"
-        busy_until[r.ticker] = exit_i
-        ret = exit_px / entry - 1
-        trades.append({
-            "ticker": r.ticker, "date": x["dates"][j], "exit_date": x["dates"][exit_i],
-            "days": exit_i - j, "rs": r.rs, "vol_ratio": np.nan, "entry": entry,
-            "stop": stop, "exit": exit_px, "risk_pct": risk * 100, "ret_pct": ret * 100,
-            "r": ret / risk, "reason": reason,
-            "max_up_pct": (x["H"][j:exit_i + 1].max() / entry - 1) * 100,
-        })
-    cols = ["ticker", "date", "exit_date", "days", "rs", "vol_ratio", "entry", "stop",
-            "exit", "risk_pct", "ret_pct", "r", "reason", "max_up_pct"]
-    return pd.DataFrame(trades, columns=cols)
+        rows.append(_trade(x, r.ticker, r.rs, np.nan, r.i, j, entry, stop, risk, hold,
+                           j + 1, "stop", same_day_stop=stop if L <= stop else None,
+                           up_from=j))
+    return _finish(rows, "_e", one_per_ticker, include_open)
 
 
 def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
              min_rs=70, min_vol=0.0, max_risk=0.0, market_ok=None,
-             entry_at="close") -> pd.DataFrame:
+             entry_at="close", one_per_ticker=True, include_open=False) -> pd.DataFrame:
     """
     market_ok: optional pd.Series(date → bool); signals on 'bad market' days are skipped.
     entry_at: "close" — buy at the signal-day close;
               "open"  — buy at the next day's open (gap included). If it opens at/below the
                         stop the trade is skipped; the stop can be hit the same day.
+    one_per_ticker: True (default, signal-level statistics) — one hypothetical trade per stock
+                    at a time, exactly as before. False — every valid signal becomes a trade;
+                    use this for portfolio replays, where the portfolio owns the positions.
+    include_open:   False (default) — only closed trades, as before. True — trades whose stop
+                    or holding period is not reached by the last bar are returned with
+                    status="open" and a mark-to-market (mark, mark_r) instead of an exit.
+    With either option changed, extra columns are returned: signal_date, entry_at, status,
+    window_complete, mark_date, mark, mark_r.
     """
     s = sig[sig["mode"] == mode]
     if market_ok is not None:
@@ -261,18 +324,15 @@ def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
     if min_vol:
         s = s[s["vol_ratio"] >= min_vol]
     s = s.sort_values(["ticker", "i"])
-    trades, busy_until = [], {}
+    rows = []
     for r in s.itertuples(index=False):
-        if r.i <= busy_until.get(r.ticker, -1):        # already in a trade on this stock
-            continue
         x = data[r.ticker]
         last = len(x["C"]) - 1
         if entry_at == "open":
             e = r.i + 1                                   # entry day
             if e > last:
                 continue
-            entry = x["O"][e]
-            first = e                                     # stop can hit on the entry day
+            entry, first = x["O"][e], e                   # stop can hit on the entry day
         else:
             e, entry, first = r.i, r.close, r.i + 1
         stop = r.stop_base * (1 - stop_buf / 100)
@@ -281,28 +341,9 @@ def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
         risk = (entry - stop) / entry
         if max_risk and risk * 100 > max_risk:
             continue
-        exit_i, exit_px, reason = None, None, None
-        for j in range(first, min(e + hold, last) + 1):
-            if x["L"][j] <= stop:                        # stopped; a gap below → open price
-                exit_i, exit_px, reason = j, (stop if j == e else min(x["O"][j], stop)), "stop"
-                break
-        if exit_i is None:
-            if e + hold > last:                          # not finished yet → leave out
-                busy_until[r.ticker] = last
-                continue
-            exit_i, exit_px, reason = e + hold, x["C"][e + hold], "time"
-        busy_until[r.ticker] = exit_i
-        ret = exit_px / entry - 1
-        trades.append({
-            "ticker": r.ticker, "date": x["dates"][e], "exit_date": x["dates"][exit_i],
-            "days": exit_i - e, "rs": r.rs, "vol_ratio": r.vol_ratio,
-            "entry": entry, "stop": stop, "exit": exit_px, "risk_pct": risk * 100,
-            "ret_pct": ret * 100, "r": ret / risk, "reason": reason,
-            "max_up_pct": (x["H"][first:exit_i + 1].max() / entry - 1) * 100,
-        })
-    cols = ["ticker", "date", "exit_date", "days", "rs", "vol_ratio", "entry", "stop",
-            "exit", "risk_pct", "ret_pct", "r", "reason", "max_up_pct"]
-    return pd.DataFrame(trades, columns=cols)
+        rows.append(_trade(x, r.ticker, r.rs, r.vol_ratio, r.i, e, entry, stop, risk, hold,
+                           first, entry_at))
+    return _finish(rows, "_sig_i", one_per_ticker, include_open)
 
 
 # =====================================================================
