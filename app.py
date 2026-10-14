@@ -18,6 +18,7 @@ from plotly.subplots import make_subplots
 from PIL import Image
 
 import backtest as bt
+import portfolio_bt
 import brand
 import core
 import trade_tab
@@ -838,6 +839,44 @@ def backtest_tab(T):
                  column_config={B["mode"]: st.column_config.TextColumn(pinned=True)})
     st.markdown(T["rating_help"])
     st.markdown(T["bt_read"])
+
+    # --- cash-constrained portfolio replay of the same simulated trades
+    with st.expander("💼 Portfolio Backtest / Портфельный бэктест", expanded=False):
+        st.caption("Виртуальный счёт с ограничением капитала и одновременных позиций. "
+                   "Uses the existing signal fills; entry-at-close and historical-index biases remain.")
+        pc1, pc2, pc3 = st.columns(3)
+        capital = pc1.number_input("Initial capital ($)", min_value=1000., value=10000., step=1000.)
+        risk_percent = pc2.number_input("Risk per trade (%)", min_value=0.1, max_value=10., value=1., step=0.1)
+        max_positions = pc3.number_input("Max positions", min_value=1, max_value=25, value=5)
+        pc4, pc5, pc6 = st.columns(3)
+        max_daily = pc4.number_input("New positions/day", min_value=1, max_value=25, value=3)
+        max_size = pc5.number_input("Max position (% equity)", min_value=1., max_value=100., value=20.)
+        cost = pc6.number_input("Costs per side (bps)", min_value=0., max_value=100., value=10.)
+        included = st.multiselect("Strategies / Стратегии", MODES,
+                                   default=["breakout", "retest", "vcp"],
+                                   format_func=lambda m: T[f"mode_{m}"])
+        if included:
+            combined = pd.concat([trades[m].assign(mode=m) for m in included], ignore_index=True)
+            if not combined.empty:
+                curve, executed, metrics = portfolio_bt.replay(
+                    combined, data, capital, risk_percent/100., int(max_positions),
+                    int(max_daily), max_size/100., cost)
+                q1, q2, q3 = st.columns(3)
+                q1.metric("Return", f"{metrics['return_pct']:+.1f}%")
+                q2.metric("Max drawdown", f"{metrics['max_drawdown_pct']:.1f}%")
+                q3.metric("CAGR", f"{metrics['cagr_pct']:.1f}%")
+                st.caption(f"Executed {metrics['executed_trades']} / {metrics['candidate_trades']} "
+                           f"signals · Max simultaneous positions {metrics['max_open_positions']}")
+                st.line_chart(curve.set_index("date")["equity"])
+                st.download_button("Download equity CSV", curve.to_csv(index=False),
+                                   "portfolio_equity.csv", "text/csv")
+                if len(executed):
+                    st.download_button("Download executed trades", executed.to_csv(index=False),
+                                       "portfolio_trades.csv", "text/csv")
+                st.caption("Limitations: present-day S&P 500 universe, no intraday sequencing; "
+                           "assumed fills for precomputed trades. This is not live brokerage P&L.")
+            else:
+                st.info("No completed trades for selected strategies.")
 
     # --- one setup in detail
     st.subheader(T["bt_detail"])
