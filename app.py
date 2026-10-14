@@ -20,6 +20,7 @@ from PIL import Image
 import backtest as bt
 import brand
 import core
+import trade_tab
 from core import MODES, NY
 
 st.set_page_config(page_title="VISAR · S&P 500 Screener",
@@ -30,7 +31,7 @@ JOURNAL_FILE = Path(__file__).parent / "journal" / "signals.csv"
 JOURNAL_URL = ("https://raw.githubusercontent.com/360profcorp/stock-screener/"
                "main/journal/signals.csv")
 # Default settings = the ones chosen by the backtest and used by the auto-scan
-DEFAULTS = {"min_rs": 85, "stop_buf": 3.0, "hold": 20, "market": "ma50"}
+DEFAULTS = {"min_rs": 85, "stop_buf": 3.0, "hold": 20, "market": "ma50", "earn_days": 5}
 BRAND_COLORS = ["#36C2C9", "#4E7CF0", "#9B5CF0", "#E0679E"]
 
 BRAND_CSS = """
@@ -78,6 +79,13 @@ TEXT = {
         "min_vol_help": "1.5 = объём в 1.5 раза выше среднего. 0 — без фильтра.",
         "closed_only": "Только закрытые свечи (во время торгов берётся вчерашняя)",
         "sectors": "Секторы (пусто — все)",
+        "earn_filter": "Не брать за N торговых дней до отчёта (0 — без фильтра)",
+        "earn_help": "Отчёт компании часто даёт гэп на 5–15% в любую сторону — стоп не спасает. "
+                     "Акции с отчётом в ближайшие N дней убираются из списка. "
+                     "Даты — из Yahoo Finance; если дата неизвестна, акция остаётся.",
+        "earn_loading": "Проверяю даты отчётов…",
+        "earn_dropped": "Убрано из-за близкого отчёта: {n} ({t})",
+        "earn_soon": "⚠️ через {d} дн.",
         "account": "Размер счёта, $",
         "risk_pct": "Риск на сделку, % от счёта",
         "stop_buf": "Запас стопа под уровнем, %",
@@ -196,6 +204,7 @@ TEXT = {
             "close": "Закрытие", "level": "Уровень", "pct_level": "% от уровня",
             "stop": "Стоп", "risk_pct": "Риск %", "shares": "Акций",
             "pos_value": "Позиция $", "vol_ratio": "Объём / ср.20д",
+            "earnings": "Отчёт", "earn_days": "Дней до отчёта",
             "signal": "Сигнал", "date": "Дата", "chart": "График",
         },
     },
@@ -225,6 +234,13 @@ TEXT = {
         "min_vol_help": "1.5 = volume 1.5× above average. 0 = no filter.",
         "closed_only": "Closed candles only (during market hours uses yesterday)",
         "sectors": "Sectors (empty = all)",
+        "earn_filter": "Skip if earnings within N trading days (0 = no filter)",
+        "earn_help": "Earnings often gap a stock 5–15% either way — a stop won't help. "
+                     "Stocks reporting within N days are removed. Dates come from Yahoo "
+                     "Finance; if the date is unknown, the stock stays.",
+        "earn_loading": "Checking earnings dates…",
+        "earn_dropped": "Removed due to upcoming earnings: {n} ({t})",
+        "earn_soon": "⚠️ in {d}d",
         "account": "Account size, $",
         "risk_pct": "Risk per trade, % of account",
         "stop_buf": "Stop buffer below level, %",
@@ -342,6 +358,7 @@ TEXT = {
             "close": "Close", "level": "Level", "pct_level": "% vs level",
             "stop": "Stop", "risk_pct": "Risk %", "shares": "Shares",
             "pos_value": "Position $", "vol_ratio": "Vol / 20d avg",
+            "earnings": "Earnings", "earn_days": "Days to earnings",
             "signal": "Signal", "date": "Date", "chart": "Chart",
         },
     },
@@ -364,6 +381,11 @@ def get_prices(tickers: tuple):
 @st.cache_data(ttl=60 * 60, show_spinner=False)
 def get_prices_since(tickers: tuple, start: str):
     return core.get_prices(tickers, start=start)
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def get_earnings(tickers: tuple):
+    return core.next_earnings(tickers)
 
 
 @st.cache_data(ttl=10 * 60, show_spinner=False)
@@ -464,6 +486,8 @@ def scan_tab(T, lang):
         drop_unclosed = st.checkbox(T["closed_only"], value=True, key="closed_only")
         sectors_all = sorted(get_sp500()["sector"].dropna().unique())
         sectors = st.multiselect(T["sectors"], sectors_all, key="sectors")
+        earn_days = st.slider(T["earn_filter"], 0, 15, DEFAULTS["earn_days"],
+                              help=T["earn_help"], key="earn_days")
         mkt = st.selectbox(T["mkt_filter"], core.MARKET_FILTERS, help=T["mkt_help"],
                            index=core.MARKET_FILTERS.index(DEFAULTS["market"]),
                            format_func=lambda f: T["mkt_opts"][f], key="mkt")
@@ -491,8 +515,16 @@ def scan_tab(T, lang):
             blocked = not core.regime_ok(regime_now, mkt)
             if blocked:
                 result = result.iloc[0:0]
+            dropped = []
+            if not result.empty:
+                with st.spinner(T["earn_loading"]):
+                    earn = get_earnings(tuple(result["ticker"]))
+                before = set(result["ticker"])
+                result, _ = core.apply_earnings(result, earn, earn_days)
+                dropped = sorted(before - set(result["ticker"]))
         st.session_state.update(result=result, mode_scanned=mode, tickers=tickers,
                                 blocked=T["mkt_opts"][mkt] if blocked else None,
+                                earn_dropped=dropped,
                                 scanned_at=datetime.now(NY).strftime("%d.%m %H:%M ET"))
 
     if "result" not in st.session_state:
@@ -502,6 +534,10 @@ def scan_tab(T, lang):
     res = st.session_state["result"]
     st.metric(f"{T['found']}: {T['mode_' + st.session_state['mode_scanned']]}", len(res),
               help=f"{T['scanned_at']}: {st.session_state['scanned_at']}")
+    dropped = st.session_state.get("earn_dropped") or []
+    if dropped:
+        st.caption(T["earn_dropped"].format(n=len(dropped), t=", ".join(dropped[:12])
+                                            + (" …" if len(dropped) > 12 else "")))
     if res.empty:
         if st.session_state.get("blocked"):
             st.warning(T["mkt_blocked"].format(f=st.session_state["blocked"]))
@@ -510,9 +546,14 @@ def scan_tab(T, lang):
     else:
         C = T["cols"]
         other = "en" if lang == "ru" else "ru"
-        view = (res.drop(columns=[f"signal_{other}"])
-                   .rename(columns={f"signal_{lang}": "signal"})
-                   .rename(columns=C))
+        base = res.drop(columns=[f"signal_{other}"]).rename(columns={f"signal_{lang}": "signal"})
+        if "earnings" in base:                      # show earnings right after the risk columns
+            cols = list(base.columns)
+            for c in ("earn_days", "earnings"):
+                cols.remove(c)
+                cols.insert(cols.index("pos_value") + 1, c)
+            base = base[cols]
+        view = base.rename(columns=C)
         st.caption(T["tap_row"])
         event = st.dataframe(
             view, hide_index=True, use_container_width=True,
@@ -789,13 +830,16 @@ def main():
     st.title(T["title"])
     st.caption(T["subtitle"])
 
-    tab_scan, tab_journal, tab_bt = st.tabs([T["tab_scan"], T["tab_journal"], T["tab_bt"]])
+    tab_scan, tab_journal, tab_bt, tab_trade = st.tabs(
+        [T["tab_scan"], T["tab_journal"], T["tab_bt"], trade_tab.TX[lang]["tab"]])
     with tab_scan:
         scan_tab(T, lang)
     with tab_journal:
         journal_tab(T)
     with tab_bt:
         backtest_tab(T)
+    with tab_trade:
+        trade_tab.render(T, lang, get_prices)
 
     st.caption(T["footer"])
 

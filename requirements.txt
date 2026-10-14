@@ -5,3 +5,4 @@ numpy
 lxml
 requests
 plotly>=5.20
+cryptography>=42
