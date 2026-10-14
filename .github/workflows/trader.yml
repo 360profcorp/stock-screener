@@ -2,13 +2,15 @@ name: Trading bot
 
 on:
   schedule:
-    - cron: "5 0 * * 2-6"
-    - cron: "15 13 * * 1-5"
-    - cron: "15 14 * * 1-5"
+    - cron: "5 0 * * 2-6"     # plan:    ~8:05 PM New York (7:05 PM in winter), after the auto-scan
+    - cron: "15 13 * * 1-5"   # execute: 9:15 AM New York (summer) — before the open
+    - cron: "15 14 * * 1-5"   # execute: 9:15 AM New York (winter); runs at 8:15/10:15 are skipped
+    - cron: "25 19 * * 1-5"   # preclose: 3:25 PM New York (summer) — breakouts before the close
+    - cron: "25 20 * * 1-5"   # preclose: 3:25 PM New York (winter); runs at 2:25/4:25 are skipped
   workflow_dispatch:
     inputs:
       command:
-        description: "plan or execute"
+        description: "plan, execute or preclose"
         default: "execute"
         required: true
 
@@ -35,19 +37,28 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           SCHWAB_APP_KEY: ${{ secrets.SCHWAB_APP_KEY }}
           SCHWAB_APP_SECRET: ${{ secrets.SCHWAB_APP_SECRET }}
-          TRADING: "dry"
-          TRADE_SETUPS: "vcp,breakout"
-          RISK_USD: "15"
-          MAX_POSITION_USD: "500"
-          MAX_POSITIONS: "5"
-          MAX_NEW_PER_DAY: "3"
-          HOLD_DAYS: "20"
-          LIMIT_PCT: "1"
-          SCHWAB_ACCOUNT: ""
+          # ---- Настройки бота ----
+          TRADING: "dry"            # off | dry (тренировка) | manual (с подтверждением) | auto
+          TRADE_SETUPS: "breakout,vcp,retest"   # пробой — перед закрытием; VCP и ретест — утром
+          RISK_USD: "15"            # $ потери, если сработает стоп
+          MAX_POSITION_USD: "500"   # макс. сумма в одной акции
+          MAX_POSITIONS: "5"        # макс. открытых позиций
+          MAX_NEW_PER_DAY: "3"      # макс. новых покупок в день
+          HOLD_DAYS: "20"           # продать через N торговых дней
+          # правила пробоя перед закрытием — как в автоскане и бэктесте
+          MIN_RS: "85"
+          STOP_BUF: "3"
+          MARKET_FILTER: "ma50"
+          EARNINGS_DAYS: "5"
+          SCHWAB_ACCOUNT: ""        # последние цифры счёта для бота (если счетов несколько)
         run: |
           CMD="${{ github.event.inputs.command }}"
           if [ -z "$CMD" ]; then
-            if [ "${{ github.event.schedule }}" = "5 0 * * 2-6" ]; then CMD=plan; else CMD=execute; fi
+            case "${{ github.event.schedule }}" in
+              "5 0 * * 2-6") CMD=plan ;;
+              "25 19 * * 1-5"|"25 20 * * 1-5") CMD=preclose ;;
+              *) CMD=execute ;;
+            esac
           fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then export FORCE=1; fi
           python trader.py "$CMD"
