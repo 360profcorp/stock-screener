@@ -1,0 +1,61 @@
+name: Trading bot
+
+on:
+  schedule:
+    - cron: "5 0 * * 2-6"
+    - cron: "45 13 * * 1-5"
+    - cron: "45 14 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "plan or execute"
+        default: "execute"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trading-bot
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests cryptography
+      - name: Run bot
+        env:
+          STATE_PASSWORD: ${{ secrets.STATE_PASSWORD }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SCHWAB_APP_KEY: ${{ secrets.SCHWAB_APP_KEY }}
+          SCHWAB_APP_SECRET: ${{ secrets.SCHWAB_APP_SECRET }}
+          TRADING: "dry"
+          TRADE_SETUPS: "vcp,breakout"
+          RISK_USD: "15"
+          MAX_POSITION_USD: "500"
+          MAX_POSITIONS: "5"
+          MAX_NEW_PER_DAY: "3"
+          HOLD_DAYS: "20"
+          MAX_CHASE_PCT: "3"
+          SCHWAB_ACCOUNT: ""
+        run: |
+          CMD="${{ github.event.inputs.command }}"
+          if [ -z "$CMD" ]; then
+            if [ "${{ github.event.schedule }}" = "5 0 * * 2-6" ]; then CMD=plan; else CMD=execute; fi
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then export FORCE=1; fi
+          python trader.py "$CMD"
+      - name: Save state
+        run: |
+          git config user.name "visar-bot"
+          git config user.email "visar-bot@users.noreply.github.com"
+          git add state/trader.enc || true
+          git diff --cached --quiet || git commit -m "Bot state $(date -u +%F_%H%M)"
+          git pull --rebase
+          git push
