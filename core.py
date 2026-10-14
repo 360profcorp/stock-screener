@@ -324,42 +324,50 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
             rows.append(rec)
             continue
         c = after["Close"].values
+        n = len(c)
         rec["ret_now"] = c[-1] / entry - 1
         rec["max_up"] = after["High"].max() / entry - 1
-        if len(c) >= 5:
-            rec["ret_5d"] = c[4] / entry - 1
-        if len(c) >= 10:
-            rec["ret_10d"] = c[9] / entry - 1
         hit = after["Low"].values <= float(s["stop"])
-        if hit.any():
-            k = int(np.argmax(hit))
+        k = int(np.argmax(hit)) if hit.any() else None
+        stop_ret = float(s["stop"]) / entry - 1
+
+        def ret_at(day):
+            # result after `day` trading days — only once that many days have passed;
+            # if the stop was hit earlier, the trade was closed at the stop
+            if n < day:
+                return np.nan
+            return stop_ret if (k is not None and k < day) else c[day - 1] / entry - 1
+
+        rec["ret_5d"], rec["ret_10d"] = ret_at(5), ret_at(10)
+        if k is not None:
             rec["status"] = "stopped"
             rec["stop_day"] = k + 1
-            # once stopped, the trade result is the stop
-            stop_ret = float(s["stop"]) / entry - 1
-            if k < 5:
-                rec["ret_5d"] = stop_ret
-            if k < 10:
-                rec["ret_10d"] = stop_ret
+            rec["ret_now"] = stop_ret                     # closed trade: result is the stop
+            rec["max_up"] = after["High"].iloc[:k + 1].max() / entry - 1
         else:
-            rec["status"] = "open" if len(c) < 10 else "done10"
+            rec["status"] = "open" if n < 10 else "done10"
         rows.append(rec)
     return pd.DataFrame(rows)
 
 
 def journal_summary(ev: pd.DataFrame) -> pd.DataFrame:
-    """Per-mode stats: signals, win rate at 5d/10d, average returns, % stopped."""
+    """
+    Per-setup stats. 'Now' covers every signal (closed at stop or marked to market);
+    5d / 10d stats count only trades whose 5 / 10 days have passed, with the sample size shown.
+    """
     if ev.empty:
         return pd.DataFrame()
     g = []
     for mode, d in ev.groupby("mode"):
+        now = d["ret_now"].dropna()
         d5, d10 = d["ret_5d"].dropna(), d["ret_10d"].dropna()
+        pct = lambda x: (x > 0).mean() * 100 if len(x) else np.nan
+        avg = lambda x: x.mean() * 100 if len(x) else np.nan
         g.append({
             "mode": mode, "signals": len(d),
-            "win_5d": (d5 > 0).mean() * 100 if len(d5) else np.nan,
-            "avg_5d": d5.mean() * 100 if len(d5) else np.nan,
-            "win_10d": (d10 > 0).mean() * 100 if len(d10) else np.nan,
-            "avg_10d": d10.mean() * 100 if len(d10) else np.nan,
+            "win_now": pct(now), "avg_now": avg(now),
             "stopped": (d["status"] == "stopped").mean() * 100,
+            "n_5d": len(d5), "win_5d": pct(d5), "avg_5d": avg(d5),
+            "n_10d": len(d10), "win_10d": pct(d10), "avg_10d": avg(d10),
         })
     return pd.DataFrame(g)
