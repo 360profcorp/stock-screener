@@ -57,6 +57,10 @@ TEXT = {
         "mode_breakout": "Пробой",
         "mode_retest": "Пробой с ретестом",
         "mode_vcp": "VCP",
+        "mode_dbottom": "Двойное дно",
+        "desc_dbottom": "W-база по О'Нилу: два дна (второе на уровне первого или чуть ниже), "
+                        "на втором дне объём меньше, сегодня — пробой средней вершины. "
+                        "Глубина базы 15–35%, акция выше MA200.",
         "desc_breakout": "Закрытие дня выше максимума последних 2–3 свечей.",
         "desc_retest": "Пробой был несколько дней назад, цена вернулась к уровню, "
                        "удержала его и сегодня пошла вверх.",
@@ -158,6 +162,8 @@ TEXT = {
                     "avg_days": "Средн. дней", "bucket": "Группа",
                     "median_r": "Медиана R", "exp_r_ex5": "Ожидание R без 5 лучших",
                     "exp_r_nofilter": "Ожидание R без фильтра рынка",
+                    "exp_r_h1": "R 1-я половина", "exp_r_h2": "R 2-я половина",
+                    "rating": "Рейтинг",
                     "ticker": "Тикер", "date": "Вход", "exit_date": "Выход", "days": "Дней",
                     "rs": "RS", "vol_ratio": "Объём", "entry": "Цена входа", "stop": "Стоп",
                     "exit": "Цена выхода", "risk_pct": "Риск %", "ret_pct": "Результат %",
@@ -176,6 +182,13 @@ TEXT = {
         "bt_risk_warn": "⚠️ Макс. риск ({m:g}%) не больше запаса стопа ({b:g}%) — сделок не будет: "
                         "стоп всегда дальше. Поставь макс. риск 0 или больше {b:g}%.",
         "bt_mkt_days": "Фильтр рынка «{f}»: рынок проходил фильтр {p:.0f}% дней периода.",
+        "rating": "Рейтинг",
+        "rating_vals": {"good": "✅ рабочий", "weak": "🟡 слабый", "bad": "❌ не работает",
+                        "few": "⏳ мало сделок"},
+        "rating_now": "Рейтинг сетапа по последнему бэктесту: **{r}** (ожидание {e} R)",
+        "rating_help": "**Рейтинг:** ✅ рабочий — ожидание ≥ 0.15R, без 5 лучших ≥ 0.10R и плюс "
+                       "в обеих половинах периода; 🟡 слабый — небольшой плюс; ❌ не работает — "
+                       "ноль или минус; ⏳ мало сделок — меньше 40, выводы делать рано.",
         "cols": {
             "ticker": "Тикер", "rs": "RS", "name": "Компания", "sector": "Сектор",
             "close": "Закрытие", "level": "Уровень", "pct_level": "% от уровня",
@@ -191,6 +204,10 @@ TEXT = {
         "mode_breakout": "Breakout",
         "mode_retest": "Breakout + retest",
         "mode_vcp": "VCP",
+        "mode_dbottom": "Double bottom",
+        "desc_dbottom": "O'Neil W base: two lows (the second at or slightly under the first), "
+                        "lighter volume on the second low, today — breakout of the middle peak. "
+                        "Base depth 15–35%, stock above MA200.",
         "desc_breakout": "Daily close above the high of the last 2–3 candles.",
         "desc_retest": "Broke out a few days ago, pulled back to the level, "
                        "held it and turned up today.",
@@ -291,6 +308,8 @@ TEXT = {
                     "avg_days": "Avg days", "bucket": "Group",
                     "median_r": "Median R", "exp_r_ex5": "Expectancy R w/o top 5",
                     "exp_r_nofilter": "Expectancy R w/o market filter",
+                    "exp_r_h1": "R 1st half", "exp_r_h2": "R 2nd half",
+                    "rating": "Rating",
                     "ticker": "Ticker", "date": "Entry", "exit_date": "Exit", "days": "Days",
                     "rs": "RS", "vol_ratio": "Volume", "entry": "Entry price", "stop": "Stop",
                     "exit": "Exit price", "risk_pct": "Risk %", "ret_pct": "Result %",
@@ -309,6 +328,13 @@ TEXT = {
         "bt_risk_warn": "⚠️ Max risk ({m:g}%) is not above the stop buffer ({b:g}%) — no trades possible: "
                         "the stop is always farther. Set max risk to 0 or above {b:g}%.",
         "bt_mkt_days": "Market filter \"{f}\": the market passed it on {p:.0f}% of days in the period.",
+        "rating": "Rating",
+        "rating_vals": {"good": "✅ works", "weak": "🟡 weak", "bad": "❌ doesn't work",
+                        "few": "⏳ too few trades"},
+        "rating_now": "Setup rating from the last backtest: **{r}** (expectancy {e} R)",
+        "rating_help": "**Rating:** ✅ works — expectancy ≥ 0.15R, w/o top 5 ≥ 0.10R and positive "
+                       "in both halves of the period; 🟡 weak — small edge; ❌ doesn't work — zero "
+                       "or negative; ⏳ too few trades — under 40, too early to judge.",
         "cols": {
             "ticker": "Ticker", "rs": "RS", "name": "Company", "sector": "Sector",
             "close": "Close", "level": "Level", "pct_level": "% vs level",
@@ -422,10 +448,13 @@ def scan_tab(T, lang):
     mode = st.segmented_control(T["signal_type"], MODES, default="breakout",
                                 format_func=lambda m: T[f"mode_{m}"], key="mode") or "breakout"
     st.caption(T[f"desc_{mode}"])
+    rated = st.session_state.get("ratings", {}).get(mode)
+    if rated:
+        st.caption(T["rating_now"].format(r=T["rating_vals"][rated[0]], e=f"{rated[1]:+.2f}"))
 
     with st.expander(T["settings"], expanded=False):
         lookback = st.radio(T["lookback"], [2, 3], index=1, horizontal=True,
-                            disabled=(mode == "vcp"), key="lookback")
+                            disabled=(mode in ("vcp", "dbottom")), key="lookback")
         min_rs = st.slider(T["min_rs"], 0, 99, 70, help=T["min_rs_help"], key="min_rs")
         min_vol_ratio = st.slider(T["min_vol"], 0.0, 3.0, 0.0, 0.1,
                                   help=T["min_vol_help"], key="min_vol")
@@ -586,6 +615,31 @@ def _num(df, cols, pattern):
     return df
 
 
+def rate(s: dict) -> str:
+    """good / weak / bad / few — same rule everywhere."""
+    if s.get("trades", 0) < 40:
+        return "few"
+    h1, h2 = s.get("exp_r_h1", np.nan), s.get("exp_r_h2", np.nan)
+    if (s["expectancy_r"] >= 0.15 and s.get("exp_r_ex5", -1) >= 0.10
+            and h1 > 0 and h2 > 0):
+        return "good"
+    if s["expectancy_r"] > 0.05 and s.get("exp_r_ex5", -1) > 0:
+        return "weak"
+    return "bad"
+
+
+def halves(tr):
+    """Expectancy R in the first and second half of the period (consistency check)."""
+    if tr.empty:
+        return np.nan, np.nan
+    d = pd.to_datetime(tr["date"])
+    mid = d.min() + (d.max() - d.min()) / 2
+    out = []
+    for part in (tr[d <= mid], tr[d > mid]):
+        out.append(bt.stats(part)["expectancy_r"] if len(part) else np.nan)
+    return tuple(out)
+
+
 def backtest_tab(T):
     st.caption(T["bt_intro"])
     with st.expander(T["bt_settings"], expanded=False):
@@ -629,28 +683,34 @@ def backtest_tab(T):
 
     # --- comparison of the three setups
     st.subheader(T["bt_compare"])
-    rows = []
+    rows, ratings = [], {}
     for m in MODES:
         s = bt.stats(trades[m])
         if s["trades"]:
             if market_ok is not None:
                 s["exp_r_nofilter"] = bt.stats(bt.simulate(
                     sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk)).get("expectancy_r")
-            rows.append({"mode": T[f"mode_{m}"], **s})
+            s["exp_r_h1"], s["exp_r_h2"] = halves(trades[m])
+            code = rate(s)
+            ratings[m] = (code, s["expectancy_r"])
+            rows.append({"mode": T[f"mode_{m}"], "rating": T["rating_vals"][code], **s})
     if not rows:
         st.info(T["bt_none"])
         return
-    cols = ["mode", "trades", "win_rate", "avg_win", "avg_loss", "expectancy",
-            "expectancy_r", "exp_r_ex5", "median_r"]
+    st.session_state["ratings"] = ratings
+    cols = ["mode", "rating", "trades", "win_rate", "avg_win", "avg_loss", "expectancy",
+            "expectancy_r", "exp_r_ex5", "exp_r_h1", "exp_r_h2", "median_r"]
     if market_ok is not None:
         cols.append("exp_r_nofilter")
     cols += ["profit_factor", "stopped", "max_losing_streak", "total_r", "avg_days"]
     comp = pd.DataFrame(rows)[cols]
     comp = _num(comp, ["win_rate", "avg_win", "avg_loss", "expectancy", "stopped",
                        "avg_days", "total_r"], "{:.1f}")
-    comp = _num(comp, ["expectancy_r", "exp_r_ex5", "median_r", "exp_r_nofilter",
-                       "profit_factor"], "{:.2f}")
-    st.dataframe(comp.rename(columns=B), hide_index=True, use_container_width=True)
+    comp = _num(comp, ["expectancy_r", "exp_r_ex5", "exp_r_h1", "exp_r_h2", "median_r",
+                       "exp_r_nofilter", "profit_factor"], "{:.2f}")
+    st.dataframe(comp.rename(columns=B), hide_index=True, use_container_width=True,
+                 column_config={B["mode"]: st.column_config.TextColumn(pinned=True)})
+    st.markdown(T["rating_help"])
     st.markdown(T["bt_read"])
 
     # --- one setup in detail
