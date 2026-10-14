@@ -2,7 +2,7 @@ name: Daily scan
 
 on:
   schedule:
-    - cron: "15 22 * * 1-5"
+    - cron: "30 23 * * 1-5"
   workflow_dispatch:
 
 permissions:
