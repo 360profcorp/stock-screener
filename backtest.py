@@ -153,8 +153,12 @@ def find_signals(frames: dict, lookback=3, modes=core.MODES, progress=None) -> t
 # 2) Trades: entry at the signal close, exit at the stop or after `hold` days
 # =====================================================================
 def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
-             min_rs=70, min_vol=0.0, max_risk=0.0) -> pd.DataFrame:
+             min_rs=70, min_vol=0.0, max_risk=0.0, market_ok=None) -> pd.DataFrame:
+    """market_ok: optional pd.Series(date → bool); signals on 'bad market' days are skipped."""
     s = sig[sig["mode"] == mode]
+    if market_ok is not None:
+        days = pd.to_datetime(s["date"]).dt.normalize()
+        s = s[days.map(market_ok).fillna(True).astype(bool).values]
     if min_rs:
         s = s[s["rs"] >= min_rs]
     if min_vol:
@@ -221,6 +225,9 @@ def stats(tr: pd.DataFrame) -> dict:
         "max_losing_streak": best,
         "total_r": tr["r"].sum(),
         "avg_days": tr["days"].mean(),
+        # robustness: is the edge broad, or carried by a few lucky trades?
+        "median_r": tr["r"].median(),
+        "exp_r_ex5": tr["r"].nsmallest(max(len(tr) - 5, 0)).mean() if len(tr) > 5 else np.nan,
     }
 
 

@@ -371,3 +371,42 @@ def journal_summary(ev: pd.DataFrame) -> pd.DataFrame:
             "n_10d": len(d10), "win_10d": pct(d10), "avg_10d": avg(d10),
         })
     return pd.DataFrame(g)
+
+
+# =====================================================================
+# Состояние рынка / Market regime (S&P 500 via SPY)
+# =====================================================================
+MARKET_FILTERS = ["off", "ma50", "ma200", "both"]
+
+
+def market_regime(spy: pd.DataFrame) -> pd.DataFrame:
+    """SPY close vs its 50/200-day averages for every day."""
+    c = spy["Close"].astype(float)
+    out = pd.DataFrame({"close": c, "ma50": c.rolling(50).mean(),
+                        "ma200": c.rolling(200).mean()})
+    out["above50"] = out["close"] > out["ma50"]
+    out["above200"] = out["close"] > out["ma200"]
+    out.index = pd.to_datetime(out.index).normalize()
+    return out
+
+
+def regime_ok(reg_row, flt: str) -> bool:
+    """Is the market good enough to take signals under filter `flt`?"""
+    if flt == "off" or reg_row is None:
+        return True
+    if flt == "ma50":
+        return bool(reg_row["above50"])
+    if flt == "ma200":
+        return bool(reg_row["above200"])
+    return bool(reg_row["above50"] and reg_row["above200"])
+
+
+def regime_mask(reg: pd.DataFrame, flt: str) -> pd.Series:
+    """Per-day True/False under filter `flt` (for the backtest)."""
+    if flt == "off":
+        return pd.Series(True, index=reg.index)
+    if flt == "ma50":
+        return reg["above50"]
+    if flt == "ma200":
+        return reg["above200"]
+    return reg["above50"] & reg["above200"]

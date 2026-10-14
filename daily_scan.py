@@ -14,6 +14,8 @@ Settings come from environment variables — the `env:` block in .github/workflo
   STOP_BUF     — stop buffer below the level, % (default 1)
   MAX_RISK     — skip signals whose stop is farther than this %, 0 = no limit (default 0)
   LOOKBACK     — candles to break for breakout / retest, 2 or 3 (default 3)
+  MARKET_FILTER — take signals only when the market is in an uptrend (SPY):
+                 off | ma50 | ma200 | both  (default off)
   REPEAT_DAYS  — don't log the same stock + setup again within this many trading days,
                  0 = log every day (default 10, like the backtest's holding period)
   APP_URL      — link opened when you tap the notification
@@ -46,6 +48,12 @@ STOP_BUF = _env("STOP_BUF", 1.0)
 MAX_RISK = _env("MAX_RISK", 0.0)
 LOOKBACK = _env("LOOKBACK", 3, int)
 REPEAT_DAYS = _env("REPEAT_DAYS", 10, int)
+MARKET_FILTER = os.getenv("MARKET_FILTER", "off").strip().lower() or "off"
+if MARKET_FILTER not in core.MARKET_FILTERS:
+    print(f"bad MARKET_FILTER={MARKET_FILTER!r}, using off")
+    MARKET_FILTER = "off"
+MKT_NAMES = {"off": "без фильтра", "ma50": "SPY > MA50", "ma200": "SPY > MA200",
+             "both": "SPY > MA50 и MA200"}
 APP_URL = os.getenv("APP_URL", "https://dmitry-screener.streamlit.app")
 TOPIC = os.getenv("NTFY_TOPIC", "").strip()
 NAMES = {"breakout": "Пробой", "retest": "Ретест", "vcp": "VCP"}
@@ -95,6 +103,25 @@ def drop_repeats(res, mode, old, data_date):
     return res[keep].reset_index(drop=True)
 
 
+def market_status(prices, data_date):
+    """('🟢 Рынок: …' line, does the market pass MARKET_FILTER)."""
+    spy = core._frame_for(prices, "SPY")
+    if spy is None or len(spy) < 200:
+        return "Рынок: нет данных по SPY", True
+    reg = core.market_regime(spy)
+    day = pd.Timestamp(data_date)
+    row = reg.loc[:day].dropna().iloc[-1]
+    if row["above50"] and row["above200"]:
+        icon, word = "🟢", "в аптренде"
+    elif not row["above50"] and not row["above200"]:
+        icon, word = "🔴", "слабый"
+    else:
+        icon, word = "🟡", "смешанный"
+    line = (f"{icon} Рынок {word}: SPY {row['close']:.0f}, "
+            f"MA50 {row['ma50']:.0f}, MA200 {row['ma200']:.0f}")
+    return line, core.regime_ok(row, MARKET_FILTER)
+
+
 def build_message(results, data_date):
     lines = []
     for mode in ("vcp", "retest", "breakout"):          # most selective first
@@ -118,7 +145,7 @@ def main():
 
     universe = core.get_sp500()
     tickers = list(universe["ticker"])
-    prices = core.get_prices(tuple(tickers))
+    prices = core.get_prices(tuple(tickers) + ("SPY",))
 
     dates = last_dates(prices, tickers)
     print(f"tickers with data: {len(dates)}/{len(tickers)}")
@@ -136,11 +163,18 @@ def main():
     fresh = universe[universe["ticker"].isin(dates[dates == data_date].index)]
     print(f"data date: {data_date}, fresh tickers: {len(fresh)}")
 
+    reg_line, market_pass = market_status(prices, data_date)
+    print(reg_line)
     print(f"settings: RS≥{MIN_RS}, vol≥{MIN_VOL}, stop buffer {STOP_BUF}%, "
-          f"max risk {MAX_RISK or '—'}%, lookback {LOOKBACK}, repeat {REPEAT_DAYS}d")
+          f"max risk {MAX_RISK or '—'}%, lookback {LOOKBACK}, repeat {REPEAT_DAYS}d, "
+          f"market filter {MARKET_FILTER}")
     results = {m: core.scan(prices, fresh, m, LOOKBACK, True, MIN_VOL, MIN_RS,
                             stop_buf=STOP_BUF, max_risk=MAX_RISK)
                for m in core.MODES}
+
+    if not market_pass:
+        print(f"market filter {MARKET_FILTER}: market doesn't pass — no signals logged")
+        results = {m: r.iloc[0:0] for m, r in results.items()}
 
     old = pd.read_csv(JOURNAL) if JOURNAL.exists() else None
     results = {m: drop_repeats(results[m], m, old, data_date) for m in core.MODES}
@@ -151,7 +185,9 @@ def main():
     journal.to_csv(JOURNAL, index=False)
     print(f"journal: {len(new)} signals today, total {len(journal)} (+{len(journal) - before})")
 
-    msg = build_message(results, data_date)
+    msg = build_message(results, data_date) + "\n" + reg_line
+    if not market_pass:
+        msg += f"\n⛔ Фильтр рынка ({MKT_NAMES[MARKET_FILTER]}): сигналы сегодня не записаны."
     if data_date != now.strftime("%Y-%m-%d"):
         msg += "\n⚠️ Сегодняшних свечей ещё нет — это сигналы прошлой сессии."
     print(msg)
