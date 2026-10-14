@@ -199,6 +199,14 @@ TEXT = {
         "rating_help": "**Рейтинг:** ✅ рабочий — ожидание ≥ 0.15R, без 5 лучших ≥ 0.10R и плюс "
                        "в обеих половинах периода; 🟡 слабый — небольшой плюс; ❌ не работает — "
                        "ноль или минус; ⏳ мало сделок — меньше 40, выводы делать рано.",
+        "bt_entry": "Способ входа",
+        "bt_entry_opts": {"close": "по закрытию дня сигнала", "stop": "buy-stop выше максимума"},
+        "bt_entry_help": "По закрытию: покупка по цене закрытия дня, когда пробой уже случился. "
+                         "Buy-stop: ордер ставится заранее чуть выше уровня и исполняется только "
+                         "если цена его пробьёт на следующий день (лимит +1% от триггера). "
+                         "Так торгует бот.",
+        "bt_entry_note": "Buy-stop считается для VCP и пробоя — так торгует бот. Ретест и двойное "
+                         "дно работают только при входе по закрытию.",
         "cols": {
             "ticker": "Тикер", "rs": "RS", "name": "Компания", "sector": "Сектор",
             "close": "Закрытие", "level": "Уровень", "pct_level": "% от уровня",
@@ -353,6 +361,14 @@ TEXT = {
         "rating_help": "**Rating:** ✅ works — expectancy ≥ 0.15R, w/o top 5 ≥ 0.10R and positive "
                        "in both halves of the period; 🟡 weak — small edge; ❌ doesn't work — zero "
                        "or negative; ⏳ too few trades — under 40, too early to judge.",
+        "bt_entry": "Entry method",
+        "bt_entry_opts": {"close": "at the signal-day close", "stop": "buy-stop above the high"},
+        "bt_entry_help": "At close: buy at the close of the day the breakout already happened. "
+                         "Buy-stop: an order waits just above the level and fills only if price "
+                         "breaks it the next day (limit +1% above the trigger). This is how the "
+                         "bot trades.",
+        "bt_entry_note": "Buy-stop applies to VCP and breakout — the way the bot trades. Retest "
+                         "and double bottom work only with the at-close entry.",
         "cols": {
             "ticker": "Ticker", "rs": "RS", "name": "Company", "sector": "Sector",
             "close": "Close", "level": "Level", "pct_level": "% vs level",
@@ -648,9 +664,10 @@ def backtest_signals(tickers: tuple):
         if df is not None and len(df):
             frames[t] = df
     sig, data = bt.find_signals(frames)
+    pend = bt.find_pending(frames, data)
     spy = core._frame_for(prices, "SPY")
     reg = core.market_regime(spy) if spy is not None and len(spy) else None
-    return sig, data, reg
+    return sig, data, reg, pend
 
 
 def _num(df, cols, pattern):
@@ -701,6 +718,9 @@ def backtest_tab(T):
         mkt = st.selectbox(T["mkt_filter"], core.MARKET_FILTERS, help=T["mkt_help"],
                            index=core.MARKET_FILTERS.index(DEFAULTS["market"]),
                            format_func=lambda f: T["mkt_opts"][f], key="bt_mkt")
+        entry = st.radio(T["bt_entry"], ["close", "stop"], index=1, horizontal=True,
+                         format_func=lambda e: T["bt_entry_opts"][e], help=T["bt_entry_help"],
+                         key="bt_entry")
     if max_risk and max_risk <= stop_buf:
         st.warning(T["bt_risk_warn"].format(m=max_risk, b=stop_buf))
 
@@ -711,7 +731,7 @@ def backtest_tab(T):
         return
 
     with st.spinner(T["bt_loading"]):
-        sig, data, reg = backtest_signals(tuple(get_sp500()["ticker"]))
+        sig, data, reg, pend = backtest_signals(tuple(get_sp500()["ticker"]))
     if sig.empty:
         st.info(T["bt_none"])
         return
@@ -726,8 +746,14 @@ def backtest_tab(T):
         period = market_ok[(market_ok.index >= dates.min().normalize())
                            & (market_ok.index <= dates.max().normalize())]
         st.caption(T["bt_mkt_days"].format(f=T["mkt_opts"][mkt], p=period.mean() * 100))
-    trades = {m: bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk, market_ok)
-              for m in MODES}
+    if entry == "stop":
+        trades = {m: (bt.simulate_stop(pend, data, m, hold, stop_buf, min_rs, max_risk, market_ok)
+                      if m in core.PENDING_MODES else bt.simulate(sig.iloc[0:0], data, m))
+                  for m in MODES}
+        st.caption(T["bt_entry_note"])
+    else:
+        trades = {m: bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk,
+                                 market_ok) for m in MODES}
 
     # --- comparison of the three setups
     st.subheader(T["bt_compare"])
@@ -736,8 +762,11 @@ def backtest_tab(T):
         s = bt.stats(trades[m])
         if s["trades"]:
             if market_ok is not None:
-                s["exp_r_nofilter"] = bt.stats(bt.simulate(
-                    sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk)).get("expectancy_r")
+                s["exp_r_nofilter"] = bt.stats(
+                    bt.simulate_stop(pend, data, m, hold, stop_buf, min_rs, max_risk)
+                    if entry == "stop" else
+                    bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk)
+                ).get("expectancy_r")
             s["exp_r_h1"], s["exp_r_h2"] = halves(trades[m])
             code = rate(s)
             ratings[m] = (code, s["expectancy_r"])

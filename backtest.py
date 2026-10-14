@@ -157,6 +157,92 @@ def find_signals(frames: dict, lookback=3, modes=core.MODES, progress=None) -> t
 # =====================================================================
 # 2) Trades: entry at the signal close, exit at the stop or after `hold` days
 # =====================================================================
+def find_pending(frames: dict, data: dict, lookback=3, near_pct=2.0) -> pd.DataFrame:
+    """Every historical day a buy-stop order would have been placed (setup not broken yet)."""
+    rs = rs_history(frames)
+    rows = []
+    for t, x in data.items():
+        rs_t = rs[t].reindex(x["dates"]).values if t in rs else np.full(len(x["C"]), np.nan)
+        for i in range(WARMUP, len(x["C"]) - 1):
+            v = vcp_at(x, i)
+            if v and x["C"][i] < v[0]:
+                rows.append((t, "vcp", i, x["dates"][i], x["C"][i], v[0], v[1], rs_t[i]))
+                continue
+            b = core.breakout_pending_at(x["H"], x["C"], i, lookback, near_pct / 100)
+            if b:
+                rows.append((t, "breakout", i, x["dates"][i], x["C"][i], b[0], b[1], rs_t[i]))
+    return pd.DataFrame(rows, columns=["ticker", "mode", "i", "date", "close", "pivot",
+                                       "stop_base", "rs"])
+
+
+def simulate_stop(pend: pd.DataFrame, data: dict, mode: str, hold=20, stop_buf=3.0,
+                  min_rs=85, max_risk=0.0, market_ok=None, limit_pct=1.0) -> pd.DataFrame:
+    """
+    Buy-stop entry: order placed after the close of day i at stop_trigger(pivot) with a limit
+    `limit_pct` above. Day i+1: fills only if the high reaches the trigger; a gap above the
+    trigger fills at the open, a gap above the limit fills only if price comes back to the limit.
+    Same-day stop: if day i+1 also trades down to the stop, the trade is stopped (worst case).
+    """
+    s = pend[pend["mode"] == mode]
+    if min_rs:
+        s = s[s["rs"] >= min_rs]
+    if market_ok is not None:
+        days = pd.to_datetime(s["date"]).dt.normalize()
+        s = s[days.map(market_ok).fillna(True).astype(bool).values]
+    s = s.sort_values(["ticker", "i"])
+    trades, busy_until = [], {}
+    for r in s.itertuples(index=False):
+        j = r.i + 1
+        if j <= busy_until.get(r.ticker, -1):
+            continue
+        x = data[r.ticker]
+        if j >= len(x["C"]):
+            continue
+        trig = core.stop_trigger(r.pivot)
+        lim = trig * (1 + limit_pct / 100)
+        O, H, L = x["O"][j], x["H"][j], x["L"][j]
+        if H < trig:
+            continue                                    # never broke out — order expires
+        if O <= lim:
+            entry = max(O, trig)
+        elif L <= lim:
+            entry = lim                                 # gapped above the limit, came back
+        else:
+            continue                                    # ran away — no fill
+        stop = r.stop_base * (1 - stop_buf / 100)
+        if stop >= entry:
+            continue
+        risk = (entry - stop) / entry
+        if max_risk and risk * 100 > max_risk:
+            continue
+        last = len(x["C"]) - 1
+        exit_i = exit_px = reason = None
+        if L <= stop:                                   # stopped on the entry day
+            exit_i, exit_px, reason = j, stop, "stop"
+        else:
+            for k in range(j + 1, min(j + hold, last) + 1):
+                if x["L"][k] <= stop:
+                    exit_i, exit_px, reason = k, min(x["O"][k], stop), "stop"
+                    break
+        if exit_i is None:
+            if j + hold > last:
+                busy_until[r.ticker] = last
+                continue
+            exit_i, exit_px, reason = j + hold, x["C"][j + hold], "time"
+        busy_until[r.ticker] = exit_i
+        ret = exit_px / entry - 1
+        trades.append({
+            "ticker": r.ticker, "date": x["dates"][j], "exit_date": x["dates"][exit_i],
+            "days": exit_i - j, "rs": r.rs, "vol_ratio": np.nan, "entry": entry,
+            "stop": stop, "exit": exit_px, "risk_pct": risk * 100, "ret_pct": ret * 100,
+            "r": ret / risk, "reason": reason,
+            "max_up_pct": (x["H"][j:exit_i + 1].max() / entry - 1) * 100,
+        })
+    cols = ["ticker", "date", "exit_date", "days", "rs", "vol_ratio", "entry", "stop",
+            "exit", "risk_pct", "ret_pct", "r", "reason", "max_up_pct"]
+    return pd.DataFrame(trades, columns=cols)
+
+
 def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
              min_rs=70, min_vol=0.0, max_risk=0.0, market_ok=None) -> pd.DataFrame:
     """market_ok: optional pd.Series(date → bool); signals on 'bad market' days are skipped."""

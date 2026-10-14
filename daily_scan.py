@@ -18,6 +18,7 @@ Settings come from environment variables — the `env:` block in .github/workflo
                  off | ma50 | ma200 | both  (default off)
   SETUPS       — which setups the auto-scan logs and pushes, comma-separated
                  (default breakout,retest,vcp — double bottom is off: the backtest rated it ❌)
+  EARNINGS_DAYS — skip stocks reporting earnings within N trading days, 0 = off (default 5)
   REPEAT_DAYS  — don't log the same stock + setup again within this many trading days,
                  0 = log every day (default 10, like the backtest's holding period)
   APP_URL      — link opened when you tap the notification
@@ -35,6 +36,7 @@ import requests
 import core
 
 JOURNAL = Path(__file__).parent / "journal" / "signals.csv"
+PENDING = Path(__file__).parent / "journal" / "pending.csv"     # tomorrow's buy-stop candidates
 def _env(name, default, cast=float):
     v = os.getenv(name, "").strip()
     try:
@@ -50,6 +52,7 @@ STOP_BUF = _env("STOP_BUF", 1.0)
 MAX_RISK = _env("MAX_RISK", 0.0)
 LOOKBACK = _env("LOOKBACK", 3, int)
 REPEAT_DAYS = _env("REPEAT_DAYS", 10, int)
+EARNINGS_DAYS = _env("EARNINGS_DAYS", 5, int)
 SETUPS = [m.strip() for m in os.getenv("SETUPS", "breakout,retest,vcp").lower().split(",")
           if m.strip() in core.MODES] or ["breakout", "retest", "vcp"]
 MARKET_FILTER = os.getenv("MARKET_FILTER", "off").strip().lower() or "off"
@@ -171,7 +174,8 @@ def main():
     print(reg_line)
     print(f"settings: RS≥{MIN_RS}, vol≥{MIN_VOL}, stop buffer {STOP_BUF}%, "
           f"max risk {MAX_RISK or '—'}%, lookback {LOOKBACK}, repeat {REPEAT_DAYS}d, "
-          f"market filter {MARKET_FILTER}, setups {','.join(SETUPS)}")
+          f"market filter {MARKET_FILTER}, setups {','.join(SETUPS)}, "
+          f"earnings {EARNINGS_DAYS}d")
     results = {m: core.scan(prices, fresh, m, LOOKBACK, True, MIN_VOL, MIN_RS,
                             stop_buf=STOP_BUF, max_risk=MAX_RISK)
                for m in SETUPS}
@@ -179,6 +183,39 @@ def main():
     if not market_pass:
         print(f"market filter {MARKET_FILTER}: market doesn't pass — no signals logged")
         results = {m: r.iloc[0:0] for m, r in results.items()}
+
+    earn_skipped = set()
+    if EARNINGS_DAYS:
+        tick = sorted({t for r in results.values() if not r.empty for t in r["ticker"]})
+        earn = core.next_earnings(tick, today=pd.Timestamp(data_date).date())
+        print(f"earnings dates found for {sum(v is not None for v in earn.values())}/{len(tick)}")
+        for m in list(results):
+            before = set(results[m]["ticker"]) if not results[m].empty else set()
+            results[m], _ = core.apply_earnings(results[m], earn, EARNINGS_DAYS,
+                                                today=pd.Timestamp(data_date).date())
+            if results[m] is not None and not results[m].empty:
+                results[m] = results[m].drop(columns=["earnings", "earn_days"])
+            earn_skipped |= before - (set(results[m]["ticker"]) if not results[m].empty else set())
+
+    # ---- buy-stop candidates for the trading bot (setups that haven't broken out yet)
+    try:
+        pend = core.pending_candidates(prices, fresh, min_rs=MIN_RS, stop_buf=STOP_BUF,
+                                       max_risk=MAX_RISK)
+        if not market_pass:
+            pend = pend.iloc[0:0]
+        if EARNINGS_DAYS and not pend.empty:
+            earn_p = core.next_earnings(list(pend["ticker"].head(40)),
+                                        today=pd.Timestamp(data_date).date())
+            pend, _ = core.apply_earnings(pend, earn_p, EARNINGS_DAYS,
+                                          today=pd.Timestamp(data_date).date())
+            pend = pend.drop(columns=["earnings", "earn_days"], errors="ignore")
+        PENDING.parent.mkdir(exist_ok=True)
+        cols = ["date", "mode", "ticker", "rs", "sector", "close", "pivot", "trigger", "limit",
+                "stop", "risk_pct", "dist_pct"]
+        (pend if not pend.empty else pd.DataFrame(columns=cols)).to_csv(PENDING, index=False)
+        print(f"buy-stop candidates: {len(pend)}")
+    except Exception as e:                                # never break the scan because of it
+        print("pending candidates failed:", e)
 
     old = pd.read_csv(JOURNAL) if JOURNAL.exists() else None
     results = {m: drop_repeats(results[m], m, old, data_date) for m in SETUPS}
@@ -190,6 +227,9 @@ def main():
     print(f"journal: {len(new)} signals today, total {len(journal)} (+{len(journal) - before})")
 
     msg = build_message(results, data_date) + "\n" + reg_line
+    if earn_skipped:
+        names = ", ".join(sorted(earn_skipped)[:8]) + (" …" if len(earn_skipped) > 8 else "")
+        msg += f"\n📅 Пропущено из-за отчёта ≤{EARNINGS_DAYS} дн.: {names}"
     if not market_pass:
         msg += f"\n⛔ Фильтр рынка ({MKT_NAMES[MARKET_FILTER]}): сигналы сегодня не записаны."
     if data_date != now.strftime("%Y-%m-%d"):

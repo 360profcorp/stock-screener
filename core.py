@@ -467,3 +467,142 @@ def regime_mask(reg: pd.DataFrame, flt: str) -> pd.Series:
     if flt == "ma200":
         return reg["above200"]
     return reg["above50"] & reg["above200"]
+
+
+# =====================================================================
+# Отчётность / Earnings dates (Yahoo Finance, upcoming only)
+# =====================================================================
+def _next_earnings_one(ticker: str, today):
+    """Next earnings date for one ticker (date or None). Never raises."""
+    try:
+        tk = yf.Ticker(ticker)
+        cal = tk.calendar
+        dates = []
+        if isinstance(cal, dict):
+            dates = cal.get("Earnings Date") or []
+        elif isinstance(cal, pd.DataFrame) and "Earnings Date" in cal.index:
+            dates = list(cal.loc["Earnings Date"].values)
+        dates = [pd.Timestamp(d).date() for d in dates if pd.notna(d)]
+        upcoming = sorted(d for d in dates if d >= today)
+        if upcoming:
+            return upcoming[0]
+        ed = tk.get_earnings_dates(limit=8)              # fallback endpoint
+        if ed is not None and len(ed):
+            ds = sorted({pd.Timestamp(x).date() for x in ed.index})
+            upcoming = [d for d in ds if d >= today]
+            return upcoming[0] if upcoming else None
+    except Exception:
+        pass
+    return None
+
+
+def next_earnings(tickers, today=None) -> dict:
+    """{ticker: next earnings date or None} — fetched in parallel, only for given tickers."""
+    from concurrent.futures import ThreadPoolExecutor
+    today = today or datetime.now(NY).date()
+    tickers = list(dict.fromkeys(tickers))
+    if not tickers:
+        return {}
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        dates = list(pool.map(lambda t: _next_earnings_one(t, today), tickers))
+    return dict(zip(tickers, dates))
+
+
+def apply_earnings(result: pd.DataFrame, earnings: dict, days: int, today=None):
+    """
+    Adds 'earnings' (date) and 'earn_days' (trading days until it) to the scan result
+    and drops signals whose report is within `days` trading days (0 = keep all).
+    Unknown dates are kept. Returns (filtered result, number dropped).
+    """
+    if result is None or result.empty:
+        return result, 0
+    today = today or datetime.now(NY).date()
+    out = result.copy()
+    ed = out["ticker"].map(earnings.get)
+    out["earnings"] = ed.map(lambda d: d.strftime("%Y-%m-%d") if d else "")
+    out["earn_days"] = ed.map(
+        lambda d: int(np.busday_count(today, d)) if d else None).astype("Int64")
+    if not days:
+        return out.reset_index(drop=True), 0
+    soon = out["earn_days"].notna() & (out["earn_days"] <= days)
+    return out[~soon].reset_index(drop=True), int(soon.sum())
+
+
+# =====================================================================
+# Buy-stop entries: setups that have NOT broken out yet.
+# An order waits above the pivot; it fills only if price trades through it.
+# =====================================================================
+PENDING_MODES = ["vcp", "breakout"]
+
+
+def stop_trigger(pivot: float) -> float:
+    """Buy-stop price a hair above the pivot (+0.1%, at least 1 cent)."""
+    return round(max(pivot * 1.001, pivot + 0.01), 2)
+
+
+def breakout_pending_at(H, C, i, lookback=3, near=0.02):
+    """Close is within `near` below the high of the last N candles (incl. today)."""
+    if i < lookback:
+        return None
+    pivot = float(H[i - lookback + 1:i + 1].max())
+    if C[i] >= pivot or C[i] < pivot * (1 - near):
+        return None
+    return pivot, pivot                     # (pivot, stop_base) — stop under the pivot
+
+
+def detect_pending(df, mode, lookback=3, near=0.02):
+    """Live version for the last bar. Returns dict(pivot, stop_base) or None."""
+    if mode == "breakout":
+        hit = breakout_pending_at(df["High"].values, df["Close"].values, len(df) - 1,
+                                  lookback, near)
+        return None if hit is None else {"pivot": hit[0], "stop_base": hit[1]}
+    if mode == "vcp":
+        s = detect_vcp(df)
+        if s and df["Close"].iloc[-1] < s["level"]:            # not broken out yet
+            return {"pivot": float(s["level"]), "stop_base": float(s["stop_base"])}
+    return None
+
+
+def pending_candidates(prices, universe, modes=PENDING_MODES, lookback=3, near_pct=2.0,
+                       min_rs=85, stop_buf=3.0, max_risk=0.0, limit_pct=1.0,
+                       drop_unclosed=True):
+    """Tomorrow's buy-stop orders: pivot, buy-stop trigger, limit cap and stop for each."""
+    now = datetime.now(NY)
+    frames = {}
+    for t in universe["ticker"]:
+        df = clean_frame(prices, t, drop_unclosed, now)
+        if df is not None and len(df) >= 260:
+            frames[t] = df
+    rs = rs_ratings(frames)
+    info = universe.set_index("ticker")
+    rows = []
+    for t, df in frames.items():
+        rating = rs.get(t, np.nan)
+        if min_rs and (pd.isna(rating) or rating < min_rs):
+            continue
+        close = float(df["Close"].iloc[-1])
+        for mode in modes:
+            hit = detect_pending(df, mode, lookback, near_pct / 100)
+            if not hit:
+                continue
+            trig = stop_trigger(hit["pivot"])
+            stop = round(hit["stop_base"] * (1 - stop_buf / 100), 2)
+            if stop >= trig:
+                continue
+            risk = (trig - stop) / trig * 100
+            if max_risk and risk > max_risk:
+                continue
+            rows.append({"date": df.index[-1].strftime("%Y-%m-%d"), "mode": mode,
+                         "ticker": t, "rs": int(rating),
+                         "sector": info.at[t, "sector"] if t in info.index else "",
+                         "close": round(close, 2), "pivot": round(hit["pivot"], 2),
+                         "trigger": trig, "limit": round(trig * (1 + limit_pct / 100), 2),
+                         "stop": stop, "risk_pct": round(risk, 2),
+                         "dist_pct": round((trig / close - 1) * 100, 2)})
+            break                                   # one order per stock (vcp first)
+    out = pd.DataFrame(rows)
+    if not out.empty:
+        out["prio"] = out["mode"].map({m: k for k, m in enumerate(modes)})
+        out = (out.sort_values(["prio", "rs"], ascending=[True, False])
+                  .drop(columns="prio").reset_index(drop=True))
+    return out

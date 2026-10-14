@@ -177,6 +177,25 @@ class Schwab:
         }
         return self._place(order)
 
+    def buy_stop_with_stop(self, ticker, qty, trigger, limit, stop) -> str:
+        """
+        Buy-stop entry (TRIGGER order, valid for today's session):
+          parent — STOP_LIMIT BUY: activates when price trades at `trigger`, fills up to `limit`;
+          child  — GTC STOP SELL at `stop`, placed by Schwab automatically after the fill.
+        If price never reaches the trigger, the parent expires at the close and nothing happens.
+        """
+        order = {
+            "orderType": "STOP_LIMIT", "session": "NORMAL", "duration": "DAY",
+            "stopPrice": round(float(trigger), 2), "price": round(float(limit), 2),
+            "orderStrategyType": "TRIGGER",
+            "orderLegCollection": self._leg("BUY", ticker, qty),
+            "childOrderStrategies": [{
+                "orderType": "STOP", "session": "NORMAL", "duration": "GOOD_TILL_CANCEL",
+                "stopPrice": round(float(stop), 2), "orderStrategyType": "SINGLE",
+                "orderLegCollection": self._leg("SELL", ticker, qty)}],
+        }
+        return self._place(order)
+
     def sell_market(self, ticker, qty) -> str:
         return self._place({"orderType": "MARKET", "session": "NORMAL", "duration": "DAY",
                             "orderStrategyType": "SINGLE",

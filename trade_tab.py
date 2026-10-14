@@ -41,17 +41,21 @@ TX = {
         "sch_save": "Подключить", "sch_done": "Schwab подключён ✅",
         "no_key": "Нет SCHWAB_APP_KEY / SCHWAB_APP_SECRET в Secrets Streamlit.",
         "no_gh": "Нет GH_TOKEN в Secrets Streamlit — приложение не может сохранять изменения.",
-        "plan": "План на следующую сессию", "plan_none": "Плана нет.",
+        "plan": "План на следующую сессию (buy-stop ордера)", "plan_none": "Плана нет.",
+        "orders": "Выставленные buy-stop ордера",
+        "orders_note": "Ордер исполнится, только если цена поднимется до триггера. Иначе он "
+                       "снимется сам в конце дня. Итог — в вечернем пуше.",
         "plan_from": "Сигналы от {d} · статус: {s}",
         "status": {"new": "ожидает", "done": "выполнен", "not_approved": "не подтверждён",
                    "rejected": "отклонён", "expired": "устарел"},
         "approve": "✅ Подтвердить покупки", "reject": "❌ Отменить план",
-        "approved": "Подтверждён — бот купит утром.", "rejected_msg": "План отменён.",
+        "approved": "Подтверждён — утром бот выставит buy-stop ордера.", "rejected_msg": "План отменён.",
         "pos": "Открытые позиции", "pos_none": "Открытых позиций нет.",
         "closed": "Закрытые сделки", "closed_none": "Закрытых сделок пока нет.",
         "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
         "log": "Журнал бота",
-        "cols": {"ticker": "Тикер", "mode": "Сетап", "rs": "RS", "close": "Цена сигнала",
+        "cols": {"ticker": "Тикер", "mode": "Сетап", "rs": "RS", "close": "Закрытие",
+                 "trigger": "Купить выше", "limit": "Лимит", "date": "Дата",
                  "stop": "Стоп", "est_qty": "≈ Акций", "est_cost": "≈ Сумма $",
                  "entry_date": "Вход", "entry": "Цена входа", "qty": "Акций",
                  "days": "Дней", "last": "Сейчас", "pnl_now": "P&L $", "dry": "Тренировка",
@@ -80,7 +84,10 @@ TX = {
         "sch_save": "Connect", "sch_done": "Schwab connected ✅",
         "no_key": "SCHWAB_APP_KEY / SCHWAB_APP_SECRET missing in Streamlit secrets.",
         "no_gh": "GH_TOKEN missing in Streamlit secrets — the app can't save changes.",
-        "plan": "Plan for the next session", "plan_none": "No plan.",
+        "plan": "Plan for the next session (buy-stop orders)", "plan_none": "No plan.",
+        "orders": "Buy-stop orders placed",
+        "orders_note": "An order fills only if price rises to the trigger; otherwise it "
+                       "expires at the close. Results come in the evening push.",
         "plan_from": "Signals from {d} · status: {s}",
         "status": {"new": "waiting", "done": "executed", "not_approved": "not approved",
                    "rejected": "rejected", "expired": "expired"},
@@ -90,7 +97,8 @@ TX = {
         "closed": "Closed trades", "closed_none": "No closed trades yet.",
         "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
         "log": "Bot log",
-        "cols": {"ticker": "Ticker", "mode": "Setup", "rs": "RS", "close": "Signal price",
+        "cols": {"ticker": "Ticker", "mode": "Setup", "rs": "RS", "close": "Close",
+                 "trigger": "Buy above", "limit": "Limit", "date": "Date",
                  "stop": "Stop", "est_qty": "≈ Shares", "est_cost": "≈ Amount $",
                  "entry_date": "Entry", "entry": "Entry price", "qty": "Shares",
                  "days": "Days", "last": "Now", "pnl_now": "P&L $", "dry": "Training",
@@ -185,8 +193,8 @@ def render(T, lang, get_prices):
     else:
         st.caption(X["plan_from"].format(d=plan["date"],
                                          s=X["status"].get(plan.get("status"), plan.get("status"))))
-        df = pd.DataFrame(plan["items"])[["ticker", "mode", "rs", "close", "stop", "est_qty",
-                                          "est_cost"]]
+        df = pd.DataFrame(plan["items"])[["ticker", "mode", "rs", "close", "trigger", "limit",
+                                          "stop", "est_qty", "est_cost"]]
         df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
         st.dataframe(df.rename(columns=C), hide_index=True, use_container_width=True)
         if plan.get("status") == "new" and state.get("mode") == "manual":
@@ -202,6 +210,16 @@ def render(T, lang, get_prices):
                     plan["approved"], plan["rejected"] = False, True
                     if save("Bot: plan rejected"):
                         st.success(X["rejected_msg"])
+
+    # ---------- buy-stop orders waiting for today ----------
+    orders = state.get("orders") or []
+    if orders:
+        st.subheader(X["orders"])
+        df = pd.DataFrame(orders)
+        df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
+        st.dataframe(df[["ticker", "mode", "date", "trigger", "limit", "stop", "qty", "dry"]]
+                     .rename(columns=C), hide_index=True, use_container_width=True)
+        st.caption(X["orders_note"])
 
     # ---------- open positions ----------
     st.subheader(X["pos"])
