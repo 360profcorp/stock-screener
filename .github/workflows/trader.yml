@@ -3,8 +3,8 @@ name: Trading bot
 on:
   schedule:
     - cron: "5 0 * * 2-6"
-    - cron: "45 13 * * 1-5"
-    - cron: "45 14 * * 1-5"
+    - cron: "15 13 * * 1-5"
+    - cron: "15 14 * * 1-5"
   workflow_dispatch:
     inputs:
       command:
@@ -42,7 +42,7 @@ jobs:
           MAX_POSITIONS: "5"
           MAX_NEW_PER_DAY: "3"
           HOLD_DAYS: "20"
-          MAX_CHASE_PCT: "3"
+          LIMIT_PCT: "1"
           SCHWAB_ACCOUNT: ""
         run: |
           CMD="${{ github.event.inputs.command }}"
