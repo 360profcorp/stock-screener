@@ -1,4 +1,19 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-14,breakout,VLO,98,Energy,459.78,457.2,443.48,3.54
+2026-10-14,breakout,MPC,98,Energy,484.92,477.73,463.4,4.44
+2026-10-14,breakout,PSX,97,Energy,297.29,292.88,284.09,4.44
+2026-10-14,breakout,CNC,95,Health Care,70.16,69.7,67.61,3.64
+2026-10-14,breakout,NUE,93,Materials,257.11,254.3,246.67,4.06
+2026-10-14,breakout,MRK,91,Health Care,147.37,146.68,142.28,3.45
+2026-10-14,breakout,EXPD,91,Industrials,196.38,195.9,190.02,3.24
+2026-10-14,breakout,A,90,Health Care,174.0,172.74,167.56,3.7
+2026-10-14,breakout,IFF,89,Materials,89.6,88.88,86.21,3.78
+2026-10-14,breakout,AMGN,88,Health Care,426.11,420.35,407.74,4.31
+2026-10-14,breakout,CAH,85,Health Care,247.74,241.18,233.94,5.57
+2026-10-14,retest,HUM,94,Health Care,427.4,410.01,397.71,6.95
+2026-10-14,retest,MRK,91,Health Care,147.37,144.15,137.33,6.81
+2026-10-14,retest,BIIB,90,Health Care,232.83,228.0,219.91,5.55
+2026-10-14,vcp,MSFT,85,Information Technology,533.69,551.15,516.56,3.21
 2026-10-12,breakout,NTAP,96,Information Technology,239.18,238.08,235.7,1.46
 2026-10-12,breakout,APA,95,Energy,46.84,46.59,46.12,1.53
 2026-10-12,breakout,COP,90,Energy,137.56,135.56,134.2,2.44
