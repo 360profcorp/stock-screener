@@ -1,24 +1,29 @@
 """
-VISAR trading bot — buy-stop entries above the pivot, managed by the setup rules.
+VISAR trading bot. Entries chosen by the backtest (2 years, S&P 500, RS ≥ 85, stop −3%, 20 days):
+  • Breakout       — bought the SAME day, ~30 min before the close, if the breakout is holding
+                     (at-close entry: 0.25R vs 0.19R at the next open).
+  • VCP, retest    — signal from the evening scan, bought the NEXT morning at the open
+                     (at-open entry: VCP 0.27R, retest 0.18R).
+Every buy gets a GTC stop at Schwab right after the fill; exit by the stop or after HOLD_DAYS.
 
-Daily cycle
-    python trader.py plan      EVENING (after the auto-scan):
-                               1. checks what happened today: which buy-stops filled,
-                                  which positions hit their stop or were sold by time
-                               2. picks tomorrow's buy-stop orders from journal/pending.csv
-                               3. sends a push with today's results + tomorrow's plan
-    python trader.py execute   MORNING before the open (~9:15 ET):
-                               1. sells positions held HOLD_DAYS (market order at the open)
-                               2. places the plan: BUY STOP-LIMIT a hair above the pivot
-                                  (+ automatic GTC stop at Schwab once it fills).
-                                  If price never reaches the trigger, the order expires.
+Daily cycle (New York time)
+    python trader.py preclose  ~15:30  scans breakouts on today's live candles and buys
+                                       those still above the level (market order + stop)
+    python trader.py plan      ~20:05  1. checks what happened today (fills, stops, time exits)
+                                       2. tomorrow's plan from journal/signals.csv (VCP, retest;
+                                          breakouts too if the pre-close run didn't happen)
+                                       3. push with results + plan
+    python trader.py execute   ~9:15   1. sells positions held HOLD_DAYS (at the open)
+                                       2. places the plan: market buy at the open + GTC stop
 
 Modes (TRADING in .github/workflows/trader.yml):
     off     nothing happens
-    dry     training mode: identical logic, fills simulated from daily bars (Yahoo)
-    manual  real orders, only after you approve the plan in the app (Trading tab)
+    dry     training: same logic, fills simulated from Yahoo prices
+    manual  real orders; the morning plan needs approval in the app (Trading tab).
+            Breakouts can't wait for approval (30 min to the close) — they're bought only
+            if "buy breakouts without approval" is switched on in the app, otherwise you get
+            a push with the list.
     auto    real orders without approval
-
 All state (Schwab login, plan, orders, positions, history) is encrypted in state/trader.enc.
 """
 import math
@@ -38,8 +43,10 @@ from schwab_api import Schwab, SchwabError, refresh_age_days
 
 ROOT = Path(__file__).parent
 STATE_FILE = ROOT / vault.STATE_PATH
-PENDING = ROOT / "journal" / "pending.csv"
+SIGNALS = ROOT / "journal" / "signals.csv"
 NAMES = {"breakout": "Пробой", "retest": "Ретест", "vcp": "VCP", "dbottom": "Двойное дно"}
+OPEN_MODES = ("vcp", "retest")            # bought at the next open
+CLOSE_MODES = ("breakout",)               # bought before today's close
 
 
 def _env(name, default, cast=float):
@@ -51,14 +58,20 @@ def _env(name, default, cast=float):
 
 
 MODE = os.getenv("TRADING", "off").strip().lower() or "off"
-TRADE_SETUPS = [s.strip() for s in os.getenv("TRADE_SETUPS", "vcp,breakout").split(",")
-                if s.strip() in core.PENDING_MODES]
+TRADE_SETUPS = [s.strip() for s in os.getenv("TRADE_SETUPS", "breakout,vcp,retest").split(",")
+                if s.strip() in OPEN_MODES + CLOSE_MODES]
 RISK_USD = _env("RISK_USD", 15.0)            # $ lost if the stop is hit
 MAX_POSITION_USD = _env("MAX_POSITION_USD", 500.0)
 MAX_POSITIONS = _env("MAX_POSITIONS", 5, int)
 MAX_NEW_PER_DAY = _env("MAX_NEW_PER_DAY", 3, int)
 HOLD_DAYS = _env("HOLD_DAYS", 20, int)
-LIMIT_PCT = _env("LIMIT_PCT", 1.0)           # buy-stop limit: max % above the trigger
+# breakout scan before the close — same rules as the auto-scan / backtest
+MIN_RS = _env("MIN_RS", 85, int)
+STOP_BUF = _env("STOP_BUF", 3.0)
+MAX_RISK = _env("MAX_RISK", 0.0)
+LOOKBACK = _env("LOOKBACK", 3, int)
+EARNINGS_DAYS = _env("EARNINGS_DAYS", 5, int)
+MARKET_FILTER = os.getenv("MARKET_FILTER", "ma50").strip().lower() or "ma50"
 ACCOUNT = os.getenv("SCHWAB_ACCOUNT", "").strip()
 PASSWORD = os.getenv("STATE_PASSWORD", "")
 APP_KEY = os.getenv("SCHWAB_APP_KEY", "")
@@ -103,16 +116,26 @@ def mode_label(mode):
             "auto": "🤖 авто", "off": "выключен"}.get(mode, mode)
 
 
-def sizing(trigger, limit, stop):
-    """Shares so that a fill at the trigger loses RISK_USD at the stop, capped by $ size."""
-    per = trigger - stop
-    if per <= 0:
+def sizing(price, stop):
+    """Shares so that the stop loses about RISK_USD, capped by MAX_POSITION_USD."""
+    per = price - stop
+    if per <= 0 or price <= 0:
         return 0
-    return int(min(math.floor(RISK_USD / per), math.floor(MAX_POSITION_USD / limit)))
+    return int(min(math.floor(RISK_USD / per), math.floor(MAX_POSITION_USD / price)))
 
 
 def is_dry(x):
     return bool(x.get("dry"))
+
+
+def new_today(state, today):
+    return (sum(p.get("entry_date") == today for p in state["positions"])
+            + sum(o.get("date") == today for o in state["orders"]))
+
+
+def room_today(state, today):
+    return max(0, min(MAX_NEW_PER_DAY - new_today(state, today),
+                      MAX_POSITIONS - len(state["positions"]) - len(state["orders"])))
 
 
 def close_position(state, p, exit_px, reason, day):
@@ -128,6 +151,33 @@ def close_position(state, p, exit_px, reason, day):
 def r_txt(rec):
     return f"{rec['r']:+.1f}R, ${rec['pnl']:+.0f}" if rec.get("r") is not None else \
         f"${rec['pnl']:+.0f}"
+
+
+def load_state():
+    state = vault.load_file(STATE_FILE, PASSWORD)
+    state.setdefault("orders", [])
+    state.setdefault("positions", [])
+    state.setdefault("closed", [])
+    # orders/plans from the old buy-stop version are dropped
+    old = [o for o in state["orders"] if o.get("kind") != "open"]
+    if old:
+        state["orders"] = [o for o in state["orders"] if o.get("kind") == "open"]
+        vault.log(state, f"dropped {len(old)} old buy-stop order(s)")
+    if state.get("plan") and state["plan"].get("kind") != "open":
+        state["plan"] = None
+    state["mode"] = MODE
+    return state
+
+
+def schwab_or_none(state):
+    """Live broker, or None (+ push) when the weekly Schwab login has expired."""
+    age = refresh_age_days(state.get("token"))
+    if age is None or age >= 7:
+        push("VISAR бот: нужен вход в Schwab",
+             "Доступ к Schwab истёк (живёт 7 дней). Открой приложение → «Торговля» → "
+             "«Подключить Schwab». Пока бот не торгует.", tags="warning")
+        return None
+    return Schwab(APP_KEY, APP_SECRET, state["token"], ACCOUNT)
 
 
 # =====================================================================
@@ -159,29 +209,28 @@ class DryBroker:
 # EVENING: reconcile today, then plan tomorrow
 # =====================================================================
 def reconcile_dry(state, broker, today, events):
-    # 1. buy-stop orders placed for today
-    for o in [o for o in state.get("orders", []) if is_dry(o) and o["date"] <= today]:
-        b = broker.bar(o["ticker"], o["date"])
+    # 1. morning buys at the open
+    for o in [o for o in state["orders"] if is_dry(o) and o["date"] <= today]:
         state["orders"].remove(o)
+        b = broker.bar(o["ticker"], o["date"])
         if b is None:
-            events.append(f"❔ {o['ticker']}: нет данных за {o['date']} — ордер снят")
+            events.append(f"❔ {o['ticker']}: нет данных за {o['date']} — покупка не засчитана")
             continue
-        if b["High"] < o["trigger"]:
-            continue                                         # not triggered — expired
-        if b["Open"] <= o["limit"]:
-            fill = max(float(b["Open"]), o["trigger"])
-        elif b["Low"] <= o["limit"]:
-            fill = o["limit"]
-        else:
-            events.append(f"⏭ {o['ticker']}: гэп выше лимита {o['limit']} — не куплено")
+        fill = float(b["Open"])
+        if fill <= o["stop"]:
+            events.append(f"⏭ {o['ticker']}: открылась {fill:.2f} — ниже стопа, не куплено")
+            continue
+        qty = sizing(fill, o["stop"])               # live sizes by the pre-market quote ≈ open
+        if qty < 1:
+            events.append(f"⏭ {o['ticker']}: открылась {fill:.2f} — позиция < 1 акции")
             continue
         p = {"ticker": o["ticker"], "mode": o["mode"], "rs": o.get("rs"), "entry_date": o["date"],
-             "entry": round(fill, 2), "stop": o["stop"], "qty": o["qty"], "dry": True,
-             "checked": o["date"], "signal_date": o.get("signal_date")}
+             "entry": round(fill, 2), "stop": o["stop"], "qty": qty, "dry": True,
+             "checked": o["date"], "signal_date": o.get("signal_date"), "how": "open"}
         state["positions"].append(p)
-        events.append(f"🟢 {p['ticker']}: buy-stop исполнен ~{p['entry']} × {p['qty']} шт "
-                      f"(${p['entry'] * p['qty']:.0f}), стоп {p['stop']}")
-        if b["Low"] <= o["stop"]:                            # same-day stop (worst case)
+        events.append(f"🟢 {p['ticker']} ({NAMES[p['mode']]}): куплено на открытии "
+                      f"~{p['entry']} × {qty} шт (${p['entry'] * qty:.0f}), стоп {p['stop']}")
+        if b["Low"] <= o["stop"]:                            # stopped the same day
             rec = close_position(state, p, o["stop"], "stop", o["date"])
             events.append(f"🛑 {p['ticker']}: выбило стопом в тот же день ({r_txt(rec)})")
 
@@ -209,21 +258,34 @@ def reconcile_dry(state, broker, today, events):
 
 def reconcile_live(state, broker, today, events):
     held = broker.positions()
+    # 1. breakouts bought before the close: confirm the fill
+    for p in [p for p in state["positions"] if not is_dry(p) and p.get("pending_fill")]:
+        qty = int(held.get(p["ticker"], 0))
+        if qty >= 1:
+            p["entry"] = round(broker.last_fill(p["ticker"], "BUY") or p["entry"], 2)
+            p["qty"] = qty
+            p.pop("pending_fill")
+        else:
+            state["positions"].remove(p)
+            events.append(f"⏭ {p['ticker']}: покупка перед закрытием не исполнилась")
+    # 2. morning buys at the open
     known = {p["ticker"] for p in state["positions"] if not is_dry(p)}
-    # 1. which buy-stops filled today
-    for o in [o for o in state.get("orders", []) if not is_dry(o) and o["date"] <= today]:
+    for o in [o for o in state["orders"] if not is_dry(o) and o["date"] <= today]:
         state["orders"].remove(o)
         qty = int(held.get(o["ticker"], 0))
         if qty >= 1 and o["ticker"] not in known:
-            fill = broker.last_fill(o["ticker"], "BUY") or o["trigger"]
+            fill = broker.last_fill(o["ticker"], "BUY") or o.get("est", 0)
             p = {"ticker": o["ticker"], "mode": o["mode"], "rs": o.get("rs"),
                  "entry_date": o["date"], "entry": round(fill, 2), "stop": o["stop"],
                  "qty": qty, "dry": False, "order_id": o.get("order_id"),
-                 "signal_date": o.get("signal_date")}
+                 "signal_date": o.get("signal_date"), "how": "open"}
             state["positions"].append(p)
-            events.append(f"🟢 {p['ticker']}: buy-stop исполнен ~{p['entry']} × {qty} шт, "
-                          f"стоп {p['stop']} стоит у Schwab")
-    # 2. positions that are gone: stopped out or sold by time
+            known.add(p["ticker"])
+            events.append(f"🟢 {p['ticker']} ({NAMES[p['mode']]}): куплено ~{p['entry']} × "
+                          f"{qty} шт, стоп {p['stop']} стоит у Schwab")
+        elif qty < 1:
+            events.append(f"⏭ {o['ticker']}: утренняя покупка не исполнилась")
+    # 3. positions that are gone: stopped out or sold by time
     for p in [p for p in state["positions"] if not is_dry(p)]:
         if held.get(p["ticker"], 0) < p["qty"] * 0.5:
             px = broker.last_fill(p["ticker"], "SELL") or p["stop"]
@@ -233,39 +295,41 @@ def reconcile_live(state, broker, today, events):
             events.append(f"{icon} {p['ticker']}: закрыта ~{rec['exit']} ({r_txt(rec)})")
 
 
-def build_plan(pending: pd.DataFrame, state: dict, today: str) -> dict | None:
-    if pending is None or pending.empty:
+def build_plan(signals: pd.DataFrame, state: dict, today: str) -> dict | None:
+    """Tomorrow-at-the-open plan from today's auto-scan signals."""
+    if signals is None or signals.empty:
         return None
-    day = str(pending["date"].max())
-    p = pending[(pending["date"].astype(str) == day) & pending["mode"].isin(TRADE_SETUPS)]
-    busy = {x["ticker"] for x in state["positions"]}
-    p = p[~p["ticker"].isin(busy)].copy()
-    p["prio"] = p["mode"].map({m: i for i, m in enumerate(TRADE_SETUPS)})
-    p = p.sort_values(["prio", "rs"], ascending=[True, False]).drop_duplicates("ticker")
+    day = str(signals["date"].astype(str).max())
+    modes = [m for m in TRADE_SETUPS if m in OPEN_MODES]
+    fallback = "breakout" in TRADE_SETUPS and state.get("last_preclose") != day
+    if fallback:                       # the pre-close run didn't happen → breakouts at the open
+        modes.append("breakout")
+    s = signals[(signals["date"].astype(str) == day) & signals["mode"].isin(modes)]
+    busy = {x["ticker"] for x in state["positions"]} | {o["ticker"] for o in state["orders"]}
+    s = s[~s["ticker"].isin(busy)].copy()
+    s["prio"] = s["mode"].map({m: i for i, m in enumerate(modes)})
+    s = s.sort_values(["prio", "rs"], ascending=[True, False]).drop_duplicates("ticker")
     room = max(0, min(MAX_NEW_PER_DAY, MAX_POSITIONS - len(state["positions"])))
     items = []
-    for r in p.itertuples():
+    for r in s.itertuples():
         if len(items) >= room:
             break
-        trig = float(r.trigger)
-        lim = round(trig * (1 + LIMIT_PCT / 100), 2)
-        qty = sizing(trig, lim, float(r.stop))
+        close, stop = float(r.close), round(float(r.stop), 2)
+        qty = sizing(close, stop)
         if qty < 1:
             continue
-        items.append({"ticker": r.ticker, "mode": r.mode, "rs": int(r.rs),
-                      "close": round(float(r.close), 2), "trigger": trig, "limit": lim,
-                      "stop": round(float(r.stop), 2), "est_qty": qty,
-                      "est_cost": round(qty * trig, 2), "dist_pct": float(r.dist_pct)})
-    return {"date": day, "for": str(np.busday_offset(day, 1, roll="forward", holidays=HOLIDAYS)),
+        items.append({"ticker": r.ticker, "mode": r.mode, "rs": int(r.rs), "close": round(close, 2),
+                      "level": round(float(r.level), 2), "stop": stop, "est_qty": qty,
+                      "est_cost": round(qty * close, 2)})
+    return {"kind": "open", "date": day,
+            "for": str(np.busday_offset(day, 1, roll="forward", holidays=HOLIDAYS)),
             "created": now_ny().strftime("%Y-%m-%d %H:%M"), "items": items,
-            "skipped_full": max(0, len(p) - len(items)), "status": "new",
-            "approved": MODE in ("auto", "dry")}
+            "skipped_full": max(0, len(s) - len(items)), "status": "new",
+            "approved": MODE in ("auto", "dry"), "fallback_breakouts": fallback}
 
 
 def cmd_plan():
-    state = vault.load_file(STATE_FILE, PASSWORD)
-    state.setdefault("orders", [])
-    state["mode"] = MODE
+    state = load_state()
     today = now_ny().strftime("%Y-%m-%d")
     events = []
 
@@ -283,9 +347,9 @@ def cmd_plan():
             events.append(f"⚠️ Schwab: {str(e)[:120]}")
 
     # ---- 2. tomorrow's plan
-    pending = pd.read_csv(PENDING) if PENDING.exists() else None
-    plan = build_plan(pending, state, today)
-    fresh = plan is not None and busdays(plan["date"], today) == 0     # today's candidates only
+    signals = pd.read_csv(SIGNALS) if SIGNALS.exists() else None
+    plan = build_plan(signals, state, today) if MODE != "off" else None
+    fresh = plan is not None and busdays(plan["date"], today) == 0     # today's signals only
     if fresh:
         old = state.get("plan")
         if not (old and old.get("date") == plan["date"] and old.get("approved")
@@ -301,27 +365,26 @@ def cmd_plan():
         lines += ["Сегодня:"] + events + [""]
     plan = state.get("plan") if fresh and state.get("plan", {}).get("status") == "new" else None
     if not plan:
-        lines.append("Кандидатов на завтра нет." if pending is not None and pending.empty
-                     else "Плана на завтра нет — автоскан сегодня не обновил кандидатов.")
+        lines.append("Плана на завтра нет — автоскан сегодня не записал сигналов.")
     elif not plan["items"]:
-        lines.append("План на завтра пуст: " + (f"нет мест ({len(state['positions'])}/"
-                                                 f"{MAX_POSITIONS})" if plan["skipped_full"]
-                                                 else "подходящих сетапов нет") + ".")
+        lines.append("Покупок на завтра нет: " + (f"нет мест ({len(state['positions'])}/"
+                                                   f"{MAX_POSITIONS})" if plan["skipped_full"]
+                                                   else "сигналов VCP / ретеста нет") + ".")
     else:
-        lines.append(f"Завтра buy-stop (риск ${RISK_USD:.0f}, держать {HOLD_DAYS} дн.):")
-        lines += [f"{i['ticker']} ({NAMES[i['mode']]}, RS {i['rs']}): купить выше {i['trigger']} "
-                  f"(лимит {i['limit']}), стоп {i['stop']}, ~{i['est_qty']} шт"
-                  for i in plan["items"]]
+        lines.append(f"Завтра на открытии (риск ~${RISK_USD:.0f}, держать {HOLD_DAYS} дн.):")
+        lines += [f"{i['ticker']} ({NAMES[i['mode']]}, RS {i['rs']}): ~{i['est_qty']} шт "
+                  f"по ~{i['close']}, стоп {i['stop']}" for i in plan["items"]]
+        if plan.get("fallback_breakouts"):
+            lines.append("(пробои тоже утром — сегодня перед закрытием бот не сработал)")
         lines.append("✋ Подтверди в приложении → «Торговля» до 9:15 утра." if MODE == "manual"
-                     else "🧪 Тренировка: ордера виртуальные." if MODE == "dry"
-                     else "Ордера будут выставлены утром до открытия.")
-    open_n = len(state["positions"])
-    lines.append(f"Открыто позиций: {open_n}/{MAX_POSITIONS}")
+                     else "🧪 Тренировка: сделки виртуальные." if MODE == "dry"
+                     else "Покупка по рынку на открытии, стоп сразу у Schwab.")
+    lines.append(f"Открыто позиций: {len(state['positions'])}/{MAX_POSITIONS}")
     push(f"VISAR бот {mode_label(MODE)}: {today}", "\n".join(lines), tags="clipboard")
 
 
 # =====================================================================
-# MORNING: time exits + place buy-stops
+# MORNING: time exits + buys at the open
 # =====================================================================
 def run_execute(state, broker, today, events):
     dry = getattr(broker, "dry", False)
@@ -335,7 +398,7 @@ def run_execute(state, broker, today, events):
             p["exiting"] = today
             events.append(f"⏱ {p['ticker']}: {HOLD_DAYS} дн. прошло — продажа на открытии")
 
-    # 2. buy-stop orders from the plan
+    # 2. buys at the open from the plan
     plan = state.get("plan")
     if not plan or plan.get("status") != "new":
         return
@@ -345,10 +408,10 @@ def run_execute(state, broker, today, events):
     if MODE == "manual" and not plan.get("approved"):
         plan["status"] = "rejected" if plan.get("rejected") else "not_approved"
         if not plan.get("rejected"):
-            events.append("✋ План не подтверждён — ордеров нет.")
+            events.append("✋ План не подтверждён — покупок нет.")
         return
     busy = {p["ticker"] for p in state["positions"]} | {o["ticker"] for o in state["orders"]}
-    room = MAX_POSITIONS - len(state["positions"]) - len(state["orders"])
+    room = room_today(state, today)
     quotes = {} if dry else broker.quotes([i["ticker"] for i in plan["items"]])
     results = []
     for it in plan["items"]:
@@ -358,74 +421,67 @@ def run_execute(state, broker, today, events):
         if room <= 0:
             results.append((t, "нет мест"))
             continue
-        q = quotes.get(t)
-        if q and q > it["limit"]:
-            results.append((t, f"премаркет {q:.2f} уже выше лимита — пропуск"))
+        est = quotes.get(t) or it["close"]
+        if est <= it["stop"]:
+            results.append((t, f"премаркет {est:.2f} ниже стопа — пропуск"))
             continue
-        qty = sizing(it["trigger"], it["limit"], it["stop"])
+        qty = sizing(est, it["stop"])
         if qty < 1:
             results.append((t, "размер < 1 акции"))
             continue
         oid = "dry"
         if not dry:
             try:
-                oid = broker.buy_stop_with_stop(t, qty, it["trigger"], it["limit"], it["stop"])
+                oid = broker.buy_with_stop(t, qty, it["stop"])
             except SchwabError as e:
                 results.append((t, f"ошибка ордера: {str(e)[:80]}"))
                 continue
-        state["orders"].append({"ticker": t, "mode": it["mode"], "rs": it["rs"], "date": today,
-                                "trigger": it["trigger"], "limit": it["limit"],
-                                "stop": it["stop"], "qty": qty, "order_id": oid, "dry": dry,
+        state["orders"].append({"kind": "open", "ticker": t, "mode": it["mode"], "rs": it["rs"],
+                                "date": today, "est": round(est, 2), "stop": it["stop"],
+                                "qty": qty, "order_id": oid, "dry": dry,
                                 "signal_date": plan["date"]})
         room -= 1
         results.append((t, "ok"))
-        events.append(f"📌 {t}: buy-stop {qty} шт выше {it['trigger']} (лимит {it['limit']}), "
-                      f"стоп {it['stop']}")
+        events.append(f"📌 {t} ({NAMES[it['mode']]}): покупка {qty} шт на открытии "
+                      f"(~{est:.2f}), стоп {it['stop']}")
     for t, why in results:
         if why != "ok":
             events.append(f"⏭ {t}: {why}")
     plan["status"], plan["results"] = "done", results
 
 
-def market_open_today(today) -> bool:
-    return today not in HOLIDAYS
-
-
-def cmd_execute():
-    state = vault.load_file(STATE_FILE, PASSWORD)
-    state.setdefault("orders", [])
-    state["mode"] = MODE
-    now = now_ny()
+def check_day(now, state, key, window, label):
+    """Common guards: mode, weekend, holiday, time window, already ran today."""
     today = now.strftime("%Y-%m-%d")
     if MODE == "off":
         print("TRADING=off")
-        return
-    if now.weekday() >= 5:
-        print("weekend")
-        return
-    if not FORCE and not ((8, 0) <= (now.hour, now.minute) < (9, 29)):
-        print(f"outside the pre-market window ({now:%H:%M} ET)")
-        return
-    if state.get("last_execute") == today and not FORCE:
-        print("already executed today")
-        return
-    if not market_open_today(today):
-        print("market holiday")
-        return
+        return False
+    if now.weekday() >= 5 or today in HOLIDAYS:
+        print("market closed today")
+        return False
+    if not FORCE and not (window[0] <= (now.hour, now.minute) < window[1]):
+        print(f"outside the {label} window ({now:%H:%M} ET)")
+        return False
+    if state.get(key) == today and not FORCE:
+        print(f"{label}: already ran today")
+        return False
+    return True
 
+
+def cmd_execute():
+    state = load_state()
+    now = now_ny()
+    today = now.strftime("%Y-%m-%d")
+    if not check_day(now, state, "last_execute", ((8, 0), (9, 29)), "pre-market"):
+        return
     events = []
     if MODE == "dry":
         broker = DryBroker([])
-        broker.dry = True
     else:
-        age = refresh_age_days(state.get("token"))
-        if age is None or age >= 7:
-            push("VISAR бот: нужен вход в Schwab",
-                 "Доступ к Schwab истёк (живёт 7 дней). Открой приложение → «Торговля» → "
-                 "«Подключить Schwab». Сегодня бот не торгует.", tags="warning")
+        broker = schwab_or_none(state)
+        if broker is None:
             vault.save_file(STATE_FILE, state, PASSWORD)
             return
-        broker = Schwab(APP_KEY, APP_SECRET, state["token"], ACCOUNT)
 
     run_execute(state, broker, today, events)
     state["last_execute"] = today
@@ -441,6 +497,120 @@ def cmd_execute():
         print("nothing to do")
 
 
+# =====================================================================
+# BEFORE THE CLOSE: breakouts on today's live candle
+# =====================================================================
+def breakouts_now(today):
+    """(candidates DataFrame, market line, market passes, note) from today's live candles."""
+    universe = core.get_sp500()
+    prices = core.get_prices(tuple(universe["ticker"]) + ("SPY",))
+    spy = core._frame_for(prices, "SPY")
+    if spy is None or spy.empty or spy.index[-1].strftime("%Y-%m-%d") != today:
+        return None, "", False, "Yahoo ещё не отдаёт сегодняшние свечи"
+    reg = core.market_regime(spy).dropna()
+    row = reg.iloc[-1]
+    ok = core.regime_ok(row, MARKET_FILTER)
+    line = f"SPY {row['close']:.0f}, MA50 {row['ma50']:.0f}, MA200 {row['ma200']:.0f}"
+    fresh = []
+    for t in universe["ticker"]:
+        df = core._frame_for(prices, t)
+        if df is not None and len(df) and df.index[-1].strftime("%Y-%m-%d") == today:
+            fresh.append(t)
+    uni = universe[universe["ticker"].isin(fresh)]
+    res = core.scan(prices, uni, "breakout", LOOKBACK, False, 0, MIN_RS,
+                    stop_buf=STOP_BUF, max_risk=MAX_RISK)
+    if not ok or res.empty:
+        return res.iloc[0:0] if not res.empty else res, line, ok, ""
+    note = ""
+    if EARNINGS_DAYS:
+        earn = core.next_earnings(list(res["ticker"].head(30)), today=pd.Timestamp(today).date())
+        res, dropped = core.apply_earnings(res, earn, EARNINGS_DAYS,
+                                           today=pd.Timestamp(today).date())
+        if dropped:
+            note = f"📅 пропущено из-за отчёта: {dropped}"
+    return res, line, ok, note
+
+
+def cmd_preclose():
+    state = load_state()
+    now = now_ny()
+    today = now.strftime("%Y-%m-%d")
+    if not check_day(now, state, "last_preclose", ((15, 10), (15, 58)), "pre-close"):
+        return
+    if "breakout" not in TRADE_SETUPS:
+        print("breakouts are not traded (TRADE_SETUPS)")
+        return
+
+    res, mkt_line, mkt_ok, note = breakouts_now(today)
+    if res is None:
+        push(f"VISAR бот: пробои {today}", f"{note} — пробои купим завтра на открытии.",
+             tags="warning")
+        return
+    state["last_preclose"] = today
+    lines = []
+    if not mkt_ok:
+        lines.append(f"⛔ Рынок не проходит фильтр ({mkt_line}) — пробои сегодня не покупаем.")
+    busy = {p["ticker"] for p in state["positions"]} | {o["ticker"] for o in state["orders"]}
+    cand = res[~res["ticker"].isin(busy)] if not res.empty else res
+    room = room_today(state, today)
+
+    live = MODE in ("manual", "auto")
+    broker = None
+    if live and not cand.empty:
+        if MODE == "manual" and not state.get("auto_breakouts"):
+            lines.append("Пробои сейчас (в ручном режиме бот их не покупает — включи "
+                         "«Покупать пробои без подтверждения» в приложении):")
+            lines += [f"{r.ticker} (RS {r.rs}): {r.close}, уровень {r.level}, стоп {r.stop}"
+                      for r in cand.head(6).itertuples()]
+            cand = cand.iloc[0:0]
+        else:
+            broker = schwab_or_none(state)
+            if broker is None:
+                cand = cand.iloc[0:0]
+    quotes = broker.quotes(list(cand["ticker"].head(room + 5))) if broker and room else {}
+
+    bought = []
+    for r in cand.itertuples():
+        if len(bought) >= room:
+            lines.append(f"⏭ ещё {len(cand) - len(bought)} пробоев — нет мест "
+                         f"({len(state['positions'])}/{MAX_POSITIONS}, сегодня до {MAX_NEW_PER_DAY})")
+            break
+        px = float(quotes.get(r.ticker) or r.close)
+        if px <= r.level:
+            lines.append(f"⏭ {r.ticker}: цена {px:.2f} вернулась под уровень {r.level}")
+            continue
+        qty = sizing(px, r.stop)
+        if qty < 1:
+            continue
+        oid = "dry"
+        if broker:
+            try:
+                oid = broker.buy_with_stop(r.ticker, qty, r.stop)
+            except SchwabError as e:
+                lines.append(f"⚠️ {r.ticker}: ошибка ордера {str(e)[:80]}")
+                continue
+        p = {"ticker": r.ticker, "mode": "breakout", "rs": int(r.rs), "entry_date": today,
+             "entry": round(px, 2), "stop": round(float(r.stop), 2), "qty": qty,
+             "dry": not live, "checked": today, "signal_date": today, "how": "close",
+             "order_id": oid}
+        if live:
+            p["pending_fill"] = True
+        state["positions"].append(p)
+        bought.append(r.ticker)
+        lines.append(f"🟢 {r.ticker} (RS {r.rs}): {qty} шт по ~{px:.2f} (${px * qty:.0f}), "
+                     f"уровень {r.level}, стоп {r.stop}")
+    if not bought and mkt_ok and not any(l.startswith("Пробои сейчас") for l in lines):
+        lines.append("Пробоев с RS ≥ %d сейчас нет." % MIN_RS if res.empty
+                     else "Новых покупок нет.")
+    if note:
+        lines.append(note)
+    lines.append(f"Открыто позиций: {len(state['positions'])}/{MAX_POSITIONS}")
+    vault.log(state, f"preclose {today}: bought {bought}")
+    vault.save_file(STATE_FILE, state, PASSWORD)
+    title = f"VISAR бот {mode_label(MODE)}: пробои {now:%H:%M}"
+    push(title, "\n".join(lines), tags="chart_with_upwards_trend")
+
+
 def main():
     if not PASSWORD:
         print("STATE_PASSWORD is not set — add it to GitHub secrets")
@@ -451,6 +621,8 @@ def main():
             cmd_plan()
         elif cmd == "execute":
             cmd_execute()
+        elif cmd == "preclose":
+            cmd_preclose()
         else:
             print(__doc__)
             return 1

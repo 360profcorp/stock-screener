@@ -41,27 +41,33 @@ TX = {
         "sch_save": "Подключить", "sch_done": "Schwab подключён ✅",
         "no_key": "Нет SCHWAB_APP_KEY / SCHWAB_APP_SECRET в Secrets Streamlit.",
         "no_gh": "Нет GH_TOKEN в Secrets Streamlit — приложение не может сохранять изменения.",
-        "plan": "План на следующую сессию (buy-stop ордера)", "plan_none": "Плана нет.",
-        "orders": "Выставленные buy-stop ордера",
-        "orders_note": "Ордер исполнится, только если цена поднимется до триггера. Иначе он "
-                       "снимется сам в конце дня. Итог — в вечернем пуше.",
+        "plan": "План на утро (покупка на открытии)", "plan_none": "Плана нет.",
+        "plan_note": "VCP и ретест покупаются на открытии следующего дня. Пробои бот покупает "
+                     "сам в тот же день около 15:30, если пробой держится.",
+        "orders": "Утренние покупки (ждут подтверждения исполнения)",
+        "orders_note": "Покупка по рынку на открытии, стоп ставится сразу. Итог — в вечернем пуше.",
+        "auto_brk": "Покупать пробои без подтверждения (около 15:30)",
+        "auto_brk_help": "В ручном режиме нет времени подтверждать пробой — до закрытия 30 минут. "
+                         "Включено: бот покупает пробои сам с теми же лимитами риска. "
+                         "Выключено: присылает пуш со списком, а покупаешь ты сам.",
         "plan_from": "Сигналы от {d} · статус: {s}",
         "status": {"new": "ожидает", "done": "выполнен", "not_approved": "не подтверждён",
                    "rejected": "отклонён", "expired": "устарел"},
         "approve": "✅ Подтвердить покупки", "reject": "❌ Отменить план",
-        "approved": "Подтверждён — утром бот выставит buy-stop ордера.", "rejected_msg": "План отменён.",
+        "approved": "Подтверждён — утром бот купит на открытии.", "rejected_msg": "План отменён.",
         "pos": "Открытые позиции", "pos_none": "Открытых позиций нет.",
         "closed": "Закрытые сделки", "closed_none": "Закрытых сделок пока нет.",
         "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
         "log": "Журнал бота",
         "cols": {"ticker": "Тикер", "mode": "Сетап", "rs": "RS", "close": "Закрытие",
-                 "trigger": "Купить выше", "limit": "Лимит", "date": "Дата",
+                 "level": "Уровень", "est": "≈ Цена", "how": "Вход", "date": "Дата",
                  "stop": "Стоп", "est_qty": "≈ Акций", "est_cost": "≈ Сумма $",
                  "entry_date": "Вход", "entry": "Цена входа", "qty": "Акций",
                  "days": "Дней", "last": "Сейчас", "pnl_now": "P&L $", "dry": "Тренировка",
                  "exit_date": "Выход", "exit": "Цена выхода", "reason": "Причина",
                  "pnl": "P&L $", "r": "R"},
         "reasons": {"stop": "🛑 стоп", "time": "⏱ 20 дней"},
+        "how": {"close": "перед закрытием", "open": "на открытии"},
     },
     "en": {
         "tab": "💼 Trading",
@@ -84,10 +90,16 @@ TX = {
         "sch_save": "Connect", "sch_done": "Schwab connected ✅",
         "no_key": "SCHWAB_APP_KEY / SCHWAB_APP_SECRET missing in Streamlit secrets.",
         "no_gh": "GH_TOKEN missing in Streamlit secrets — the app can't save changes.",
-        "plan": "Plan for the next session (buy-stop orders)", "plan_none": "No plan.",
-        "orders": "Buy-stop orders placed",
-        "orders_note": "An order fills only if price rises to the trigger; otherwise it "
-                       "expires at the close. Results come in the evening push.",
+        "plan": "Morning plan (buy at the open)", "plan_none": "No plan.",
+        "plan_note": "VCP and retest are bought at the next open. Breakouts are bought by the "
+                     "bot the same day around 3:30 PM if the breakout holds.",
+        "orders": "Morning buys (waiting for fill confirmation)",
+        "orders_note": "Market buy at the open, stop placed right away. Results come in the "
+                       "evening push.",
+        "auto_brk": "Buy breakouts without approval (around 3:30 PM)",
+        "auto_brk_help": "In manual mode there's no time to approve a breakout — 30 minutes to "
+                         "the close. On: the bot buys breakouts itself within the same risk "
+                         "limits. Off: you get a push with the list and buy yourself.",
         "plan_from": "Signals from {d} · status: {s}",
         "status": {"new": "waiting", "done": "executed", "not_approved": "not approved",
                    "rejected": "rejected", "expired": "expired"},
@@ -98,13 +110,14 @@ TX = {
         "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
         "log": "Bot log",
         "cols": {"ticker": "Ticker", "mode": "Setup", "rs": "RS", "close": "Close",
-                 "trigger": "Buy above", "limit": "Limit", "date": "Date",
+                 "level": "Level", "est": "≈ Price", "how": "Entry", "date": "Date",
                  "stop": "Stop", "est_qty": "≈ Shares", "est_cost": "≈ Amount $",
                  "entry_date": "Entry", "entry": "Entry price", "qty": "Shares",
                  "days": "Days", "last": "Now", "pnl_now": "P&L $", "dry": "Training",
                  "exit_date": "Exit", "exit": "Exit price", "reason": "Reason",
                  "pnl": "P&L $", "r": "R"},
         "reasons": {"stop": "🛑 stop", "time": "⏱ 20 days"},
+        "how": {"close": "before the close", "open": "at the open"},
     },
 }
 
@@ -193,8 +206,8 @@ def render(T, lang, get_prices):
     else:
         st.caption(X["plan_from"].format(d=plan["date"],
                                          s=X["status"].get(plan.get("status"), plan.get("status"))))
-        df = pd.DataFrame(plan["items"])[["ticker", "mode", "rs", "close", "trigger", "limit",
-                                          "stop", "est_qty", "est_cost"]]
+        df = pd.DataFrame(plan["items"]).reindex(columns=["ticker", "mode", "rs", "close",
+                                                          "stop", "est_qty", "est_cost"])
         df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
         st.dataframe(df.rename(columns=C), hide_index=True, use_container_width=True)
         if plan.get("status") == "new" and state.get("mode") == "manual":
@@ -211,13 +224,22 @@ def render(T, lang, get_prices):
                     if save("Bot: plan rejected"):
                         st.success(X["rejected_msg"])
 
-    # ---------- buy-stop orders waiting for today ----------
+    st.caption(X["plan_note"])
+    if state.get("mode") == "manual":
+        on = st.toggle(X["auto_brk"], value=bool(state.get("auto_breakouts")),
+                       help=X["auto_brk_help"], key="auto_brk")
+        if on != bool(state.get("auto_breakouts")):
+            state["auto_breakouts"] = on
+            vault.log(state, f"auto breakouts {'on' if on else 'off'}")
+            save("Bot: auto breakouts " + ("on" if on else "off"))
+
+    # ---------- morning buys waiting for the evening check ----------
     orders = state.get("orders") or []
     if orders:
         st.subheader(X["orders"])
         df = pd.DataFrame(orders)
         df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-        st.dataframe(df[["ticker", "mode", "date", "trigger", "limit", "stop", "qty", "dry"]]
+        st.dataframe(df.reindex(columns=["ticker", "mode", "date", "est", "stop", "qty", "dry"])
                      .rename(columns=C), hide_index=True, use_container_width=True)
         st.caption(X["orders_note"])
 
@@ -243,8 +265,9 @@ def render(T, lang, get_prices):
         except Exception:
             df["last"], df["pnl_now"] = np.nan, np.nan
         df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-        cols = ["ticker", "mode", "entry_date", "entry", "stop", "qty", "days", "last", "pnl_now",
-                "dry"]
+        df["how"] = df.get("how", pd.Series(index=df.index, dtype=object)).map(X["how"])
+        cols = ["ticker", "mode", "how", "entry_date", "entry", "stop", "qty", "days", "last",
+                "pnl_now", "dry"]
         st.dataframe(df[cols].rename(columns=C), hide_index=True, use_container_width=True)
 
     # ---------- closed trades ----------
