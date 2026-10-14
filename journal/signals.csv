@@ -18,24 +18,24 @@ date,mode,ticker,rs,sector,close,level,stop,risk_pct
 2026-10-12,breakout,ACN,81,Information Technology,214.87,209.06,206.97,3.68
 2026-10-12,breakout,BAX,81,Health Care,24.78,24.6,24.35,1.72
 2026-10-12,breakout,MCK,80,Health Care,955.76,943.97,934.53,2.22
+2026-10-12,breakout,KDP,79,Consumer Staples,32.75,31.87,31.55,3.66
 2026-10-12,breakout,EMR,79,Industrials,162.46,162.32,160.7,1.09
-2026-10-12,breakout,KDP,78,Consumer Staples,32.75,31.87,31.55,3.66
 2026-10-12,breakout,JNJ,78,Health Care,263.73,261.61,258.99,1.8
 2026-10-12,breakout,JBL,78,Information Technology,312.01,307.31,304.24,2.49
 2026-10-12,breakout,EL,77,Consumer Staples,100.04,98.48,97.5,2.54
 2026-10-12,breakout,MTD,77,Health Care,1563.01,1562.16,1546.54,1.05
+2026-10-12,breakout,FANG,77,Energy,195.11,194.39,192.45,1.37
 2026-10-12,breakout,HAS,77,Consumer Discretionary,94.73,94.4,93.46,1.34
-2026-10-12,breakout,FANG,76,Energy,195.11,194.39,192.45,1.37
-2026-10-12,breakout,EBAY,75,Consumer Discretionary,114.65,113.43,112.3,2.05
+2026-10-12,breakout,EBAY,76,Consumer Discretionary,114.65,113.43,112.3,2.05
 2026-10-12,breakout,CSX,75,Industrials,47.75,47.62,47.14,1.27
+2026-10-12,breakout,HST,75,Real Estate,22.74,22.72,22.49,1.09
 2026-10-12,breakout,FAST,74,Industrials,51.49,50.92,50.41,2.1
-2026-10-12,breakout,HST,74,Real Estate,22.74,22.72,22.49,1.09
+2026-10-12,breakout,V,74,Financials,389.27,386.84,382.97,1.62
 2026-10-12,breakout,GWW,73,Industrials,1306.73,1295.05,1282.1,1.88
 2026-10-12,breakout,REGN,73,Health Care,762.81,753.68,746.14,2.18
-2026-10-12,breakout,V,73,Financials,389.27,386.84,382.97,1.62
+2026-10-12,breakout,ELV,73,Health Care,422.09,418.56,414.37,1.83
 2026-10-12,breakout,WELL,73,Real Estate,230.29,228.02,225.74,1.98
 2026-10-12,breakout,OKE,73,Energy,92.02,91.11,90.2,1.98
-2026-10-12,breakout,ELV,72,Health Care,422.09,418.56,414.37,1.83
 2026-10-12,breakout,PFE,72,Health Care,28.4,28.29,28.01,1.38
 2026-10-12,breakout,ADP,72,Industrials,273.81,273.02,270.29,1.29
 2026-10-12,breakout,META,71,Communication Services,742.96,738.29,730.91,1.62
@@ -55,7 +55,7 @@ date,mode,ticker,rs,sector,close,level,stop,risk_pct
 2026-10-12,retest,CAH,79,Health Care,238.08,235.97,231.54,2.75
 2026-10-12,retest,IT,76,Information Technology,194.1,189.99,188.09,3.1
 2026-10-12,retest,ADM,75,Consumer Staples,80.42,80.29,78.95,1.82
-2026-10-12,retest,HST,74,Real Estate,22.74,22.46,21.9,3.7
+2026-10-12,retest,HST,75,Real Estate,22.74,22.46,21.9,3.7
 2026-10-12,retest,GWW,73,Industrials,1306.73,1257.81,1245.23,4.71
 2026-10-12,vcp,HPE,98,Information Technology,70.33,73.56,68.81,2.15
 2026-10-12,vcp,FTNT,96,Information Technology,192.94,181.37,167.86,13.0
@@ -65,5 +65,5 @@ date,mode,ticker,rs,sector,close,level,stop,risk_pct
 2026-10-12,vcp,JCI,84,Industrials,155.41,160.41,149.85,3.58
 2026-10-12,vcp,APH,81,Information Technology,86.19,89.93,83.12,3.56
 2026-10-12,vcp,AME,76,Industrials,249.89,255.41,243.17,2.69
-2026-10-12,vcp,HST,74,Real Estate,22.74,22.9,21.9,3.7
+2026-10-12,vcp,HST,75,Real Estate,22.74,22.9,21.9,3.7
 2026-10-12,vcp,GWW,73,Industrials,1306.73,1300.0,1246.0,4.65
