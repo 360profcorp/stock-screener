@@ -17,6 +17,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 from PIL import Image
 
+import backtest as bt
 import brand
 import core
 from core import MODES, NY
@@ -120,6 +121,43 @@ TEXT = {
                    "days": "Дней"},
         "status": {"new": "🆕 сегодня", "open": "⏳ в работе", "done10": "✅ 10 дней прошло",
                    "stopped": "🛑 стоп", "nodata": "— нет данных"},
+        "tab_bt": "🧪 Бэктест",
+        "bt_intro": "Проверка трёх сетапов на истории S&P 500 примерно за 2 года по тем же правилам, "
+                    "что и живой скан. Вход — по закрытию дня сигнала, выход — по стопу или через "
+                    "N дней. Одна сделка на акцию за раз.",
+        "bt_settings": "⚙️ Настройки бэктеста",
+        "bt_hold": "Держать позицию, торговых дней",
+        "bt_run": "🧪 Запустить бэктест",
+        "bt_loading": "Загружаю 3 года котировок S&P 500 и ищу сигналы на истории… "
+                      "первый раз 1–2 минуты, дальше мгновенно",
+        "bt_hint": "Нажми **Запустить бэктест**. После первого запуска настройки пересчитываются сразу.",
+        "bt_period": "Период проверки: {a} — {b} · сигналов на истории: {n}",
+        "bt_compare": "Сравнение сетапов",
+        "bt_detail": "Подробно по сетапу",
+        "bt_equity": "Накопленный результат в R (каждая сделка рискует 1R)",
+        "bt_by_rs": "По уровню RS",
+        "bt_by_vol": "По объёму в день сигнала",
+        "bt_trades": "Сделки",
+        "bt_download": "⬇️ Скачать сделки CSV",
+        "bt_none": "Сделок нет — ослабь фильтры (RS, объём, макс. риск).",
+        "bt_read": "**Как читать:** главное — *Ожидание R* (средний результат сделки в единицах риска). "
+                   "Больше 0 — сетап зарабатывает; 0.2R+ — хорошо. *Profit factor* = сумма прибылей ÷ "
+                   "сумма убытков: больше 1.5 — хорошо. Процент прибыльных сам по себе мало значит: "
+                   "40% прибыльных с большим средним плюсом лучше, чем 60% с маленьким.",
+        "bt_limits": "Ограничения: сегодняшний состав S&P 500 (акции, выбывшие из индекса, не учтены), "
+                     "без комиссий и проскальзывания, вход по цене закрытия. Прошлые результаты не "
+                     "гарантируют будущих.",
+        "bt_reason": {"stop": "🛑 стоп", "time": "⏱ по времени"},
+        "bt_cols": {"mode": "Сетап", "trades": "Сделок", "win_rate": "Прибыльных, %",
+                    "avg_win": "Средн. плюс, %", "avg_loss": "Средн. минус, %",
+                    "expectancy": "Ожидание, %", "expectancy_r": "Ожидание, R",
+                    "profit_factor": "Profit factor", "stopped": "По стопу, %",
+                    "max_losing_streak": "Макс. серия убытков", "total_r": "Итого, R",
+                    "avg_days": "Средн. дней", "bucket": "Группа",
+                    "ticker": "Тикер", "date": "Вход", "exit_date": "Выход", "days": "Дней",
+                    "rs": "RS", "vol_ratio": "Объём", "entry": "Цена входа", "stop": "Стоп",
+                    "exit": "Цена выхода", "risk_pct": "Риск %", "ret_pct": "Результат %",
+                    "r": "R", "reason": "Выход по", "max_up_pct": "Макс. рост %"},
         "cols": {
             "ticker": "Тикер", "rs": "RS", "name": "Компания", "sector": "Сектор",
             "close": "Закрытие", "level": "Уровень", "pct_level": "% от уровня",
@@ -198,6 +236,43 @@ TEXT = {
                    "days": "Days"},
         "status": {"new": "🆕 today", "open": "⏳ running", "done10": "✅ 10 days done",
                    "stopped": "🛑 stopped", "nodata": "— no data"},
+        "tab_bt": "🧪 Backtest",
+        "bt_intro": "Tests the three setups on ~2 years of S&P 500 history with the same rules as the "
+                    "live scan. Entry at the signal-day close, exit at the stop or after N days. "
+                    "One trade per stock at a time.",
+        "bt_settings": "⚙️ Backtest settings",
+        "bt_hold": "Holding period, trading days",
+        "bt_run": "🧪 Run backtest",
+        "bt_loading": "Loading 3 years of S&P 500 quotes and finding historical signals… "
+                      "1–2 min the first time, instant afterwards",
+        "bt_hint": "Press **Run backtest**. After the first run, settings recalculate instantly.",
+        "bt_period": "Test period: {a} — {b} · historical signals: {n}",
+        "bt_compare": "Setup comparison",
+        "bt_detail": "Setup details",
+        "bt_equity": "Cumulative result in R (each trade risks 1R)",
+        "bt_by_rs": "By RS level",
+        "bt_by_vol": "By volume on the signal day",
+        "bt_trades": "Trades",
+        "bt_download": "⬇️ Download trades CSV",
+        "bt_none": "No trades — loosen the filters (RS, volume, max risk).",
+        "bt_read": "**How to read:** the key number is *Expectancy R* (average trade result in units of "
+                   "risk). Above 0 — the setup makes money; 0.2R+ is good. *Profit factor* = gross "
+                   "profit ÷ gross loss: above 1.5 is good. Win rate alone means little: 40% winners "
+                   "with big average wins beat 60% with small ones.",
+        "bt_limits": "Limitations: today's S&P 500 members (stocks that left the index are missing), "
+                     "no commissions or slippage, entry at the close. Past results don't guarantee "
+                     "future ones.",
+        "bt_reason": {"stop": "🛑 stop", "time": "⏱ time"},
+        "bt_cols": {"mode": "Setup", "trades": "Trades", "win_rate": "Winners, %",
+                    "avg_win": "Avg win, %", "avg_loss": "Avg loss, %",
+                    "expectancy": "Expectancy, %", "expectancy_r": "Expectancy, R",
+                    "profit_factor": "Profit factor", "stopped": "Stopped, %",
+                    "max_losing_streak": "Max losing streak", "total_r": "Total, R",
+                    "avg_days": "Avg days", "bucket": "Group",
+                    "ticker": "Ticker", "date": "Entry", "exit_date": "Exit", "days": "Days",
+                    "rs": "RS", "vol_ratio": "Volume", "entry": "Entry price", "stop": "Stop",
+                    "exit": "Exit price", "risk_pct": "Risk %", "ret_pct": "Result %",
+                    "r": "R", "reason": "Exit by", "max_up_pct": "Max run-up %"},
         "cols": {
             "ticker": "Ticker", "rs": "RS", "name": "Company", "sector": "Sector",
             "close": "Close", "level": "Level", "pct_level": "% vs level",
@@ -417,6 +492,132 @@ def journal_tab(T):
 
 
 # =====================================================================
+# Вкладка «Бэктест» / Backtest tab
+# =====================================================================
+@st.cache_resource(ttl=12 * 3600, show_spinner=False)
+def backtest_signals(tickers: tuple):
+    """3 years of quotes → every historical signal (cached; filters are applied later)."""
+    prices = core.get_prices(tickers, period="3y")
+    frames = {}
+    for t in tickers:
+        df = core._frame_for(prices, t)
+        if df is not None and len(df):
+            frames[t] = df
+    return bt.find_signals(frames)
+
+
+def _num(df, cols, pattern):
+    for c in cols:
+        if c in df:
+            df[c] = df[c].map(lambda v: "∞" if v == np.inf else _fmt(v, pattern))
+    return df
+
+
+def backtest_tab(T):
+    st.caption(T["bt_intro"])
+    with st.expander(T["bt_settings"], expanded=False):
+        hold = st.radio(T["bt_hold"], [5, 10, 20], index=1, horizontal=True, key="bt_hold")
+        min_rs = st.slider(T["min_rs"], 0, 99, 70, help=T["min_rs_help"], key="bt_rs")
+        min_vol = st.slider(T["min_vol"], 0.0, 3.0, 0.0, 0.1, help=T["min_vol_help"],
+                            key="bt_vol")
+        stop_buf = st.slider(T["stop_buf"], 0.0, 5.0, 1.0, 0.25, help=T["stop_help"],
+                             key="bt_buf")
+        max_risk = st.slider(T["max_risk"], 0.0, 15.0, 0.0, 0.5, help=T["max_risk_help"],
+                             key="bt_maxrisk")
+
+    if st.button(T["bt_run"], type="primary", use_container_width=True):
+        st.session_state["bt_ready"] = True
+    if not st.session_state.get("bt_ready"):
+        st.write(T["bt_hint"])
+        return
+
+    with st.spinner(T["bt_loading"]):
+        sig, data = backtest_signals(tuple(get_sp500()["ticker"]))
+    if sig.empty:
+        st.info(T["bt_none"])
+        return
+    dates = pd.to_datetime(sig["date"])
+    st.caption(T["bt_period"].format(a=dates.min().strftime("%d.%m.%Y"),
+                                     b=dates.max().strftime("%d.%m.%Y"), n=f"{len(sig):,}"))
+
+    B = T["bt_cols"]
+    trades = {m: bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk)
+              for m in MODES}
+
+    # --- comparison of the three setups
+    st.subheader(T["bt_compare"])
+    rows = []
+    for m in MODES:
+        s = bt.stats(trades[m])
+        if s["trades"]:
+            rows.append({"mode": T[f"mode_{m}"], **s})
+    if not rows:
+        st.info(T["bt_none"])
+        return
+    comp = pd.DataFrame(rows)[["mode", "trades", "win_rate", "avg_win", "avg_loss",
+                               "expectancy", "expectancy_r", "profit_factor", "stopped",
+                               "max_losing_streak", "total_r", "avg_days"]]
+    comp = _num(comp, ["win_rate", "avg_win", "avg_loss", "expectancy", "stopped",
+                       "avg_days", "total_r"], "{:.1f}")
+    comp = _num(comp, ["expectancy_r", "profit_factor"], "{:.2f}")
+    st.dataframe(comp.rename(columns=B), hide_index=True, use_container_width=True)
+    st.markdown(T["bt_read"])
+
+    # --- one setup in detail
+    st.subheader(T["bt_detail"])
+    mode = st.segmented_control(T["signal_type"], MODES, default="vcp",
+                                format_func=lambda m: T[f"mode_{m}"], key="bt_mode") or "vcp"
+    tr = trades[mode]
+    if tr.empty:
+        st.info(T["bt_none"])
+        return
+
+    eq = bt.equity_r(tr)
+    fig = go.Figure(go.Scatter(x=eq.index, y=eq.values, mode="lines",
+                               line=dict(color="#9B5CF0", width=2),
+                               fill="tozeroy", fillcolor="rgba(155,92,240,0.12)"))
+    fig.update_layout(height=300, margin=dict(l=8, r=8, t=36, b=8),
+                      title=dict(text=T["bt_equity"], x=0.02, font=dict(size=14)),
+                      paper_bgcolor="#0B0B12", plot_bgcolor="#0B0B12",
+                      font=dict(color="#EDEDF5"), showlegend=False)
+    fig.update_xaxes(gridcolor="#1E1E2C")
+    fig.update_yaxes(gridcolor="#1E1E2C", side="right", zeroline=True,
+                     zerolinecolor="#8A8AA0")
+    st.plotly_chart(fig, use_container_width=True,
+                    config={"displayModeBar": False, "scrollZoom": False})
+
+    c1, c2 = st.columns(2)
+    for col, title, key, bins, labels in (
+        (c1, T["bt_by_rs"], "rs", [0, 50, 70, 80, 90, 100],
+         ["<50", "50–69", "70–79", "80–89", "90–99"]),
+        (c2, T["bt_by_vol"], "vol_ratio", [0, 1, 1.5, 2, np.inf],
+         ["<1x", "1–1.5x", "1.5–2x", "≥2x"]),
+    ):
+        with col:
+            st.markdown(f"**{title}**")
+            bk = bt.by_bucket(tr, key, bins, labels)
+            if not bk.empty:
+                bk = _num(bk, ["win_rate", "expectancy"], "{:.1f}")
+                bk = _num(bk, ["expectancy_r", "profit_factor"], "{:.2f}")
+                st.dataframe(bk.rename(columns=B), hide_index=True, use_container_width=True)
+
+    st.markdown(f"**{T['bt_trades']}**")
+    view = tr.sort_values("date", ascending=False).copy()
+    view["date"] = pd.to_datetime(view["date"]).dt.strftime("%Y-%m-%d")
+    view["exit_date"] = pd.to_datetime(view["exit_date"]).dt.strftime("%Y-%m-%d")
+    view["reason"] = view["reason"].map(T["bt_reason"])
+    view["rs"] = view["rs"].round().astype("Int64")
+    view = view.round({"rs": 0, "vol_ratio": 2, "entry": 2, "stop": 2, "exit": 2,
+                       "risk_pct": 2, "ret_pct": 2, "r": 2, "max_up_pct": 2})
+    view = view.rename(columns=B)
+    st.dataframe(view, hide_index=True, use_container_width=True, height=360,
+                 column_config={B["ticker"]: st.column_config.TextColumn(pinned=True)})
+    st.download_button(T["bt_download"], view.to_csv(index=False).encode("utf-8"),
+                       f"backtest_{mode}.csv", "text/csv", use_container_width=True)
+    st.caption(T["bt_limits"])
+
+
+# =====================================================================
 # Интерфейс / UI
 # =====================================================================
 def main():
@@ -431,11 +632,13 @@ def main():
     st.title(T["title"])
     st.caption(T["subtitle"])
 
-    tab_scan, tab_journal = st.tabs([T["tab_scan"], T["tab_journal"]])
+    tab_scan, tab_journal, tab_bt = st.tabs([T["tab_scan"], T["tab_journal"], T["tab_bt"]])
     with tab_scan:
         scan_tab(T, lang)
     with tab_journal:
         journal_tab(T)
+    with tab_bt:
+        backtest_tab(T)
 
     st.caption(T["footer"])
 
