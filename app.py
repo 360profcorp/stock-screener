@@ -200,13 +200,20 @@ TEXT = {
                        "в обеих половинах периода; 🟡 слабый — небольшой плюс; ❌ не работает — "
                        "ноль или минус; ⏳ мало сделок — меньше 40, выводы делать рано.",
         "bt_entry": "Способ входа",
-        "bt_entry_opts": {"close": "по закрытию дня сигнала", "stop": "buy-stop выше максимума"},
+        "bt_entry_opts": {"close": "по закрытию дня сигнала", "open": "по открытию следующего дня",
+                          "stop": "buy-stop выше максимума"},
         "bt_entry_help": "По закрытию: покупка по цене закрытия дня, когда пробой уже случился. "
+                         "По открытию: покупка на следующее утро по цене открытия — с утренним "
+                         "гэпом, если он был. "
                          "Buy-stop: ордер ставится заранее чуть выше уровня и исполняется только "
                          "если цена его пробьёт на следующий день (лимит +1% от триггера). "
                          "Так торгует бот.",
         "bt_entry_note": "Buy-stop считается для VCP и пробоя — так торгует бот. Ретест и двойное "
                          "дно работают только при входе по закрытию.",
+        "mode_pending": "Перед пробоем",
+        "desc_pending": "Акции, которые ещё НЕ пробили уровень: VCP чуть ниже пивота и пробой в "
+                        "пределах 2% от максимума последних свечей. «Уровень» — цена buy-stop "
+                        "ордера: покупка, только если цена поднимется выше. Так покупает бот.",
         "cols": {
             "ticker": "Тикер", "rs": "RS", "name": "Компания", "sector": "Сектор",
             "close": "Закрытие", "level": "Уровень", "pct_level": "% от уровня",
@@ -362,13 +369,19 @@ TEXT = {
                        "in both halves of the period; 🟡 weak — small edge; ❌ doesn't work — zero "
                        "or negative; ⏳ too few trades — under 40, too early to judge.",
         "bt_entry": "Entry method",
-        "bt_entry_opts": {"close": "at the signal-day close", "stop": "buy-stop above the high"},
+        "bt_entry_opts": {"close": "at the signal-day close", "open": "at the next day's open",
+                          "stop": "buy-stop above the high"},
         "bt_entry_help": "At close: buy at the close of the day the breakout already happened. "
+                         "At open: buy the next morning at the open, including any gap. "
                          "Buy-stop: an order waits just above the level and fills only if price "
                          "breaks it the next day (limit +1% above the trigger). This is how the "
                          "bot trades.",
         "bt_entry_note": "Buy-stop applies to VCP and breakout — the way the bot trades. Retest "
                          "and double bottom work only with the at-close entry.",
+        "mode_pending": "Before breakout",
+        "desc_pending": "Stocks that have NOT broken out yet: VCP just under the pivot and "
+                        "breakouts within 2% of the recent high. \"Level\" is the buy-stop price: "
+                        "buy only if price trades above it. This is how the bot buys.",
         "cols": {
             "ticker": "Ticker", "rs": "RS", "name": "Company", "sector": "Sector",
             "close": "Close", "level": "Level", "pct_level": "% vs level",
@@ -483,9 +496,37 @@ def market_banner(T):
     return r
 
 
+def pending_as_scan(pend, universe, account, risk_pct):
+    """Buy-stop candidates in the same table format as the regular scan."""
+    cols = ["ticker", "rs", "name", "sector", "close", "level", "pct_level", "stop", "risk_pct",
+            "shares", "pos_value", "vol_ratio", "signal_ru", "signal_en", "date", "chart"]
+    if pend is None or pend.empty:
+        return pd.DataFrame(columns=cols)
+    names = universe.set_index("ticker")["name"]
+    risk_usd = account * risk_pct / 100
+    rows = []
+    for r in pend.itertuples():
+        per = r.trigger - r.stop
+        sh = int(min(risk_usd // per, account // r.limit)) if per > 0 else 0
+        setup_ru = {"vcp": "VCP", "breakout": "пробой"}.get(r.mode, r.mode)
+        setup_en = {"vcp": "VCP", "breakout": "breakout"}.get(r.mode, r.mode)
+        rows.append({
+            "ticker": r.ticker, "rs": r.rs, "name": names.get(r.ticker, ""), "sector": r.sector,
+            "close": r.close, "level": r.trigger, "pct_level": -r.dist_pct, "stop": r.stop,
+            "risk_pct": r.risk_pct, "shares": sh, "pos_value": round(sh * r.trigger, 0),
+            "vol_ratio": np.nan,
+            "signal_ru": f"{setup_ru}: buy-stop выше {r.trigger} (лимит {r.limit}), "
+                         f"до пробоя {r.dist_pct:.1f}%",
+            "signal_en": f"{setup_en}: buy-stop above {r.trigger} (limit {r.limit}), "
+                         f"{r.dist_pct:.1f}% to trigger",
+            "date": r.date,
+            "chart": f"https://www.tradingview.com/chart/?symbol={r.ticker.replace('-', '.')}"})
+    return pd.DataFrame(rows, columns=cols)
+
+
 def scan_tab(T, lang):
     regime_now = market_banner(T)
-    mode = st.segmented_control(T["signal_type"], MODES, default="breakout",
+    mode = st.segmented_control(T["signal_type"], MODES + ["pending"], default="breakout",
                                 format_func=lambda m: T[f"mode_{m}"], key="mode") or "breakout"
     st.caption(T[f"desc_{mode}"])
     rated = st.session_state.get("ratings", {}).get(mode)
@@ -524,8 +565,15 @@ def scan_tab(T, lang):
             universe = get_sp500()
             tickers = tuple(universe["ticker"])
             prices = get_prices(tickers)                  # RS uses the whole S&P 500
-            result = core.scan(prices, universe, mode, lookback, drop_unclosed,
-                               min_vol_ratio, min_rs, account, risk_pct, stop_buf, max_risk)
+            if mode == "pending":
+                result = pending_as_scan(
+                    core.pending_candidates(prices, universe, lookback=lookback, min_rs=min_rs,
+                                            stop_buf=stop_buf, max_risk=max_risk,
+                                            drop_unclosed=drop_unclosed),
+                    universe, account, risk_pct)
+            else:
+                result = core.scan(prices, universe, mode, lookback, drop_unclosed,
+                                   min_vol_ratio, min_rs, account, risk_pct, stop_buf, max_risk)
             if sectors and not result.empty:
                 result = result[result["sector"].isin(sectors)].reset_index(drop=True)
             blocked = not core.regime_ok(regime_now, mkt)
@@ -718,7 +766,7 @@ def backtest_tab(T):
         mkt = st.selectbox(T["mkt_filter"], core.MARKET_FILTERS, help=T["mkt_help"],
                            index=core.MARKET_FILTERS.index(DEFAULTS["market"]),
                            format_func=lambda f: T["mkt_opts"][f], key="bt_mkt")
-        entry = st.radio(T["bt_entry"], ["close", "stop"], index=1, horizontal=True,
+        entry = st.radio(T["bt_entry"], ["close", "open", "stop"], index=0, horizontal=True,
                          format_func=lambda e: T["bt_entry_opts"][e], help=T["bt_entry_help"],
                          key="bt_entry")
     if max_risk and max_risk <= stop_buf:
@@ -753,7 +801,7 @@ def backtest_tab(T):
         st.caption(T["bt_entry_note"])
     else:
         trades = {m: bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk,
-                                 market_ok) for m in MODES}
+                                 market_ok, entry_at=entry) for m in MODES}
 
     # --- comparison of the three setups
     st.subheader(T["bt_compare"])
@@ -765,7 +813,8 @@ def backtest_tab(T):
                 s["exp_r_nofilter"] = bt.stats(
                     bt.simulate_stop(pend, data, m, hold, stop_buf, min_rs, max_risk)
                     if entry == "stop" else
-                    bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk)
+                    bt.simulate(sig, data, m, hold, stop_buf, min_rs, min_vol, max_risk,
+                                entry_at=entry)
                 ).get("expectancy_r")
             s["exp_r_h1"], s["exp_r_h2"] = halves(trades[m])
             code = rate(s)

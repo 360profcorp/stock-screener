@@ -244,8 +244,14 @@ def simulate_stop(pend: pd.DataFrame, data: dict, mode: str, hold=20, stop_buf=3
 
 
 def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
-             min_rs=70, min_vol=0.0, max_risk=0.0, market_ok=None) -> pd.DataFrame:
-    """market_ok: optional pd.Series(date → bool); signals on 'bad market' days are skipped."""
+             min_rs=70, min_vol=0.0, max_risk=0.0, market_ok=None,
+             entry_at="close") -> pd.DataFrame:
+    """
+    market_ok: optional pd.Series(date → bool); signals on 'bad market' days are skipped.
+    entry_at: "close" — buy at the signal-day close;
+              "open"  — buy at the next day's open (gap included). If it opens at/below the
+                        stop the trade is skipped; the stop can be hit the same day.
+    """
     s = sig[sig["mode"] == mode]
     if market_ok is not None:
         days = pd.to_datetime(s["date"]).dt.normalize()
@@ -260,32 +266,39 @@ def simulate(sig: pd.DataFrame, data: dict, mode: str, hold=10, stop_buf=1.0,
         if r.i <= busy_until.get(r.ticker, -1):        # already in a trade on this stock
             continue
         x = data[r.ticker]
-        entry = r.close
+        last = len(x["C"]) - 1
+        if entry_at == "open":
+            e = r.i + 1                                   # entry day
+            if e > last:
+                continue
+            entry = x["O"][e]
+            first = e                                     # stop can hit on the entry day
+        else:
+            e, entry, first = r.i, r.close, r.i + 1
         stop = r.stop_base * (1 - stop_buf / 100)
         if stop >= entry:
             continue
         risk = (entry - stop) / entry
         if max_risk and risk * 100 > max_risk:
             continue
-        last = len(x["C"]) - 1
         exit_i, exit_px, reason = None, None, None
-        for j in range(r.i + 1, min(r.i + hold, last) + 1):
+        for j in range(first, min(e + hold, last) + 1):
             if x["L"][j] <= stop:                        # stopped; a gap below → open price
-                exit_i, exit_px, reason = j, min(x["O"][j], stop), "stop"
+                exit_i, exit_px, reason = j, (stop if j == e else min(x["O"][j], stop)), "stop"
                 break
         if exit_i is None:
-            if r.i + hold > last:                        # not finished yet → leave out
+            if e + hold > last:                          # not finished yet → leave out
                 busy_until[r.ticker] = last
                 continue
-            exit_i, exit_px, reason = r.i + hold, x["C"][r.i + hold], "time"
+            exit_i, exit_px, reason = e + hold, x["C"][e + hold], "time"
         busy_until[r.ticker] = exit_i
         ret = exit_px / entry - 1
         trades.append({
-            "ticker": r.ticker, "date": r.date, "exit_date": x["dates"][exit_i],
-            "days": exit_i - r.i, "rs": r.rs, "vol_ratio": r.vol_ratio,
+            "ticker": r.ticker, "date": x["dates"][e], "exit_date": x["dates"][exit_i],
+            "days": exit_i - e, "rs": r.rs, "vol_ratio": r.vol_ratio,
             "entry": entry, "stop": stop, "exit": exit_px, "risk_pct": risk * 100,
             "ret_pct": ret * 100, "r": ret / risk, "reason": reason,
-            "max_up_pct": (x["H"][r.i + 1:exit_i + 1].max() / entry - 1) * 100,
+            "max_up_pct": (x["H"][first:exit_i + 1].max() / entry - 1) * 100,
         })
     cols = ["ticker", "date", "exit_date", "days", "rs", "vol_ratio", "entry", "stop",
             "exit", "risk_pct", "ret_pct", "r", "reason", "max_up_pct"]
