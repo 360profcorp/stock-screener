@@ -16,6 +16,8 @@ Settings come from environment variables — the `env:` block in .github/workflo
   LOOKBACK     — candles to break for breakout / retest, 2 or 3 (default 3)
   MARKET_FILTER — take signals only when the market is in an uptrend (SPY):
                  off | ma50 | ma200 | both  (default off)
+  SETUPS       — which setups the auto-scan logs and pushes, comma-separated
+                 (default breakout,retest,vcp — double bottom is off: the backtest rated it ❌)
   REPEAT_DAYS  — don't log the same stock + setup again within this many trading days,
                  0 = log every day (default 10, like the backtest's holding period)
   APP_URL      — link opened when you tap the notification
@@ -48,6 +50,8 @@ STOP_BUF = _env("STOP_BUF", 1.0)
 MAX_RISK = _env("MAX_RISK", 0.0)
 LOOKBACK = _env("LOOKBACK", 3, int)
 REPEAT_DAYS = _env("REPEAT_DAYS", 10, int)
+SETUPS = [m.strip() for m in os.getenv("SETUPS", "breakout,retest,vcp").lower().split(",")
+          if m.strip() in core.MODES] or ["breakout", "retest", "vcp"]
 MARKET_FILTER = os.getenv("MARKET_FILTER", "off").strip().lower() or "off"
 if MARKET_FILTER not in core.MARKET_FILTERS:
     print(f"bad MARKET_FILTER={MARKET_FILTER!r}, using off")
@@ -124,7 +128,7 @@ def market_status(prices, data_date):
 
 def build_message(results, data_date):
     lines = []
-    for mode in ("vcp", "dbottom", "retest", "breakout"):          # most selective first
+    for mode in [m for m in ("vcp", "dbottom", "retest", "breakout") if m in results]:
         res = results[mode]
         rep = f" (+{SKIPPED[mode]} повтор.)" if SKIPPED.get(mode) else ""
         if res.empty:
@@ -167,18 +171,18 @@ def main():
     print(reg_line)
     print(f"settings: RS≥{MIN_RS}, vol≥{MIN_VOL}, stop buffer {STOP_BUF}%, "
           f"max risk {MAX_RISK or '—'}%, lookback {LOOKBACK}, repeat {REPEAT_DAYS}d, "
-          f"market filter {MARKET_FILTER}")
+          f"market filter {MARKET_FILTER}, setups {','.join(SETUPS)}")
     results = {m: core.scan(prices, fresh, m, LOOKBACK, True, MIN_VOL, MIN_RS,
                             stop_buf=STOP_BUF, max_risk=MAX_RISK)
-               for m in core.MODES}
+               for m in SETUPS}
 
     if not market_pass:
         print(f"market filter {MARKET_FILTER}: market doesn't pass — no signals logged")
         results = {m: r.iloc[0:0] for m, r in results.items()}
 
     old = pd.read_csv(JOURNAL) if JOURNAL.exists() else None
-    results = {m: drop_repeats(results[m], m, old, data_date) for m in core.MODES}
-    new = pd.concat([core.journal_rows(results[m], m) for m in core.MODES], ignore_index=True)
+    results = {m: drop_repeats(results[m], m, old, data_date) for m in SETUPS}
+    new = pd.concat([core.journal_rows(results[m], m) for m in SETUPS], ignore_index=True)
     before = 0 if old is None else len(old)
     journal = core.merge_journal(old, new)
     JOURNAL.parent.mkdir(exist_ok=True)

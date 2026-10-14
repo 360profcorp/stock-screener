@@ -29,6 +29,8 @@ st.set_page_config(page_title="VISAR · S&P 500 Screener",
 JOURNAL_FILE = Path(__file__).parent / "journal" / "signals.csv"
 JOURNAL_URL = ("https://raw.githubusercontent.com/360profcorp/stock-screener/"
                "main/journal/signals.csv")
+# Default settings = the ones chosen by the backtest and used by the auto-scan
+DEFAULTS = {"min_rs": 85, "stop_buf": 3.0, "hold": 20, "market": "ma50"}
 BRAND_COLORS = ["#36C2C9", "#4E7CF0", "#9B5CF0", "#E0679E"]
 
 BRAND_CSS = """
@@ -455,13 +457,15 @@ def scan_tab(T, lang):
     with st.expander(T["settings"], expanded=False):
         lookback = st.radio(T["lookback"], [2, 3], index=1, horizontal=True,
                             disabled=(mode in ("vcp", "dbottom")), key="lookback")
-        min_rs = st.slider(T["min_rs"], 0, 99, 70, help=T["min_rs_help"], key="min_rs")
+        min_rs = st.slider(T["min_rs"], 0, 99, DEFAULTS["min_rs"], help=T["min_rs_help"],
+                           key="min_rs")
         min_vol_ratio = st.slider(T["min_vol"], 0.0, 3.0, 0.0, 0.1,
                                   help=T["min_vol_help"], key="min_vol")
         drop_unclosed = st.checkbox(T["closed_only"], value=True, key="closed_only")
         sectors_all = sorted(get_sp500()["sector"].dropna().unique())
         sectors = st.multiselect(T["sectors"], sectors_all, key="sectors")
         mkt = st.selectbox(T["mkt_filter"], core.MARKET_FILTERS, help=T["mkt_help"],
+                           index=core.MARKET_FILTERS.index(DEFAULTS["market"]),
                            format_func=lambda f: T["mkt_opts"][f], key="mkt")
 
     with st.expander(T["risk_settings"], expanded=False):
@@ -469,7 +473,7 @@ def scan_tab(T, lang):
                                   step=1_000.0, format="%.0f", key="account")
         risk_pct = st.number_input(T["risk_pct"], min_value=0.1, max_value=10.0,
                                    value=1.0, step=0.25, key="risk_pct")
-        stop_buf = st.slider(T["stop_buf"], 0.0, 5.0, 1.0, 0.25,
+        stop_buf = st.slider(T["stop_buf"], 0.0, 5.0, DEFAULTS["stop_buf"], 0.25,
                              help=T["stop_help"], key="stop_buf")
         max_risk = st.slider(T["max_risk"], 0.0, 15.0, 0.0, 0.5,
                              help=T["max_risk_help"], key="max_risk")
@@ -643,15 +647,18 @@ def halves(tr):
 def backtest_tab(T):
     st.caption(T["bt_intro"])
     with st.expander(T["bt_settings"], expanded=False):
-        hold = st.radio(T["bt_hold"], [5, 10, 20], index=1, horizontal=True, key="bt_hold")
-        min_rs = st.slider(T["min_rs"], 0, 99, 70, help=T["min_rs_help"], key="bt_rs")
+        hold = st.radio(T["bt_hold"], [5, 10, 20], index=[5, 10, 20].index(DEFAULTS["hold"]),
+                        horizontal=True, key="bt_hold")
+        min_rs = st.slider(T["min_rs"], 0, 99, DEFAULTS["min_rs"], help=T["min_rs_help"],
+                           key="bt_rs")
         min_vol = st.slider(T["min_vol"], 0.0, 3.0, 0.0, 0.1, help=T["min_vol_help"],
                             key="bt_vol")
-        stop_buf = st.slider(T["stop_buf"], 0.0, 5.0, 1.0, 0.25, help=T["stop_help"],
-                             key="bt_buf")
+        stop_buf = st.slider(T["stop_buf"], 0.0, 5.0, DEFAULTS["stop_buf"], 0.25,
+                             help=T["stop_help"], key="bt_buf")
         max_risk = st.slider(T["max_risk"], 0.0, 15.0, 0.0, 0.5, help=T["max_risk_help"],
                              key="bt_maxrisk")
         mkt = st.selectbox(T["mkt_filter"], core.MARKET_FILTERS, help=T["mkt_help"],
+                           index=core.MARKET_FILTERS.index(DEFAULTS["market"]),
                            format_func=lambda f: T["mkt_opts"][f], key="bt_mkt")
     if max_risk and max_risk <= stop_buf:
         st.warning(T["bt_risk_warn"].format(m=max_risk, b=stop_buf))
