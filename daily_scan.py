@@ -7,10 +7,16 @@ VISAR daily auto-scan — runs on GitHub Actions every weekday after the US clos
 A push is sent on every run — with signals, or with the reason nothing was found.
 The journal de-duplicates by date + setup + ticker, so re-runs and holidays are harmless.
 
-Settings come from environment variables (GitHub → Settings → Secrets and variables → Actions):
-  NTFY_TOPIC  — your private ntfy topic name (secret). Without it the push is skipped.
-  MIN_RS      — RS filter for the auto-scan (default 70)
-  APP_URL     — link opened when you tap the notification
+Settings come from environment variables — the `env:` block in .github/workflows/daily-scan.yml:
+  NTFY_TOPIC   — your private ntfy topic name (repository secret). Without it the push is skipped.
+  MIN_RS       — minimum relative strength, 0–99 (default 70)
+  MIN_VOL      — minimum volume vs 20-day average, e.g. 1.5; 0 = no filter (default 0)
+  STOP_BUF     — stop buffer below the level, % (default 1)
+  MAX_RISK     — skip signals whose stop is farther than this %, 0 = no limit (default 0)
+  LOOKBACK     — candles to break for breakout / retest, 2 or 3 (default 3)
+  REPEAT_DAYS  — don't log the same stock + setup again within this many trading days,
+                 0 = log every day (default 10, like the backtest's holding period)
+  APP_URL      — link opened when you tap the notification
 """
 import os
 import sys
@@ -18,13 +24,28 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 
 import core
 
 JOURNAL = Path(__file__).parent / "journal" / "signals.csv"
-MIN_RS = int(os.getenv("MIN_RS", "70"))
+def _env(name, default, cast=float):
+    v = os.getenv(name, "").strip()
+    try:
+        return cast(v) if v else default
+    except ValueError:
+        print(f"bad {name}={v!r}, using {default}")
+        return default
+
+
+MIN_RS = _env("MIN_RS", 70, int)
+MIN_VOL = _env("MIN_VOL", 0.0)
+STOP_BUF = _env("STOP_BUF", 1.0)
+MAX_RISK = _env("MAX_RISK", 0.0)
+LOOKBACK = _env("LOOKBACK", 3, int)
+REPEAT_DAYS = _env("REPEAT_DAYS", 10, int)
 APP_URL = os.getenv("APP_URL", "https://dmitry-screener.streamlit.app")
 TOPIC = os.getenv("NTFY_TOPIC", "").strip()
 NAMES = {"breakout": "Пробой", "retest": "Ретест", "vcp": "VCP"}
@@ -54,18 +75,39 @@ def last_dates(prices, tickers):
     return pd.Series(out, dtype=object)
 
 
+SKIPPED = {}
+
+
+def drop_repeats(res, mode, old, data_date):
+    """Skip a stock if the same setup was already logged within REPEAT_DAYS trading days."""
+    if not REPEAT_DAYS or res.empty or old is None or old.empty:
+        return res
+    prev = old[(old["mode"] == mode) & (old["date"].astype(str) < data_date)]
+    if prev.empty:
+        return res
+    last = prev.groupby("ticker")["date"].max().astype(str)
+    gap = {t: np.busday_count(d, data_date) for t, d in last.items()}
+    keep = res["ticker"].map(lambda t: gap.get(t, 10**6) > REPEAT_DAYS)
+    skipped = (~keep).sum()
+    if skipped:
+        SKIPPED[mode] = int(skipped)
+        print(f"{mode}: {skipped} repeat signal(s) skipped")
+    return res[keep].reset_index(drop=True)
+
+
 def build_message(results, data_date):
     lines = []
     for mode in ("vcp", "retest", "breakout"):          # most selective first
         res = results[mode]
+        rep = f" (+{SKIPPED[mode]} повтор.)" if SKIPPED.get(mode) else ""
         if res.empty:
-            lines.append(f"{NAMES[mode]}: 0")
+            lines.append(f"{NAMES[mode]}: 0{rep}")
             continue
         top = ", ".join(f"{r.ticker} ({r.rs})" for r in res.head(6).itertuples())
         more = f" +{len(res) - 6}" if len(res) > 6 else ""
-        lines.append(f"{NAMES[mode]}: {len(res)} — {top}{more}")
+        lines.append(f"{NAMES[mode]}: {len(res)} — {top}{more}{rep}")
     d = datetime.strptime(data_date, "%Y-%m-%d").strftime("%d.%m.%Y")
-    return f"Свечи на {d}, RS ≥ {MIN_RS}\n" + "\n".join(lines)
+    return f"Свечи на {d}, RS ≥ {MIN_RS}, стоп −{STOP_BUF:g}%\n" + "\n".join(lines)
 
 
 def main():
@@ -94,12 +136,15 @@ def main():
     fresh = universe[universe["ticker"].isin(dates[dates == data_date].index)]
     print(f"data date: {data_date}, fresh tickers: {len(fresh)}")
 
-    results = {m: core.scan(prices, fresh, m, lookback=3, drop_unclosed=True,
-                            min_vol_ratio=0.0, min_rs=MIN_RS)
+    print(f"settings: RS≥{MIN_RS}, vol≥{MIN_VOL}, stop buffer {STOP_BUF}%, "
+          f"max risk {MAX_RISK or '—'}%, lookback {LOOKBACK}, repeat {REPEAT_DAYS}d")
+    results = {m: core.scan(prices, fresh, m, LOOKBACK, True, MIN_VOL, MIN_RS,
+                            stop_buf=STOP_BUF, max_risk=MAX_RISK)
                for m in core.MODES}
 
-    new = pd.concat([core.journal_rows(results[m], m) for m in core.MODES], ignore_index=True)
     old = pd.read_csv(JOURNAL) if JOURNAL.exists() else None
+    results = {m: drop_repeats(results[m], m, old, data_date) for m in core.MODES}
+    new = pd.concat([core.journal_rows(results[m], m) for m in core.MODES], ignore_index=True)
     before = 0 if old is None else len(old)
     journal = core.merge_journal(old, new)
     JOURNAL.parent.mkdir(exist_ok=True)
