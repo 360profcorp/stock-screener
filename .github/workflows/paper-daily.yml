@@ -3,8 +3,8 @@ name: Paper portfolio (Retest RS-first)
 # Paper trading only — no broker, no orders. NOT scheduled: enable the cron line only after
 # the PR is reviewed and merged (Task 10/10B: do not deploy).
 on:
-  # schedule:
-  #   - cron: "45 21 * * 1-5"   # ~5:45 PM New York (summer) / 4:45 PM (winter), after the close
+   schedule:
+     - cron: "45 21 * * 1-5"   # ~5:45 PM New York (summer) / 4:45 PM (winter), after the close
   workflow_dispatch:
     inputs:
       new_experiment:
