@@ -37,7 +37,8 @@ TIMINGS = PRE_OPEN | {"close"}
 
 def replay(trades, data, initial_cash=10000., risk_fraction=.01,
            max_positions=5, max_new_per_day=3, max_position_fraction=.20,
-           cost_bps=10., start=None, end=None, entry_timing="close", open_at_end="mark"):
+           cost_bps=10., start=None, end=None, entry_timing="close", open_at_end="mark",
+           record_decisions=False):
     """Replay precomputed ticker trades; return (equity, executions, metrics).
 
     cost_bps: per-side combined commission/slippage in basis points.
@@ -47,6 +48,9 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
     exit day, hence not reusable for entries the same day (conservative).
     Whole shares, no leverage, no short sales, fixed stops as provided.
     One position per ticker: the portfolio, not the trade simulator, owns tickers.
+    record_decisions (Task 10 audit, default off = unchanged output): metrics['decisions'] lists
+    every candidate in processing order with its outcome ('entered' or the skip reason) and
+    shares; the curve gets a 'holdings' column (sorted (ticker, shares) at each close).
     """
     if initial_cash <= 0 or not 0 < risk_fraction <= 1 or not 0 < max_position_fraction <= 1:
         raise ValueError('Invalid capital/risk settings')
@@ -109,23 +113,31 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
     equity_rows, fills = [], []
     fee = cost_bps / 10000.
     counters = defaultdict(int)
+    decisions = []
 
     def try_enter(r, day, equity_basis, new_count):
         """Admit and size one candidate; returns True if entered."""
         nonlocal cash
         ticker = r['ticker']
+
+        def skip(reason):
+            skipped[reason] += 1
+            if record_decisions:
+                decisions.append(dict(day=day, ticker=ticker, rs=r.get('rs'),
+                                      outcome=reason, shares=0))
+            return False
         if ticker not in frames or day not in frames[ticker] or (
                 r['exit_date'] is not None and r['exit_date'] not in frames[ticker]):
-            skipped['missing_prices'] += 1; return False
+            return skip('missing_prices')
         if ticker in held:
-            skipped['ticker_open'] += 1; return False
+            return skip('ticker_open')
         if len(held) >= max_positions:
-            skipped['positions'] += 1; return False
+            return skip('positions')
         if new_count >= daily_cap:
-            skipped['daily_entries'] += 1; return False
+            return skip('daily_entries')
         entry, stop = float(r['entry']), float(r['stop'])
         if not np.isfinite(entry) or not np.isfinite(stop) or entry <= stop or stop <= 0:
-            skipped['invalid'] += 1; return False
+            return skip('invalid')
         risk_budget = equity_basis * risk_fraction
         position_cap = equity_basis * max_position_fraction
         by_risk = risk_budget / (entry - stop)
@@ -133,7 +145,7 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
         by_cash = cash / (entry * (1 + fee))
         qty = int(min(by_risk, by_cap, by_cash))
         if qty < 1:
-            skipped['capital_or_risk'] += 1; return False
+            return skip('capital_or_risk')
         if by_cash < min(by_risk, by_cap):
             counters['cash_limited_entries'] += 1     # size cut by free cash, not by risk
         spend = qty * entry * (1 + fee)
@@ -141,6 +153,9 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
         held[ticker] = {**r, 'qty': qty, 'entry_cost': spend,
                         'risk_dollars': qty * (entry - stop)}
         counters['entries_' + ('pre_open' if r['entry_at'] in PRE_OPEN else 'close')] += 1
+        if record_decisions:
+            decisions.append(dict(day=day, ticker=ticker, rs=r.get('rs'), outcome='entered',
+                                  shares=qty))
         return True
 
     def book_exit(ticker, day, price, status, exits):
@@ -188,8 +203,10 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
                           'liquidated', exits)
         cash += sum(exits)
         market_value = sum(p['qty'] * last_prices.get(t, p['entry']) for t, p in held.items())
-        equity_rows.append(dict(date=day, equity=cash+market_value, cash=cash,
-                                open_positions=len(held)))
+        row = dict(date=day, equity=cash+market_value, cash=cash, open_positions=len(held))
+        if record_decisions:
+            row['holdings'] = tuple(sorted((t, p['qty']) for t, p in held.items()))
+        equity_rows.append(row)
     curve = pd.DataFrame(equity_rows)
     if curve.empty:
         raise ValueError('No trading dates inside the requested period')
@@ -221,4 +238,6 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
                    entries_pre_open=counters['entries_pre_open'],
                    entries_close=counters['entries_close'],
                    note='Precomputed trade fills; daily-close mark-to-market; no intraday portfolio simulation.')
+    if record_decisions:
+        metrics['decisions'] = decisions
     return curve, executions, metrics

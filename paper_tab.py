@@ -20,7 +20,12 @@ TX = {
                exp="Ожидание", trades="Сделок", win="В плюсе", cur_dd="Текущая просадка",
                eq="Капитал против SPY", ddc="Просадка, %", pos="Открытые позиции",
                pend="Ордера на следующую сессию", led="Закрытые сделки", sig="Сигналы последней сессии",
-               orders="Журнал ордеров", none="—", updated="Обновлено: {u} · данные на {d}"),
+               orders="Журнал ордеров", none="—", updated="Обновлено: {u} · данные на {d}",
+               fwd="**Только форвард:** сделки по сигналам, записанным до открытия сессии. "
+                   "Начало: {s}. Сигналов, записанных с опозданием и не торговавшихся: {late}.",
+               bf="⚠️ Реконструкция истории (backfill) — НЕ форвард-результат",
+               bf_note="Пересчитано задним числом по историческим данным. Не смешивается с "
+                       "форвард-портфелем и не является результатом торговли."),
     "en": dict(tab="📒 Paper", title="Paper portfolio: Retest, RS-first",
                note="Virtual $10,000 account, no broker. Signals are recorded after the close, "
                     "bought at the next open, stop 3% under the level, exit after 20 days.",
@@ -30,7 +35,12 @@ TX = {
                eq="Equity vs SPY", ddc="Drawdown, %", pos="Open positions",
                pend="Orders for the next session", led="Closed trades",
                sig="Signals of the last session", orders="Order log", none="—",
-               updated="Updated: {u} · data as of {d}"),
+               updated="Updated: {u} · data as of {d}",
+               fwd="**Forward only:** trades from signals recorded before the session open. "
+                   "Started {s}. Late signals stored but not traded: {late}.",
+               bf="⚠️ Reconstructed history (backfill) — NOT forward results",
+               bf_note="Recomputed after the fact from historical data. Kept separate from "
+                       "the forward portfolio; not a trading result."),
 }
 
 
@@ -43,9 +53,12 @@ def render(lang="ru"):
     st.subheader(X["title"])
     st.caption(X["note"])
     state = store.load_state(store.STATE_FILE)
-    if not state or not state.get("equity"):
+    if not state or not state.get("equity") or state.get("kind") != "forward":
         st.info(X["empty"])
+        _backfill(X)
         return
+    late = sum(o.get("outcome") == "not_traded_late" for o in state.get("orders_log", []))
+    st.markdown(X["fwd"].format(s=state.get("start"), late=late))
     init = state["config"]["initial_cash"]
     eq = pd.DataFrame(state["equity"])
     eq["date"] = pd.to_datetime(eq["date"])
@@ -121,3 +134,20 @@ def render(lang="ru"):
     with st.expander(X["orders"]):
         st.dataframe(pd.DataFrame(state["orders_log"]).iloc[::-1].head(200),
                      hide_index=True, use_container_width=True)
+    _backfill(X)
+
+
+def _backfill(X):
+    """Reconstructed history, if any — separate section, never mixed with forward numbers."""
+    bf = store.load_state(store.paths("backfill")["state_file"])
+    if not bf or bf.get("kind") != "backfill" or not bf.get("equity"):
+        return
+    with st.expander(X["bf"], expanded=False):
+        st.warning(X["bf_note"])
+        eq = pd.DataFrame(bf["equity"])
+        m = pm.performance(eq, pd.DataFrame(bf["ledger"]), bf["config"]["initial_cash"])
+        st.dataframe(pd.DataFrame([{k: m[k] for k in ("return_pct", "max_drawdown_pct",
+                                                      "profit_factor", "expectancy_r",
+                                                      "trades", "spy_return_pct")}]).round(2),
+                     hide_index=True, use_container_width=True)
+        st.line_chart(eq.set_index("date")["equity"])

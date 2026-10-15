@@ -3,8 +3,9 @@
 A) screener_vs_history: scan_day() on data truncated at day D must find exactly the Retest
    signals that backtest.find_signals() finds at D (same tickers, level, stop base, RS),
    and the same eligible set as simulate()'s RS / market filters.
-B) stepper_vs_replay: the day-by-day PaperPortfolio, fed day by day, must produce the same
-   fills, exits, open positions and equity curve as
+B) stepper_vs_replay: the day-by-day PaperPortfolio, fed day by day, must produce exactly
+   the same candidate order, accept/reject decision and reason, share counts, fills, exits,
+   cash, holdings and equity on every session as
    simulate(entry_at="open", one_per_ticker=False, include_open=True) + RS-first order +
    portfolio_bt.replay(open_at_end="mark")  (the corrected Task 6 engine).
 """
@@ -14,7 +15,7 @@ import pandas as pd
 import backtest as bt
 import portfolio_bt as pf
 from paper.config import DEFAULT
-from paper.portfolio import PaperPortfolio
+from paper.portfolio import PaperPortfolio, new_state
 from paper.screener import rank_rs_first, scan_day, truncate
 
 
@@ -91,10 +92,11 @@ def reference_replay(sig, data, market_ok, start, end, cfg=DEFAULT):
                      risk_fraction=cfg.risk_fraction, max_positions=cfg.max_positions,
                      max_new_per_day=cfg.max_new_per_day,
                      max_position_fraction=cfg.max_position_fraction, cost_bps=cfg.cost_bps,
-                     start=start, end=end, open_at_end="mark")
+                     start=start, end=end, open_at_end="mark", record_decisions=True)
 
 
-def run_stepper(sig, data, market_ok, start, end, cfg=DEFAULT, scanner=None):
+def run_stepper(sig, data, market_ok, start, end, cfg=DEFAULT, scanner=None,
+                kind="verification"):
     """
     Drive PaperPortfolio over [start, end]. Signals come from `sig` (fast path) or, if
     scanner=(frames, spy) is given, from scan_day() on truncated data each day (live path).
@@ -105,7 +107,7 @@ def run_stepper(sig, data, market_ok, start, end, cfg=DEFAULT, scanner=None):
     start, end = pd.Timestamp(start).normalize(), pd.Timestamp(end).normalize()
     idx = bar_index(data)
     el = eligible_signals(sig, market_ok, cfg) if scanner is None else None
-    port = PaperPortfolio(cfg=cfg)
+    port = PaperPortfolio(new_state(cfg, kind), cfg=cfg, kind=kind, trace=True)
 
     def signals_for(day):
         if scanner is not None:
@@ -149,7 +151,31 @@ def compare(port, ref) -> dict:
     eq_new = port.equity_df().set_index("date")["equity"]
     common = eq_ref.index.intersection(eq_new.index)
     eq_ok = len(common) == len(eq_ref) and np.allclose(eq_ref[common], eq_new[common], atol=1e-6)
-    return dict(ok=bool(fills_ok and op_ref == op_new and eq_ok), fills_ref=len(a),
+    # exact per-candidate decisions (same order, same outcome, same shares)
+    comparable = {"entered", "ticker_open", "positions", "daily_entries", "invalid",
+                  "capital_or_risk"}
+    dec_ref = [(str(pd.Timestamp(d["day"]).date()), d["ticker"], d["outcome"], int(d["shares"]))
+               for d in m.get("decisions", [])]
+    dec_new = [(o["session"], o["ticker"], o["outcome"], int(o["shares"]))
+               for o in port.s["orders_log"] if o["outcome"] in comparable]
+    first_diff = next((k for k, (x, y) in enumerate(zip(dec_ref, dec_new)) if x != y), None)
+    dec_ok = dec_ref == dec_new
+    # cash and holdings at every close
+    ref_days = curve.assign(date=pd.to_datetime(curve["date"]).dt.strftime("%Y-%m-%d"))
+    tr = {r["date"]: r for r in (port.trace or [])}
+    cash_ok = hold_ok = len(tr) > 0
+    for r in ref_days.itertuples():
+        t = tr.get(r.date)
+        if t is None or abs(t["cash"] - r.cash) > 1e-6:
+            cash_ok = False
+        if t is None or tuple(t["holdings"]) != tuple(r.holdings):
+            hold_ok = False
+    reasons = pd.Series([d[2] for d in dec_new]).value_counts().to_dict() if dec_new else {}
+    all_ok = bool(fills_ok and op_ref == op_new and eq_ok and dec_ok and cash_ok and hold_ok)
+    return dict(ok=all_ok, decisions_ref=len(dec_ref), decisions_new=len(dec_new),
+                decisions_ok=dec_ok, first_decision_diff=first_diff,
+                decision_outcomes=reasons, cash_ok=bool(cash_ok), holdings_ok=bool(hold_ok),
+                fills_ref=len(a),
                 fills_new=len(b), fills_ok=bool(fills_ok), open_ref=op_ref, open_new=op_new,
                 open_ok=op_ref == op_new, equity_days=len(common), equity_ok=bool(eq_ok),
                 final_ref=float(eq_ref.iloc[-1]) if len(eq_ref) else None,

@@ -5,12 +5,15 @@ Task 10 — Retest RS-first paper trading runner. NO broker, NO real orders.
                                run (fills at the open, stops, 20-day exits, mark-to-market),
                                scans the closed session, records signals with timestamps
                                BEFORE the next session, updates ML labels, saves state.
+  python paper_run.py backfill YYYY-MM-DD   reconstructed history into paper/backfill/
+                               (labelled backfill, never mixed with forward results)
   python paper_run.py verify   real-data equivalence report (scanner vs history,
                                paper portfolio vs the Task 6 replay engine).
 
 State:  paper/state/portfolio.json (+ CSV exports, summary.json)
 ML:     paper/data/signals.csv  (all raw Retest detections with as-of features + labels)
 """
+import hashlib
 import json
 import os
 import sys
@@ -62,21 +65,45 @@ def closed_data_date(frames: dict, now: datetime) -> pd.Timestamp:
     return pd.Timestamp(d).normalize()
 
 
-def daily(universe=None, prices=None, now=None, state_path=store.STATE_FILE,
-          signals_path=store.SIGNALS_FILE, out_dir=store.STATE_DIR, cfg=DEFAULT) -> dict:
+def _source_meta(frames, spy, day, now, universe_sig):
+    last = pd.Series({t: df.index[-1] for t, df in frames.items()})
+    try:
+        import yfinance
+        yf_ver = yfinance.__version__
+    except Exception:
+        yf_ver = None
+    return dict(downloaded_at=now.isoformat(timespec="seconds"), source="yahoo/yfinance",
+                yfinance=yf_ver, bar_date=str(pd.Timestamp(day).date()),
+                tickers_total=len(frames),
+                tickers_with_bar=int(sum(day in df.index for df in frames.values())),
+                latest_bar_in_download=str(last.max().date()),
+                spy_last_bar=str(spy.index[-1].date()) if spy is not None else None,
+                universe_sha=universe_sig)
+
+
+def daily(universe=None, prices=None, now=None, root=ROOT, cfg=DEFAULT) -> dict:
+    """FORWARD paper trading (acceptance 1): only signals recorded before their execution
+    session's open are traded; missed sessions are processed for exits/marks only."""
     now = now or datetime.now(timezone.utc)
+    P = store.paths("forward", root)
+    universe = core.get_sp500() if universe is None else universe
     frames, spy, sectors = load_market(universe, prices)
     data_date = closed_data_date(frames, now)
-    state = store.load_state(state_path) or new_state(cfg)
-    if state["config"] != cfg.as_dict():
-        raise RuntimeError("paper/state config differs from paper/config.py — a strategy change "
-                           "needs a new portfolio (move the old state away first)")
-    port = PaperPortfolio(state, cfg)
+    sid = store.strategy_id(cfg)
+    state = store.load_state(P["state_file"]) or new_state(cfg, "forward", sid)
+    if state.get("kind") != "forward" or state["config"] != cfg.as_dict():
+        raise RuntimeError("paper/state is not a forward portfolio of this exact strategy "
+                           "configuration — a strategy change needs a new portfolio")
+    port = PaperPortfolio(state, cfg, kind="forward")
     last = pd.Timestamp(state["processed_through"]) if state["processed_through"] else None
     sessions = sorted({d for d in spy.index if d <= data_date and (last is None or d > last)})
     if last is None:
         sessions = sessions[-1:]                          # a new portfolio starts today
     run_id = now.strftime("%Y%m%dT%H%M%SZ")
+    gen = now.isoformat(timespec="seconds")
+    fp = store.code_fingerprint(root)
+    usig = hashlib.sha256(",".join(sorted(map(str, universe["ticker"]))).encode()
+                                ).hexdigest()[:12]
     report = dict(run_id=run_id, data_date=str(data_date.date()), sessions=[], events=[])
     for day in sessions:
         tr = truncate(frames, day)
@@ -84,29 +111,57 @@ def daily(universe=None, prices=None, now=None, state_path=store.STATE_FILE,
                     "L": df["Low"].iloc[-1], "C": df["Close"].iloc[-1]}
                 for t, df in tr.items() if df.index[-1] == day}
         spy_close = float(spy.loc[day, "Close"]) if day in spy.index else None
-        report["events"] += port.step(day, bars, spy_close)
+        report["events"] += port.step(day, bars, spy_close, processed_late=day < data_date)
         scan = scan_day(tr, spy, day, cfg, sectors, already_truncated=True)
-        gen = datetime.now(timezone.utc).isoformat(timespec="seconds")
         nxt = store.next_session(day)
-        late = day < data_date                            # caught up after the fact
-        store.append_signals(scan, gen, nxt, late, run_id, signals_path)
+        late = store.is_late(gen, nxt)
+        meta = dict(kind="forward", run_id=run_id, generated_at=gen, signal_date=str(day.date()),
+                    scheduled_for=nxt, late=late, strategy_id=sid,
+                    strategy_version=store.STRATEGY_VERSION, parameters=cfg.as_dict(),
+                    code_fingerprint=fp, source=_source_meta(frames, spy, day, now, usig))
+        store.write_snapshot(day, scan, meta, P["snapshots"])
+        store.append_signals(scan, gen, nxt, late, run_id, P["signals"],
+                             extra=dict(strategy_id=sid, code_version=fp["combined"],
+                                        kind="forward"))
         n = port.queue_signals(day, scan, gen, nxt, late)
         report["sessions"].append(dict(day=str(day.date()), raw=len(scan), queued=n,
                                        late=late))
-    store.update_labels(frames, signals_path)
-    store.save_state(port.s, state_path)
-    store.export_tables(port.s, out_dir)
+    store.update_labels(truncate(frames, data_date), data_date, P["signals"], P["labels"],
+                        port.s, gen)
+    store.save_state(port.s, P["state_file"])
+    store.export_tables(port.s, P["state_dir"])
     perf = pm.performance(port.equity_df(), port.ledger_df(), cfg.initial_cash)
-    summary = dict(updated=now.isoformat(timespec="seconds"), **report,
+    summary = dict(updated=gen, kind="forward", strategy_id=sid, **report,
                    processed_through=port.s["processed_through"], cash=port.s["cash"],
                    open_positions=len(port.s["positions"]),
-                   pending_orders=len(port.s["pending"]), performance=perf)
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    (Path(out_dir) / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
+                   pending_orders=len(port.s["pending"]), performance=perf,
+                   snapshot_integrity_failures=store.verify_snapshots(P["snapshots"]))
+    (P["state_dir"] / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
     print(json.dumps({k: summary[k] for k in ("data_date", "sessions", "processed_through",
                                               "open_positions", "pending_orders")},
                      default=str))
     return summary
+
+
+def backfill(start, end=None, root=ROOT, cfg=DEFAULT) -> dict:
+    """RECONSTRUCTED history in paper/backfill — clearly labelled, never merged with forward."""
+    frames, spy, _ = load_market()
+    sig, data = bt.find_signals(frames, lookback=cfg.lookback, modes=[cfg.mode])
+    market_ok = core.regime_mask(core.market_regime(spy), cfg.market_filter)
+    cal = V.calendar(data)
+    end = pd.Timestamp(end) if end else cal[-1]
+    port = V.run_stepper(sig, data, market_ok, start, end, cfg, kind="backfill")
+    port.s["strategy_id"] = store.strategy_id(cfg)
+    port.s["note"] = "RECONSTRUCTED BACKFILL — not forward paper trading"
+    P = store.paths("backfill", root)
+    store.save_state(port.s, P["state_file"])
+    store.export_tables(port.s, P["state_dir"])
+    perf = pm.performance(port.equity_df(), port.ledger_df(), cfg.initial_cash)
+    (P["state_dir"] / "summary.json").write_text(json.dumps(dict(
+        kind="backfill", start=str(pd.Timestamp(start).date()), end=str(end.date()),
+        generated=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        performance=perf), indent=1, default=str))
+    return perf
 
 
 def verify(out=ROOT / "research" / "results" / "task10", n_screen_days=25, live_days=30,
@@ -149,12 +204,17 @@ def verify(out=ROOT / "research" / "results" / "task10", n_screen_days=25, live_
           f"B) Paper portfolio vs replay, full period: fills {rB['fills_new']}/{rB['fills_ref']}, "
           f"open positions equal {rB['open_ok']}, equity identical on {rB['equity_days']} days "
           f"({rB['equity_ok']}), final {rB['final_new']:.2f} vs {rB['final_ref']:.2f}",
+          f"   decisions identical in order/outcome/shares: {rB['decisions_ok']} "
+          f"({rB['decisions_new']}/{rB['decisions_ref']}; outcomes {rB['decision_outcomes']}), "
+          f"cash every close {rB['cash_ok']}, holdings every close {rB['holdings_ok']}",
           f"C) Live path (daily scan) vs replay, last {live_days} sessions: fills "
-          f"{rC['fills_new']}/{rC['fills_ref']}, equity identical {rC['equity_ok']}, "
-          f"open positions equal {rC['open_ok']}", "", "| Day | OK | Detail |", "|---|---|---|"]
+          f"{rC['fills_new']}/{rC['fills_ref']}, decisions {rC['decisions_ok']} "
+          f"({rC['decisions_new']}/{rC['decisions_ref']}), cash {rC['cash_ok']}, holdings "
+          f"{rC['holdings_ok']}, equity {rC['equity_ok']}, open positions {rC['open_ok']}",
+          "", "| Day | OK | Detail |", "|---|---|---|"]
     md += [f"| {d} | {ok} | {s} |" for d, ok, s in res["screener"]["detail"]]
     (out / "VERIFY.md").write_text("\n".join(md) + "\n")
-    print("\n".join(md[:9]))
+    print("\n".join(md[:10]))
     return res
 
 
@@ -162,6 +222,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     if cmd == "daily":
         daily()
+    elif cmd == "backfill":
+        backfill(sys.argv[2] if len(sys.argv) > 2 else "2025-01-02")
     elif cmd == "verify":
         r = verify()
         sys.exit(0 if r["all_ok"] else 1)

@@ -4,6 +4,7 @@ with backtest.find_signals, no look-ahead, persistence, signal timestamps, metri
 Synthetic, seeded data only (deterministic). Run: python -m unittest test_paper -v
 """
 import json
+import os
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -98,7 +99,9 @@ class NoLookAhead(unittest.TestCase):
             df.loc[late, ["Open", "High", "Low", "Close"]] *= 3.0
         sig2, data2 = bt.find_signals(fr2, modes=["retest"])
         b = V.run_stepper(sig2, data2, mo, S, D, CFG)
-        self.assertEqual(a.s["ledger"], b.s["ledger"])
+        clock = ("generated_at", "signal_generated_at")                       # wall clock only
+        strip0 = lambda lst: [{k: v for k, v in o.items() if k not in clock} for o in lst]
+        self.assertEqual(strip0(a.s["ledger"]), strip0(b.s["ledger"]))
         self.assertEqual(a.s["equity"], b.s["equity"])
         strip = lambda lst: [{k: v for k, v in o.items() if k != "generated_at"} for o in lst]
         self.assertEqual(strip(a.s["pending"]), strip(b.s["pending"]))      # wall clock aside
@@ -137,7 +140,7 @@ class PortfolioMechanics(unittest.TestCase):
                                                          eligible=True, rank=1)]))
         p.step("2026-01-06", {"AAA": self.bars(94, 96, 93, 95)})
         self.assertEqual(p.s["positions"], {})
-        self.assertEqual(p.s["orders_log"][-1]["status"], "no_trade_open_below_stop")
+        self.assertEqual(p.s["orders_log"][-1]["outcome"], "no_trade_open_below_stop")
 
     def test_order_waits_for_next_bar(self):
         p = PaperPortfolio(cfg=DEFAULT)
@@ -203,8 +206,7 @@ class PersistenceAndTimestamps(unittest.TestCase):
         uni = pd.DataFrame({"ticker": list(fr), "name": "", "sector": "Tech"})
         days = spy.index
         with tempfile.TemporaryDirectory() as d:
-            kw = dict(universe=uni, state_path=Path(d) / "p.json",
-                      signals_path=Path(d) / "s.csv", out_dir=Path(d), cfg=CFG)
+            kw = dict(universe=uni, root=Path(d), cfg=CFG)
             cut = lambda k: prices[prices.index <= days[k]]
             now = lambda k: datetime(days[k].year, days[k].month, days[k].day, 23, 0,
                                      tzinfo=timezone.utc)
@@ -212,13 +214,21 @@ class PersistenceAndTimestamps(unittest.TestCase):
             self.assertEqual([x["day"] for x in s1["sessions"]], [str(days[300].date())])
             s2 = paper_run.daily(prices=cut(304), now=now(304), **kw)     # 4 sessions missed
             self.assertEqual(len(s2["sessions"]), 4)
-            self.assertTrue(all(x["late"] for x in s2["sessions"][:-1]))
+            self.assertTrue(all(x["late"] and x["queued"] == 0 for x in s2["sessions"][:-1]))
             self.assertFalse(s2["sessions"][-1]["late"])
             s3 = paper_run.daily(prices=cut(304), now=now(304), **kw)     # same data again
             self.assertEqual(s3["sessions"], [])
-            st = json.loads((Path(d) / "p.json").read_text())
+            P = store.paths("forward", Path(d))
+            st = json.loads(P["state_file"].read_text())
             self.assertEqual(st["processed_through"], str(days[304].date()))
-            self.assertTrue((Path(d) / "summary.json").exists())
+            self.assertEqual(st["kind"], "forward")
+            self.assertTrue((P["state_dir"] / "summary.json").exists())
+            # the 4 caught-up sessions produced snapshots, flagged late, never traded forward
+            self.assertEqual(len(list(P["snapshots"].glob("*.json"))), 5)
+            late_logged = [o for o in st["orders_log"] if o["outcome"] == "not_traded_late"]
+            self.assertTrue(late_logged)
+            self.assertTrue(all(t["origin"] == "forward" and not t["entry_processed_late"]
+                                or t["entry_processed_late"] for t in st["ledger"]))
 
     def test_unfinished_bar_is_ignored(self):
         import paper_run
@@ -226,6 +236,100 @@ class PersistenceAndTimestamps(unittest.TestCase):
         today = fr["T00"].index[-1]
         intraday = datetime(today.year, today.month, today.day, 18, 0, tzinfo=timezone.utc)
         self.assertEqual(paper_run.closed_data_date(fr, intraday), fr["T00"].index[-2])
+
+
+class Acceptance(unittest.TestCase):
+    """Task 10 acceptance requirements 1-4."""
+
+    def scan(self, ticker="AAA", rs=90., stop=95.):
+        return pd.DataFrame([dict(ticker=ticker, signal_date="2026-01-05", rs=rs, stop=stop,
+                                  eligible=True, rank=1, close=100., level=98.)])
+
+    # 1) forward / backfill / historical strictly separated
+    def test_forward_never_trades_late_signals(self):
+        p = PaperPortfolio(cfg=DEFAULT, kind="forward") if False else \
+            PaperPortfolio(__import__("paper.portfolio").portfolio.new_state(DEFAULT, "forward"),
+                           DEFAULT, kind="forward")
+        p.step("2026-01-05", {})
+        n = p.queue_signals("2026-01-05", self.scan(), "2026-01-06T15:00:00+00:00",
+                            "2026-01-06", late=True)
+        self.assertEqual(n, 0)
+        self.assertEqual(p.s["pending"], [])
+        self.assertEqual(p.s["orders_log"][-1]["outcome"], "not_traded_late")
+
+    def test_backfill_trades_late_signals_but_is_labelled(self):
+        from paper.portfolio import new_state
+        p = PaperPortfolio(new_state(DEFAULT, "backfill"), DEFAULT, kind="backfill")
+        p.step("2026-01-05", {})
+        p.queue_signals("2026-01-05", self.scan(), late=True)
+        p.step("2026-01-06", {"AAA": {"O": 100, "H": 101, "L": 90, "C": 92}})
+        self.assertEqual(p.s["ledger"][0]["origin"], "backfill")
+
+    def test_kinds_cannot_be_mixed(self):
+        from paper.portfolio import new_state
+        with self.assertRaises(ValueError):
+            PaperPortfolio(new_state(DEFAULT, "backfill"), DEFAULT, kind="forward")
+        self.assertNotEqual(store.paths("forward")["state_file"],
+                            store.paths("backfill")["state_file"])
+
+    def test_is_late_boundary_is_the_session_open(self):
+        self.assertFalse(store.is_late("2026-01-06T14:29:59+00:00", "2026-01-06"))  # 9:29:59 ET
+        self.assertTrue(store.is_late("2026-01-06T14:30:00+00:00", "2026-01-06"))   # 9:30 ET
+        self.assertFalse(store.is_late("2026-01-05T22:00:00+00:00", "2026-01-06"))
+
+    # 2) immutable snapshots
+    def test_snapshot_write_once_and_tamper_check(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d)
+            meta = dict(strategy_id=store.strategy_id(DEFAULT), parameters=DEFAULT.as_dict(),
+                        code_fingerprint=store.code_fingerprint(),
+                        source=dict(downloaded_at="2026-01-05T22:00:00+00:00"))
+            p = store.write_snapshot("2026-01-05", self.scan(), meta, f)
+            store.write_snapshot("2026-01-05", self.scan(), meta, f)          # identical: ok
+            with self.assertRaises(store.ImmutableError):
+                store.write_snapshot("2026-01-05", self.scan(rs=99.), meta, f)
+            body = json.loads(p.read_text())
+            self.assertEqual(body["meta"]["parameters"]["min_rs"], 85)
+            self.assertIn("combined", body["meta"]["code_fingerprint"])
+            self.assertEqual(body["signals"][0]["rs"], 90.0)
+            self.assertEqual(store.verify_snapshots(f), [])
+            os.chmod(p, 0o644)
+            p.write_text(p.read_text().replace("90.0", "91.0"))
+            self.assertEqual(store.verify_snapshots(f), [p.name])
+
+    def test_strategy_id_changes_with_parameters(self):
+        self.assertNotEqual(store.strategy_id(DEFAULT), store.strategy_id(PaperConfig(min_rs=80)))
+
+    # 4) rejected signals stored; labels only when observable, never rewritten
+    def test_labels_only_when_observable(self):
+        fr, _ = market(13, n_t=1, n=80)
+        f = fr["T00"]
+        sd = f.index[30]
+        with tempfile.TemporaryDirectory() as d:
+            sp, lp = Path(d) / "s.csv", Path(d) / "l.csv"
+            scan = pd.DataFrame([dict(ticker="T00", signal_date=sd, rs=40., eligible=False)])
+            store.append_signals(scan, "x", "y", False, "r", sp)              # rejected signal
+            store.update_labels(fr, f.index[34], sp, lp)                      # 4 bars later
+            a = pd.read_csv(lp).iloc[0]
+            self.assertTrue(pd.isna(a["fwd_ret_5"]) and pd.notna(a["fwd_ret_1"]))
+            self.assertEqual(a["fwd_ret_1_observed"], str(f.index[31].date()))
+            store.update_labels(fr, f.index[60], sp, lp)
+            b = pd.read_csv(lp).iloc[0]
+            self.assertAlmostEqual(b["fwd_ret_5"], f["Close"].iloc[35] / f["Close"].iloc[30] - 1)
+            self.assertEqual(b["fwd_ret_1"], a["fwd_ret_1"])                  # never rewritten
+            fr2 = {"T00": f.assign(Close=f["Close"] * 2)}                     # data revised
+            store.update_labels(fr2, f.index[70], sp, lp)
+            c = pd.read_csv(lp).iloc[0]
+            self.assertEqual(c["fwd_ret_5"], b["fwd_ret_5"])
+            self.assertFalse(pd.read_csv(sp)["eligible"].iloc[0])             # rejected kept
+
+    def test_signal_rows_are_append_only(self):
+        with tempfile.TemporaryDirectory() as d:
+            sp = Path(d) / "s.csv"
+            store.append_signals(self.scan(), "t1", "2026-01-06", False, "r1", sp)
+            before = sp.read_text()
+            store.append_signals(self.scan(rs=10.), "t2", "2026-01-06", True, "r2", sp)
+            self.assertEqual(sp.read_text(), before)
 
 
 class Metrics(unittest.TestCase):
@@ -249,10 +353,10 @@ class Metrics(unittest.TestCase):
         f = fr["T00"]
         d = f.index[10]
         with tempfile.TemporaryDirectory() as tmp:
-            p = Path(tmp) / "s.csv"
+            p, lp = Path(tmp) / "s.csv", Path(tmp) / "l.csv"
             pd.DataFrame([dict(ticker="T00", signal_date=str(d.date()))]).to_csv(p, index=False)
-            store.update_labels(fr, p)
-            r = pd.read_csv(p).iloc[0]
+            store.update_labels(fr, f.index[-1], p, lp)
+            r = pd.read_csv(lp).iloc[0]
         self.assertAlmostEqual(r["fwd_ret_5"], f["Close"].iloc[15] / f["Close"].iloc[10] - 1)
         self.assertAlmostEqual(r["mae_20"], f["Low"].iloc[11:31].min() / f["Close"].iloc[10] - 1)
 
