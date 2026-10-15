@@ -342,6 +342,11 @@ def main(argv=None):
                 for b in ("gc", "warm", "hot", "htb"):
                     row[f"net_base_{b}"] = E.trade_stats(ds, f"net_r_base_{b}").get("mean_r")
                 row["net_stress_hot"] = E.trade_stats(ds, "net_r_stress_hot").get("mean_r")
+                row["median_net_base_warm"] = E.trade_stats(ds, "net_r_base_warm") \
+                    .get("median_r")
+                row["tiny_risk_trades"] = int(((ds["trade_status"] == "closed") &
+                                               (ds["risk_pct"] < 0.5)).sum()) \
+                    if "risk_pct" in ds and len(ds) else 0
                 dn = ds[E.non_overlapping(ds)]
                 row["nonoverlap_trades"] = E.trade_stats(dn, "gross_r").get("trades", 0)
                 row["nonoverlap_gross"] = E.trade_stats(dn, "gross_r").get("mean_r")
@@ -508,7 +513,9 @@ def build_report(info, umeta, uni, cov, miss, counts, rej, long_ref, long_1500, 
           "R per trade: gross, then net of 10 bps/side slippage+commission, dividends paid and "
           "borrow at GC 0.25 % / warm 3 % / hot 10 % / HTB 30 % APR; `net_stress_hot` = 50 "
           "bps/side + 10 %. Unknown borrow → no net figure. `gap_no_trade`: opened at/above the "
-          "stop (skipped).", "", md_table(short_tbl),
+          "stop (skipped). Costs are expressed in R, so trades whose entry is very close to "
+          "the stop (`tiny_risk_trades`, risk < 0.5 %) inflate net-R means; use the median "
+          "column alongside.", "", md_table(short_tbl),
           "## 7. Price-move labels (signal-close origin, eligible, %, signed by direction)", "",
           md_table(px_tbl),
           "## 8. Equivalence with production", "",
