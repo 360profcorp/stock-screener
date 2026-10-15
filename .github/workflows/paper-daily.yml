@@ -1,0 +1,53 @@
+name: Paper portfolio (Retest RS-first)
+
+# Paper trading only — no broker, no orders. NOT scheduled: enable the cron line only after
+# the PR is reviewed and merged (Task 10/10B: do not deploy).
+on:
+  # schedule:
+  #   - cron: "45 21 * * 1-5"   # ~5:45 PM New York (summer) / 4:45 PM (winter), after the close
+  workflow_dispatch:
+    inputs:
+      new_experiment:
+        description: "Archive the current forward experiment and start a new one with this label (only after a strategy change)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-portfolio
+  cancel-in-progress: false            # never run two state updates at once
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Run paper session(s)
+        run: |
+          if [ -n "${{ github.event.inputs.new_experiment }}" ]; then
+            python paper_run.py daily --new-experiment "${{ github.event.inputs.new_experiment }}"
+          else
+            python paper_run.py daily
+          fi
+      - name: Back up state as a run artifact (kept 90 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-state-${{ github.run_id }}
+          path: |
+            paper/state
+            paper/data
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Persist state (retries, fails loudly on conflict)
+        run: |
+          git config user.name "visar-paper"
+          git config user.email "visar-paper@users.noreply.github.com"
+          scripts/persist_state.sh "Paper portfolio $(date -u +%F_%H%M)" paper/state paper/data
