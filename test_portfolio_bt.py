@@ -46,7 +46,9 @@ class PortfolioTests(unittest.TestCase):
 
     def test_window_candidates_reconcile(self):
         trades = self.trades()
-        curve, fills, metrics = replay(trades, self.data, start=self.days[0], end=self.days[2])
+        # v3 rule kept as an explicit option (Task 6 default is open_at_end='mark')
+        curve, fills, metrics = replay(trades, self.data, start=self.days[0], end=self.days[2],
+                                       open_at_end='skip')
         self.assertEqual(metrics['candidate_trades'], 3)
         self.assertEqual(metrics['executed_trades'], 0)
         self.assertEqual(metrics['skipped']['outside_window_or_invalid_dates'], 3)
@@ -55,7 +57,8 @@ class PortfolioTests(unittest.TestCase):
         trades = self.trades().copy()
         trades.loc[0, 'exit_date'] = self.days[1]
         trades.loc[0, 'exit'] = 105.
-        _, fills, metrics = replay(trades, self.data, start=self.days[0], end=self.days[2])
+        _, fills, metrics = replay(trades, self.data, start=self.days[0], end=self.days[2],
+                                   open_at_end='skip')
         self.assertEqual(metrics['candidate_trades'], 3)
         self.assertEqual(metrics['executed_trades'], 1)
         self.assertEqual(metrics['skipped']['outside_window_or_invalid_dates'], 2)
