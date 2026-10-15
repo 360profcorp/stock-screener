@@ -1,0 +1,88 @@
+{
+ "updated": "2026-10-15T04:11:01+00:00",
+ "kind": "forward",
+ "experiment": "forward-retest-rs-first-1.0+cfg.d4b20dc660ae",
+ "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
+ "code_fingerprint": "17454c61f631",
+ "revision": 1,
+ "run_id": "20261015T041101Z",
+ "data_date": "2026-10-14",
+ "sessions": [
+  {
+   "day": "2026-10-14",
+   "raw": 28,
+   "queued": 6,
+   "late": false,
+   "processed_late": false
+  }
+ ],
+ "events": [],
+ "processed_through": "2026-10-14",
+ "cash": 10000.0,
+ "open_positions": 0,
+ "pending_orders": 6,
+ "forward": {
+  "genuine_forward": {
+   "available": true,
+   "contaminated_since": null,
+   "genuine_through": "2026-10-14",
+   "reason": null,
+   "metrics": {
+    "days": 1,
+    "final_equity": 10000.0,
+    "return_pct": 0.0,
+    "cagr_pct": NaN,
+    "max_drawdown_pct": 0.0,
+    "current_drawdown_pct": 0.0,
+    "exposure_pct": 0.0,
+    "spy_price_return_pct": 0.0,
+    "excess_vs_spy_price_pct": 0.0
+   }
+  },
+  "observed_portfolio": {
+   "contains_reconstructed": false,
+   "metrics": {
+    "days": 1,
+    "final_equity": 10000.0,
+    "return_pct": 0.0,
+    "cagr_pct": NaN,
+    "max_drawdown_pct": 0.0,
+    "current_drawdown_pct": 0.0,
+    "exposure_pct": 0.0,
+    "spy_price_return_pct": 0.0,
+    "excess_vs_spy_price_pct": 0.0
+   }
+  },
+  "timely": {
+   "trades": {
+    "closed": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "expectancy_r": null,
+    "expectancy_usd": null,
+    "total_pnl_usd": 0.0
+   },
+   "open_positions": 0,
+   "note": "trade-level statistics, not a counterfactual portfolio return"
+  },
+  "reconstructed": {
+   "trades": {
+    "closed": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "expectancy_r": null,
+    "expectancy_usd": null,
+    "total_pnl_usd": 0.0
+   },
+   "open_positions": 0,
+   "events": []
+  },
+  "late_not_traded": {
+   "count": 0,
+   "signals": []
+  },
+  "late_processed_sessions": [],
+  "benchmark_note": "SPY comparison is price-only (dividends excluded)"
+ },
+ "snapshot_integrity_failures": []
+}
