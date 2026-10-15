@@ -190,6 +190,7 @@ def fetch_all(session=None, timeout=30) -> dict:
                 rec["http"] = r.status_code
                 if r.status_code == 200:
                     rec["sha256"] = hashlib.sha256(r.content).hexdigest()
+                    rec["_raw"] = r.content                  # saved verbatim in the snapshot
                     if kind == "ishares":
                         df, as_of = parse_ishares(r.text)
                         rec.update(ok=len(df) > 50, rows=len(df), as_of=str(as_of),
@@ -204,6 +205,28 @@ def fetch_all(session=None, timeout=30) -> dict:
     return out
 
 
+def align_share_class(tickers, reference) -> dict:
+    """iShares writes share classes without a separator (BRKB, BFB); map such a ticker to the
+    reference spelling (BRK-B) when the reference list has exactly that form. {old: new}."""
+    ref = set(reference)
+    out = {}
+    for t in tickers:
+        if t in ref or len(t) < 3:
+            continue
+        cand = f"{t[:-1]}-{t[-1]}"
+        if cand in ref:
+            out[t] = cand
+    return out
+
+
+def removed_since(changes: pd.DataFrame, start, current: set) -> list:
+    """Tickers removed from the index on/after `start` and not in it now (for PIT tests)."""
+    if changes is None or not len(changes):
+        return []
+    ch = changes[changes["date"] >= pd.Timestamp(start)]
+    return sorted(set(ch["removed"].dropna()) - set(current))
+
+
 def build_universe(fetched: dict) -> tuple:
     """(universe DataFrame, meta dict). Prefers dated iShares lists, else Wikipedia."""
     lists, as_of, changes, names, sectors, source = {}, {}, {}, {}, {}, {}
@@ -215,7 +238,10 @@ def build_universe(fetched: dict) -> tuple:
         pick = ish or wik
         if pick is None:
             continue
-        df = pick["_df"]
+        df = pick["_df"].copy()
+        if ish and wik:
+            df["ticker"] = df["ticker"].replace(align_share_class(df["ticker"],
+                                                                  wik["_df"]["ticker"]))
         lists[g] = set(df["ticker"])
         as_of[g] = pick.get("_as_of")
         source[g] = pick["source"]

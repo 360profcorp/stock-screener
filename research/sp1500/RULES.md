@@ -23,6 +23,10 @@ Two effects are measured separately:
 1. **universe expansion** — RS percentile measured against the **S&P 500** cross-section
    (same meaning of "RS 85" as production) for all 1500 stocks;
 2. **RS base change** — RS percentile against the full **1500** cross-section.
+3. (sensitivity, added before any real-data run) **point-in-time S&P 500**: signals of stocks
+   that were members on the signal day, RS against that day's members.
+Entry on a ticker with no bar on the next market session follows production (its next bar);
+`entry_delay_sessions` is recorded so such rows can be excluded.
 
 ## Short hypotheses v1 (independent, fixed) — from the owner-supplied draft
 Source: `SP1500_Shorts_AI_Research_v1` (`research/expansion.py`, prepared against main d54c6dd,
