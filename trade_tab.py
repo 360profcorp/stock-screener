@@ -60,11 +60,12 @@ TX = {
         "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
         "log": "Журнал бота",
         "cols": {"ticker": "Тикер", "mode": "Сетап", "rs": "RS", "close": "Закрытие",
-                 "level": "Уровень", "est": "≈ Цена", "how": "Вход", "date": "Дата",
+                 "level": "Уровень", "est": "≈ Цена", "how": "Когда вход", "date": "Дата",
                  "stop": "Стоп", "est_qty": "≈ Акций", "est_cost": "≈ Сумма $",
-                 "entry_date": "Вход", "entry": "Цена входа", "qty": "Акций",
-                 "days": "Дней", "last": "Сейчас", "pnl_now": "P&L $", "dry": "Тренировка",
-                 "exit_date": "Выход", "exit": "Цена выхода", "reason": "Причина",
+                 "entry_date": "Дата входа", "entry": "Цена входа", "qty": "Акций",
+                 "days": "Дней", "last": "Сейчас", "pnl_now": "P&L сейчас $",
+                 "dry": "Тренировка",
+                 "exit_date": "Дата выхода", "exit": "Цена выхода", "reason": "Причина",
                  "pnl": "P&L $", "r": "R"},
         "reasons": {"stop": "🛑 стоп", "time": "⏱ 20 дней"},
         "how": {"close": "перед закрытием", "open": "на открытии"},
@@ -110,16 +111,76 @@ TX = {
         "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
         "log": "Bot log",
         "cols": {"ticker": "Ticker", "mode": "Setup", "rs": "RS", "close": "Close",
-                 "level": "Level", "est": "≈ Price", "how": "Entry", "date": "Date",
+                 "level": "Level", "est": "≈ Price", "how": "Entry timing", "date": "Date",
                  "stop": "Stop", "est_qty": "≈ Shares", "est_cost": "≈ Amount $",
-                 "entry_date": "Entry", "entry": "Entry price", "qty": "Shares",
-                 "days": "Days", "last": "Now", "pnl_now": "P&L $", "dry": "Training",
-                 "exit_date": "Exit", "exit": "Exit price", "reason": "Reason",
+                 "entry_date": "Entry date", "entry": "Entry price", "qty": "Shares",
+                 "days": "Days", "last": "Now", "pnl_now": "Open P&L $", "dry": "Training",
+                 "exit_date": "Exit date", "exit": "Exit price", "reason": "Reason",
                  "pnl": "P&L $", "r": "R"},
         "reasons": {"stop": "🛑 stop", "time": "⏱ 20 days"},
         "how": {"close": "before the close", "open": "at the open"},
     },
 }
+
+
+PLAN_COLS = ["ticker", "mode", "rs", "close", "stop", "est_qty", "est_cost"]
+ORDER_COLS = ["ticker", "mode", "date", "est", "stop", "qty", "dry"]
+POS_COLS = ["ticker", "mode", "how", "entry_date", "entry", "stop", "qty", "days", "last",
+            "pnl_now", "dry"]
+CLOSED_COLS = ["ticker", "mode", "entry_date", "entry", "exit_date", "exit", "qty", "reason",
+               "pnl", "r", "dry"]
+
+
+def _view(df: pd.DataFrame, cols: list, labels: dict) -> pd.DataFrame:
+    """Columns `cols` (missing ones shown empty) renamed to display labels. Two fields with
+    the same label would crash st.dataframe (PyArrow: duplicate column names), so that is
+    refused here with the conflicting fields named."""
+    shown = [labels.get(c, c) for c in cols]
+    dup = sorted({x for x in shown if shown.count(x) > 1})
+    if dup:
+        raise ValueError("duplicate display labels " +
+                         str({x: [c for c in cols if labels.get(c, c) == x] for x in dup}))
+    return df.reindex(columns=cols).rename(columns=labels)
+
+
+def plan_table(items, T, X) -> pd.DataFrame:
+    df = pd.DataFrame(items).reindex(columns=PLAN_COLS)
+    df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
+    return _view(df, PLAN_COLS, X["cols"])
+
+
+def orders_table(orders, T, X) -> pd.DataFrame:
+    df = pd.DataFrame(orders).reindex(columns=ORDER_COLS)
+    df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
+    return _view(df, ORDER_COLS, X["cols"])
+
+
+def positions_table(pos, T, X, get_prices, today=None) -> pd.DataFrame:
+    df = pd.DataFrame(pos)
+    today = today or time.strftime("%Y-%m-%d")
+    df["days"] = df["entry_date"].map(lambda d: int(np.busday_count(d, today)))
+    try:
+        px = get_prices(tuple(sorted(df["ticker"].unique())))
+        last = {}
+        for t in df["ticker"]:
+            try:
+                last[t] = float(px[t]["Close"].dropna().iloc[-1])
+            except Exception:
+                pass
+        df["last"] = df["ticker"].map(last)
+        df["pnl_now"] = ((df["last"] - df["entry"]) * df["qty"]).round(2)
+    except Exception:                       # prices unavailable: show the positions anyway
+        df["last"], df["pnl_now"] = np.nan, np.nan
+    df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
+    df["how"] = df.get("how", pd.Series(index=df.index, dtype=object)).map(X["how"])
+    return _view(df, POS_COLS, X["cols"])
+
+
+def closed_table(closed, T, X) -> pd.DataFrame:
+    df = pd.DataFrame(closed)
+    df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
+    df["reason"] = df["reason"].map(X["reasons"])
+    return _view(df.iloc[::-1], CLOSED_COLS, X["cols"])
 
 
 def _secret(name):
@@ -197,7 +258,6 @@ def render(T, lang, get_prices):
         if not _secret("GH_TOKEN"):
             st.caption(X["no_gh"])
 
-    C = X["cols"]
     # ---------- plan ----------
     st.subheader(X["plan"])
     plan = state.get("plan")
@@ -206,10 +266,8 @@ def render(T, lang, get_prices):
     else:
         st.caption(X["plan_from"].format(d=plan["date"],
                                          s=X["status"].get(plan.get("status"), plan.get("status"))))
-        df = pd.DataFrame(plan["items"]).reindex(columns=["ticker", "mode", "rs", "close",
-                                                          "stop", "est_qty", "est_cost"])
-        df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-        st.dataframe(df.rename(columns=C), hide_index=True, use_container_width=True)
+        st.dataframe(plan_table(plan["items"], T, X), hide_index=True,
+                     use_container_width=True)
         if plan.get("status") == "new" and state.get("mode") == "manual":
             if plan.get("approved"):
                 st.success(X["approved"])
@@ -237,10 +295,7 @@ def render(T, lang, get_prices):
     orders = state.get("orders") or []
     if orders:
         st.subheader(X["orders"])
-        df = pd.DataFrame(orders)
-        df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-        st.dataframe(df.reindex(columns=["ticker", "mode", "date", "est", "stop", "qty", "dry"])
-                     .rename(columns=C), hide_index=True, use_container_width=True)
+        st.dataframe(orders_table(orders, T, X), hide_index=True, use_container_width=True)
         st.caption(X["orders_note"])
 
     # ---------- open positions ----------
@@ -249,26 +304,8 @@ def render(T, lang, get_prices):
     if not pos:
         st.write(X["pos_none"])
     else:
-        df = pd.DataFrame(pos)
-        today = time.strftime("%Y-%m-%d")
-        df["days"] = df["entry_date"].map(lambda d: int(np.busday_count(d, today)))
-        try:
-            px = get_prices(tuple(sorted(df["ticker"].unique())))
-            last = {}
-            for t in df["ticker"]:
-                try:
-                    last[t] = float(px[t]["Close"].dropna().iloc[-1])
-                except Exception:
-                    pass
-            df["last"] = df["ticker"].map(last)
-            df["pnl_now"] = ((df["last"] - df["entry"]) * df["qty"]).round(2)
-        except Exception:
-            df["last"], df["pnl_now"] = np.nan, np.nan
-        df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-        df["how"] = df.get("how", pd.Series(index=df.index, dtype=object)).map(X["how"])
-        cols = ["ticker", "mode", "how", "entry_date", "entry", "stop", "qty", "days", "last",
-                "pnl_now", "dry"]
-        st.dataframe(df[cols].rename(columns=C), hide_index=True, use_container_width=True)
+        st.dataframe(positions_table(pos, T, X, get_prices), hide_index=True,
+                     use_container_width=True)
 
     # ---------- closed trades ----------
     st.subheader(X["closed"])
@@ -279,12 +316,7 @@ def render(T, lang, get_prices):
         df = pd.DataFrame(closed)
         st.markdown(X["summary"].format(n=len(df), w=(df["pnl"] > 0).mean() * 100,
                                         p=df["pnl"].sum(), r=df["r"].dropna().mean()))
-        df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-        df["reason"] = df["reason"].map(X["reasons"])
-        cols = ["ticker", "mode", "entry_date", "entry", "exit_date", "exit", "qty", "reason",
-                "pnl", "r", "dry"]
-        st.dataframe(df[cols].iloc[::-1].rename(columns=C), hide_index=True,
-                     use_container_width=True)
+        st.dataframe(closed_table(closed, T, X), hide_index=True, use_container_width=True)
 
     with st.expander(X["log"], expanded=False):
         for row in reversed(state.get("log", [])[-30:]):
