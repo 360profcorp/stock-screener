@@ -37,7 +37,8 @@ TIMINGS = PRE_OPEN | {"close"}
 
 def replay(trades, data, initial_cash=10000., risk_fraction=.01,
            max_positions=5, max_new_per_day=3, max_position_fraction=.20,
-           cost_bps=10., start=None, end=None, entry_timing="close", open_at_end="mark"):
+           cost_bps=10., start=None, end=None, entry_timing="close", open_at_end="mark",
+           sector_map=None, max_per_sector=None):
     """Replay precomputed ticker trades; return (equity, executions, metrics).
 
     cost_bps: per-side combined commission/slippage in basis points.
@@ -47,6 +48,10 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
     exit day, hence not reusable for entries the same day (conservative).
     Whole shares, no leverage, no short sales, fixed stops as provided.
     One position per ticker: the portfolio, not the trade simulator, owns tickers.
+    max_per_sector (Task 9): optional cap on concurrent positions per sector, using
+    sector_map {ticker: sector}; tickers missing from the map share the 'Unknown' bucket.
+    For pre-open entries, positions exiting later the same day still count (no look-ahead).
+    None (default) = no sector cap, identical to Task 6 behaviour.
     """
     if initial_cash <= 0 or not 0 < risk_fraction <= 1 or not 0 < max_position_fraction <= 1:
         raise ValueError('Invalid capital/risk settings')
@@ -54,6 +59,12 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
         raise ValueError('Invalid portfolio limits')
     if entry_timing not in TIMINGS or open_at_end not in ("mark", "liquidate", "skip"):
         raise ValueError('Invalid entry_timing / open_at_end')
+    if max_per_sector is not None and (max_per_sector < 1 or sector_map is None):
+        raise ValueError('max_per_sector needs sector_map and must be >= 1')
+    def sector_of(t):
+        sec = sector_map.get(t) if sector_map is not None else None
+        return sec.strip() if isinstance(sec, str) and sec.strip() else 'Unknown'
+    sector_rejections = defaultdict(int)
     daily_cap = np.inf if max_new_per_day is None else max_new_per_day
     frames = {}
     calendar = set()
@@ -123,6 +134,10 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
             skipped['positions'] += 1; return False
         if new_count >= daily_cap:
             skipped['daily_entries'] += 1; return False
+        if max_per_sector is not None:
+            sec = sector_of(ticker)
+            if sum(sector_of(t) == sec for t in held) >= max_per_sector:
+                skipped['sector_limit'] += 1; sector_rejections[sec] += 1; return False
         entry, stop = float(r['entry']), float(r['stop'])
         if not np.isfinite(entry) or not np.isfinite(stop) or entry <= stop or stop <= 0:
             skipped['invalid'] += 1; return False
@@ -220,5 +235,6 @@ def replay(trades, data, initial_cash=10000., risk_fraction=.01,
                    cash_limited_entries=counters['cash_limited_entries'],
                    entries_pre_open=counters['entries_pre_open'],
                    entries_close=counters['entries_close'],
+                   sector_limit_rejections=dict(sector_rejections),
                    note='Precomputed trade fills; daily-close mark-to-market; no intraday portfolio simulation.')
     return curve, executions, metrics

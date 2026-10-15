@@ -1,0 +1,52 @@
+name: Task 9 sector research
+
+# Research only: runs the sector-concentration study on real data and commits the results
+# to the research branch. Never touches main, the bot, or the scanner.
+on:
+  push:
+    branches: [research/task9-sector-concentration]
+    paths:
+      - "research/task9_sector.py"
+      - "sector_exposure.py"
+      - "portfolio_bt.py"
+      - "backtest.py"
+      - ".github/workflows/task9-sector-research.yml"
+  workflow_dispatch:
+    inputs:
+      mc_runs:
+        description: "Monte Carlo tie-break runs"
+        default: "100"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: task9-research
+  cancel-in-progress: true
+
+jobs:
+  study:
+    if: github.ref == 'refs/heads/research/task9-sector-concentration'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Unit tests
+        run: python -m unittest test_sector_exposure test_task6_engine test_portfolio_bt -v
+      - name: Sector study
+        env:
+          MC_RUNS: ${{ github.event.inputs.mc_runs || '100' }}
+        run: python research/task9_sector.py
+      - name: Commit results
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/task9
+          git diff --cached --quiet || git commit -m "Task 9: sector study results $(date -u +%F_%H%M)"
+          git pull --rebase
+          git push
