@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-15T02:55:44+00:00",
+ "generated": "2026-10-15T03:31:22+00:00",
  "tickers": 503,
  "raw_signals": 21449,
  "window": [
@@ -150,6 +150,11 @@
    "daily_entries": 37,
    "capital_or_risk": 2
   },
+  "outcome_categories": {
+   "replay": 3760,
+   "simulate_excluded": 24
+  },
+  "outcome_violations": [],
   "cash_ok": true,
   "holdings_ok": true,
   "fills_ref": 136,
@@ -209,6 +214,11 @@
    "entered": 15,
    "daily_entries": 7
   },
+  "outcome_categories": {
+   "replay": 261,
+   "simulate_excluded": 5
+  },
+  "outcome_violations": [],
   "cash_ok": true,
   "holdings_ok": true,
   "fills_ref": 12,
@@ -249,5 +259,5 @@
   "final_new": 9754.764223869632
  },
  "all_ok": true,
- "runtime_sec": 128
+ "runtime_sec": 92
 }
