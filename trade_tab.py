@@ -57,6 +57,13 @@ TX = {
         "approve": "✅ Подтвердить покупки", "reject": "❌ Отменить план",
         "approved": "Подтверждён — утром бот купит на открытии.", "rejected_msg": "План отменён.",
         "bot_status": "Статус бота",
+        "rules": "Правила этого контура (бот, режим тренировки): VCP и ретест — покупка на "
+                 "открытии следующей сессии, пробой — около 15:30; стоп ниже уровня на 3 %; "
+                 "выход по времени — продажа на **открытии 21-й сессии** после входа. "
+                 "Бумажный портфель Retest RS-first выходит по **закрытию 20-го бара** — это "
+                 "разные правила, статистику двух контуров не объединять.",
+        "eds": {"unverified": "не проверен (нет минутных данных)", "intraday_ok": "проверен",
+                "intraday_hit": "сработал"},
         "pos": "Открытые позиции", "pos_none": "Открытых позиций нет.",
         "closed": "Закрытые сделки", "closed_none": "Закрытых сделок пока нет.",
         "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
@@ -66,6 +73,7 @@ TX = {
                  "stop": "Стоп", "est_qty": "≈ Акций", "est_cost": "≈ Сумма $",
                  "entry_date": "Дата входа", "entry": "Цена входа", "qty": "Акций",
                  "days": "Дней", "last": "Сейчас", "pnl_now": "P&L сейчас $",
+                 "entry_day_stop": "Стоп в день входа",
                  "dry": "Тренировка",
                  "exit_date": "Дата выхода", "exit": "Цена выхода", "reason": "Причина",
                  "pnl": "P&L $", "r": "R"},
@@ -109,6 +117,13 @@ TX = {
         "approve": "✅ Approve buys", "reject": "❌ Cancel plan",
         "approved": "Approved — the bot buys in the morning.", "rejected_msg": "Plan cancelled.",
         "bot_status": "Bot status",
+        "rules": "Rules of this book (bot, training mode): VCP and retest are bought at the next "
+                 "session's open, breakouts around 3:30 PM; stop 3 % below the level; time exit "
+                 "— sold at the **open of session 21** after entry. The Retest RS-first paper "
+                 "portfolio exits at the **close of bar 20** — different rules, never combine "
+                 "the two books' statistics.",
+        "eds": {"unverified": "not verified (no minute data)", "intraday_ok": "verified",
+                "intraday_hit": "hit"},
         "pos": "Open positions", "pos_none": "No open positions.",
         "closed": "Closed trades", "closed_none": "No closed trades yet.",
         "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
@@ -118,6 +133,7 @@ TX = {
                  "stop": "Stop", "est_qty": "≈ Shares", "est_cost": "≈ Amount $",
                  "entry_date": "Entry date", "entry": "Entry price", "qty": "Shares",
                  "days": "Days", "last": "Now", "pnl_now": "Open P&L $", "dry": "Training",
+                 "entry_day_stop": "Entry-day stop",
                  "exit_date": "Exit date", "exit": "Exit price", "reason": "Reason",
                  "pnl": "P&L $", "r": "R"},
         "reasons": {"stop": "🛑 stop", "time": "⏱ 20 days"},
@@ -129,7 +145,7 @@ TX = {
 PLAN_COLS = ["ticker", "mode", "rs", "close", "stop", "est_qty", "est_cost"]
 ORDER_COLS = ["ticker", "mode", "date", "est", "stop", "qty", "dry"]
 POS_COLS = ["ticker", "mode", "how", "entry_date", "entry", "stop", "qty", "days", "last",
-            "pnl_now", "dry"]
+            "pnl_now", "entry_day_stop", "dry"]
 CLOSED_COLS = ["ticker", "mode", "entry_date", "entry", "exit_date", "exit", "qty", "reason",
                "pnl", "r", "dry"]
 
@@ -176,6 +192,8 @@ def positions_table(pos, T, X, get_prices, today=None) -> pd.DataFrame:
         df["last"], df["pnl_now"] = np.nan, np.nan
     df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
     df["how"] = df.get("how", pd.Series(index=df.index, dtype=object)).map(X["how"])
+    df["entry_day_stop"] = df.get("entry_day_stop", pd.Series(index=df.index, dtype=object)) \
+        .map(X["eds"])
     return _view(df, POS_COLS, X["cols"])
 
 
@@ -250,6 +268,7 @@ def render(T, lang, get_prices):
     if sha is None:
         st.caption(X["no_state"])
     render_status(state, lang)
+    st.caption(X["rules"])
 
     # ---------- Schwab ----------
     with st.expander(X["schwab"], expanded=False):

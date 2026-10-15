@@ -49,6 +49,13 @@ class FakeBroker:
         return None if b is None or b.empty else b.iloc[-1]
 
 
+def run_ex(st, fr, k, ev, hm=(9, 0)):
+    """Morning run at hm (ET) on session k."""
+    day = DAYS[k]
+    now = datetime(day.year, day.month, day.day, hm[0], hm[1], tzinfo=core.NY)
+    trader.run_execute(st, FakeBroker(fr), d(k), ev, now)
+
+
 DAYS = pd.bdate_range("2026-10-19", periods=40, freq="C", holidays=trader.HOLIDAYS)
 
 
@@ -82,7 +89,7 @@ class TestTradeCycle(unittest.TestCase):
         self.assertEqual(plan["for"], d(1))                   # next session, never the same day
         st["plan"] = plan
         ev = []
-        trader.run_execute(st, FakeBroker(fr), d(1), ev)      # morning of d1: order only
+        run_ex(st, fr, 1, ev)      # morning of d1: order only
         self.assertEqual(len(st["orders"]), 1)
         self.assertEqual(st["positions"], [])                 # nothing filled before the open
         trader.reconcile_dry(st, FakeBroker(fr), d(1), ev)    # evening of d1: fill at d1 open
@@ -95,10 +102,10 @@ class TestTradeCycle(unittest.TestCase):
         p = st["positions"][0]
         self.assertEqual((p["entry"], p["qty"], p["entry_date"]), (100., 3, d(1)))  # 15/5
         for k in range(2, 21):
-            trader.run_execute(st, FakeBroker(fr), d(k), [])
+            run_ex(st, fr, k, [])
             trader.reconcile_dry(st, FakeBroker(fr), d(k), [])
         self.assertEqual(len(st["positions"]), 1)
-        trader.run_execute(st, FakeBroker(fr), d(21), [])     # 20 sessions held -> exit at open
+        run_ex(st, fr, 21, [])     # 20 sessions held -> exit at open
         self.assertEqual(st["positions"][0]["exiting"], d(21))
         trader.reconcile_dry(st, FakeBroker(fr), d(21), [])
         self.assertEqual(st["positions"], [])
@@ -143,7 +150,7 @@ class TestTradeCycle(unittest.TestCase):
         fr["AAA"].loc[DAYS[20], "Low"] = 90.                   # stop on the last held day
         fr["AAA"].loc[DAYS[21], "Open"] = 104.
         st, _ = self.open_position(fr)
-        trader.run_execute(st, FakeBroker(fr), d(21), [])      # evening runs d2..d20 missed
+        run_ex(st, fr, 21, [])      # evening runs d2..d20 missed
         trader.reconcile_dry(st, FakeBroker(fr), d(21), [])
         rec = st["closed"][0]
         self.assertEqual((rec["reason"], rec["exit_date"], rec["exit"]), ("stop", d(20), 95.))
@@ -152,7 +159,7 @@ class TestTradeCycle(unittest.TestCase):
         """Fixed: a missing exit bar closed the trade at the entry price (invented P&L 0)."""
         fr = {"AAA": frame(n=21)}                              # no bar for the exit day d21
         st, _ = self.open_position(fr)
-        trader.run_execute(st, FakeBroker(fr), d(21), [])
+        run_ex(st, fr, 21, [])
         ev = []
         trader.reconcile_dry(st, FakeBroker(fr), d(21), ev)
         self.assertEqual(st["closed"], [])
@@ -197,6 +204,146 @@ class TestTradeCycle(unittest.TestCase):
         self.assertEqual((len(st["positions"]), st["positions"][0]["checked"]), (1, d(2)))
 
 
+class FakeIntraday(FakeBroker):
+    def __init__(self, frames, minutes):
+        super().__init__(frames)
+        self.minutes = minutes                                 # {ticker: DataFrame} or {}
+
+    def intraday(self, t, day):
+        return self.minutes.get(t)
+
+
+def minutes(day, lows):
+    """Minute bars 09:30..15:59 of `day` at 100, with {"HH:MM": low} overrides."""
+    idx = pd.date_range(f"{day} 09:30", f"{day} 15:59", freq="1min", tz=core.NY)
+    df = pd.DataFrame({"Open": 100., "High": 100.5, "Low": 99.5, "Close": 100.}, index=idx)
+    for hm, low in lows.items():
+        df.loc[df.index.strftime("%H:%M") == hm, ["Open", "Low"]] = [low + .2, low]
+    return df
+
+
+class TestLateMorningRun(unittest.TestCase):
+    """GitHub cron delays: the 09:15 ET paper run starts 35-90 min late."""
+
+    def plan_state(self, created):
+        st = empty_state()
+        st["plan"] = trader.build_plan(signals(d(0), [("AAA", "retest", 92, 100., 95.),
+                                                      ("BBB", "vcp", 90, 100., 95.)]), st, d(0))
+        st["plan"]["created"] = created
+        return st
+
+    def test_delay_35_to_90_minutes_fills_at_that_sessions_open_once(self):
+        for delay in (35, 50, 75, 90):
+            hm = divmod(9 * 60 + 15 + delay, 60)
+            fr = {"AAA": frame(), "BBB": frame()}
+            fr["AAA"].loc[DAYS[1], "Open"] = 101.
+            fr["AAA"].loc[DAYS[1], ["High", "Close"]] = [130., 125.]   # rally after the open
+            st = self.plan_state(f"{d(0)} 20:38")                     # committed the evening before
+            ev = []
+            run_ex(st, fr, 1, ev, hm=hm)
+            self.assertEqual(sorted(o["ticker"] for o in st["orders"]), ["AAA", "BBB"], delay)
+            self.assertTrue(all(o["late_run"] and o["fill_session"] == d(1) for o in st["orders"]))
+            run_ex(st, fr, 1, [], hm=(hm[0] + 1, hm[1]))               # second delayed cron
+            self.assertEqual(len(st["orders"]), 2)                      # no duplicate buys
+            trader.reconcile_dry(st, FakeBroker(fr), d(1), [])
+            aaa = next(p for p in st["positions"] if p["ticker"] == "AAA")
+            self.assertEqual((aaa["entry"], aaa["entry_date"]), (101., d(1)))  # the open, not later
+            self.assertTrue(aaa["late_run"])
+
+    def test_decision_after_the_open_gets_no_opening_price(self):
+        fr = {"AAA": frame(), "BBB": frame()}
+        st = self.plan_state(f"{d(1)} 09:45")                         # fixed after the open
+        ev = []
+        run_ex(st, fr, 1, ev, hm=(9, 50))
+        self.assertEqual((st["orders"], st["plan"]["status"]), ([], "expired"))
+        st = self.plan_state(f"{d(1)} 09:45")
+        run_ex(st, fr, 1, [], hm=(9, 0))                              # if run before the open: ok
+        self.assertEqual(len(st["orders"]), 2)
+
+    def test_windows_per_mode(self):
+        st = empty_state()
+        at = lambda h, m: datetime(2026, 10, 15, h, m, tzinfo=core.NY)    # noqa: E731
+        with tempfile.TemporaryDirectory() as tmp:
+            trader.STATE_FILE = Path(tmp) / "s.enc"
+            ok = lambda w, h, m: trader.check_day(at(h, m), dict(st), "last_execute", w,   # noqa
+                                                  "pre-market", None)
+            self.assertTrue(ok(trader.DRY_EXECUTE_WINDOW, 10, 45))
+            self.assertFalse(ok(trader.DRY_EXECUTE_WINDOW, 16, 30))
+            self.assertFalse(ok(trader.LIVE_EXECUTE_WINDOW, 9, 50))   # real orders unchanged
+            self.assertTrue(ok(trader.LIVE_EXECUTE_WINDOW, 9, 15))
+        trader.STATE_FILE = trader.ROOT / vault.STATE_PATH
+
+    def test_cmd_execute_twice_late_does_not_duplicate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            trader.STATE_FILE = Path(tmp) / "s.enc"
+            st = self.plan_state(f"{d(0)} 20:38")
+            vault.save_file(trader.STATE_FILE, st, os.environ["STATE_PASSWORD"])
+            orig = trader.now_ny
+            try:
+                for h, m in ((9, 50), (10, 41)):
+                    day = DAYS[1]
+                    trader.now_ny = lambda h=h, m=m, day=day: datetime(          # noqa: E731
+                        day.year, day.month, day.day, h, m, tzinfo=core.NY)
+                    trader.cmd_execute()
+            finally:
+                trader.now_ny = orig
+            saved = vault.load_file(trader.STATE_FILE, os.environ["STATE_PASSWORD"])
+            self.assertEqual(sorted(o["ticker"] for o in saved["orders"]), ["AAA", "BBB"])
+            self.assertEqual(saved["last_execute"], d(1))
+            self.assertTrue(saved["runs"]["execute"]["late"])
+        trader.STATE_FILE = trader.ROOT / vault.STATE_PATH
+
+
+class TestSessionBoundFill(unittest.TestCase):
+    def test_missing_session_bar_never_moves_the_purchase(self):
+        fr = {"AAA": frame().drop(DAYS[1])}                           # d1 missing, d2.. exist
+        st = empty_state()
+        st["plan"] = trader.build_plan(signals(d(0), [("AAA", "retest", 92, 100., 95.)]), st, d(0))
+        run_ex(st, fr, 1, [])
+        for k in (1, 2, 3):
+            trader.reconcile_dry(st, FakeBroker(fr), d(k), [])
+            self.assertEqual(st["positions"], [])                     # never filled at d2/d3
+        trader.reconcile_dry(st, FakeBroker(fr), d(4), [])
+        self.assertEqual((st["orders"], st["positions"], st["closed"]), ([], [], []))
+
+
+class TestEntryDayStop(unittest.TestCase):
+    """Breakouts bought ~15:30: the entry day's daily low may be BEFORE the purchase."""
+
+    def bought(self, entry_time="15:30"):
+        st = empty_state()
+        st["positions"] = [{"ticker": "AAA", "mode": "breakout", "entry_date": d(1),
+                            "entry": 100., "stop": 95., "qty": 3, "dry": True,
+                            "checked": d(1), "how": "close", "entry_time": entry_time}]
+        fr = {"AAA": frame()}
+        fr["AAA"].loc[DAYS[1], "Low"] = 90.                           # daily low below the stop
+        return st, fr
+
+    def test_low_before_the_purchase_is_not_a_stop(self):
+        st, fr = self.bought()
+        b = FakeIntraday(fr, {"AAA": minutes(d(1), {"10:05": 90.})})
+        trader.reconcile_dry(st, b, d(1), [])
+        self.assertEqual((len(st["positions"]), st["positions"][0]["entry_day_stop"]),
+                         (1, "intraday_ok"))
+
+    def test_low_after_the_purchase_is_a_stop(self):
+        st, fr = self.bought()
+        b = FakeIntraday(fr, {"AAA": minutes(d(1), {"15:47": 94.})})
+        trader.reconcile_dry(st, b, d(1), [])
+        rec = st["closed"][0]
+        self.assertEqual((rec["reason"], rec["exit_date"], rec["exit"]), ("stop", d(1), 94.2))
+        self.assertEqual(rec["entry_day_stop"], "intraday_hit")
+
+    def test_without_minute_data_the_limitation_is_recorded(self):
+        st, fr = self.bought()
+        trader.reconcile_dry(st, FakeIntraday(fr, {}), d(1), [])
+        self.assertEqual((len(st["positions"]), st["positions"][0]["entry_day_stop"]),
+                         (1, "unverified"))
+        st, fr = self.bought(entry_time=None)                         # old position: time unknown
+        trader.reconcile_dry(st, FakeIntraday(fr, {"AAA": minutes(d(1), {})}), d(1), [])
+        self.assertEqual(st["positions"][0]["entry_day_stop"], "unverified")
+
+
 class TestRerunAndGuards(unittest.TestCase):
     def test_same_day_reruns_do_not_duplicate(self):
         fr = {"AAA": frame(), "BBB": frame()}
@@ -204,7 +351,7 @@ class TestRerunAndGuards(unittest.TestCase):
         st["plan"] = trader.build_plan(signals(d(0), [("AAA", "retest", 92, 100., 95.),
                                                       ("BBB", "vcp", 90, 100., 95.)]), st, d(0))
         for _ in range(3):                                     # FORCE reruns of the morning
-            trader.run_execute(st, FakeBroker(fr), d(1), [])
+            run_ex(st, fr, 1, [])
         self.assertEqual(sorted(o["ticker"] for o in st["orders"]), ["AAA", "BBB"])
         for _ in range(3):                                     # evening reruns
             trader.reconcile_dry(st, FakeBroker(fr), d(1), [])

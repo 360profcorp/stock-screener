@@ -75,6 +75,18 @@ TX = {
 }
 
 
+RULES = {
+    "ru": "Правила этого контура (бумажный портфель Retest RS-first): вход по открытию "
+          "следующей сессии, выход по стопу или по **закрытию 20-го бара**. Бот во вкладке "
+          "«Торговля» продаёт на **открытии 21-й сессии** — это разные правила, статистику "
+          "двух контуров не объединять.",
+    "en": "Rules of this book (Retest RS-first paper portfolio): entry at the next session's "
+          "open, exit by the stop or at the **close of bar 20**. The bot on the Trading tab "
+          "sells at the **open of session 21** — different rules, never combine the two "
+          "books' statistics.",
+}
+
+
 def _fmt(v, f="{:+.1f}%"):
     return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f.format(v)
 
@@ -83,6 +95,7 @@ def render(lang="ru"):
     X = TX[lang]
     st.subheader(X["title"])
     st.caption(X["note"])
+    st.caption(RULES[lang])
     state = store.load_state(store.STATE_FILE)
     if not state or not state.get("equity") or state.get("kind") != "forward":
         st.info(X["empty"])

@@ -153,7 +153,12 @@ def r_txt(rec):
         f"${rec['pnl']:+.0f}"
 
 
-ORDER_DATA_WAIT_DAYS = 3                 # a dry order waits this long for its open bar
+ORDER_DATA_WAIT_DAYS = 3                 # a dry order waits this long for ITS session's bar
+LIVE_EXECUTE_WINDOW = ((8, 0), (9, 29))  # real orders: only before the open
+DRY_EXECUTE_WINDOW = ((6, 0), (16, 0))   # paper: a plan committed before the open may be
+#                                          processed late the same day (GitHub cron delays);
+#                                          it still fills at THAT session's open, never later
+OPEN_HM = (9, 30)
 
 
 def record_run(state, cmd, result, reason="", **extra):
@@ -218,6 +223,24 @@ class DryBroker:
         b = self.bars(t, pd.Timestamp(day) - pd.Timedelta(days=1), day)
         return None if b is None or b.empty else b.iloc[-1]
 
+    def intraday(self, t, day):
+        """Minute bars of `day` (New York time) or None. Yahoo keeps ~7 days of 1m data."""
+        try:
+            import yfinance as yf
+            df = yf.download(t, period="7d", interval="1m", auto_adjust=False,
+                             progress=False)
+            if df is None or df.empty:
+                return None
+            if isinstance(df.columns, pd.MultiIndex):
+                df = df.xs(t, axis=1, level=1) if t in df.columns.get_level_values(1) else \
+                    df.droplevel(1, axis=1)
+            idx = df.index.tz_convert(core.NY) if df.index.tz is not None else df.index
+            df = df.set_axis(idx)
+            return df[idx.strftime("%Y-%m-%d") == str(day)[:10]].dropna(subset=["Low"])
+        except Exception as e:
+            print("intraday unavailable:", e)
+            return None
+
 
 # =====================================================================
 # EVENING: reconcile today, then plan tomorrow
@@ -225,6 +248,8 @@ class DryBroker:
 def reconcile_dry(state, broker, today, events):
     # 1. morning buys at the open
     for o in [o for o in state["orders"] if is_dry(o) and o["date"] <= today]:
+        # the fill belongs to the order's own session (o["date"]): only that bar is loaded,
+        # the purchase is never moved to a later session
         b = broker.bar(o["ticker"], o["date"])
         if b is None:                    # no open bar yet: never invent a fill, wait for data
             if busdays(o["date"], today) < ORDER_DATA_WAIT_DAYS:
@@ -246,7 +271,8 @@ def reconcile_dry(state, broker, today, events):
             continue
         p = {"ticker": o["ticker"], "mode": o["mode"], "rs": o.get("rs"), "entry_date": o["date"],
              "entry": round(fill, 2), "stop": o["stop"], "qty": qty, "dry": True,
-             "checked": o["date"], "signal_date": o.get("signal_date"), "how": "open"}
+             "checked": o["date"], "signal_date": o.get("signal_date"), "how": "open",
+             "committed_at": o.get("committed_at"), "late_run": bool(o.get("late_run"))}
         state["positions"].append(p)
         events.append(f"🟢 {p['ticker']} ({NAMES[p['mode']]}): куплено на открытии "
                       f"~{p['entry']} × {qty} шт (${p['entry'] * qty:.0f}), стоп {p['stop']}")
@@ -254,7 +280,14 @@ def reconcile_dry(state, broker, today, events):
             rec = close_position(state, p, o["stop"], "stop", o["date"])
             events.append(f"🛑 {p['ticker']}: выбило стопом в тот же день ({r_txt(rec)})")
 
-    # 2. open positions: time exits sold at today's open, stops from daily lows
+    # 2. breakouts bought before the close: the entry day's daily low may have happened BEFORE
+    #    the purchase, so it is never used. Only minute bars after the entry time count; without
+    #    them the entry-day stop stays unverified (flag kept on the position and the trade).
+    for p in [p for p in state["positions"] if is_dry(p) and p.get("how") == "close"
+              and not p.get("entry_day_stop")]:
+        check_entry_day_stop(state, broker, p, events)
+
+    # 3. open positions: time exits sold at today's open, stops from daily lows
     for p in [p for p in state["positions"] if is_dry(p)]:
         upto = today
         if p.get("exiting"):             # sold at the open of the exit day: stops before it first
@@ -282,6 +315,31 @@ def reconcile_dry(state, broker, today, events):
         rec = close_position(state, p, float(b["Open"]), "time", p["exiting"])
         events.append(f"⏱ {p['ticker']}: продано через {HOLD_DAYS} дн. ~{rec['exit']} "
                       f"({r_txt(rec)})")
+
+
+def check_entry_day_stop(state, broker, p, events):
+    """Stop between the pre-close purchase and the close of the entry day (paper mode)."""
+    t0 = p.get("entry_time")
+    bars = broker.intraday(p["ticker"], p["entry_date"]) if t0 and hasattr(broker, "intraday") \
+        else None
+    if bars is None or bars.empty:
+        p["entry_day_stop"] = "unverified"       # no minute data: explicit limitation
+        return
+    hm = bars.index.strftime("%H:%M")
+    after = bars[hm > t0]
+    if after.empty or hm.max() < "15:59":
+        p["entry_day_stop"] = "unverified"       # minute data incomplete
+        return
+    hit = after[after["Low"] <= p["stop"]]
+    if hit.empty:
+        p["entry_day_stop"] = "intraday_ok"
+        return
+    first = hit.iloc[0]
+    px = min(float(first["Open"]), p["stop"])
+    p["entry_day_stop"] = "intraday_hit"
+    rec = close_position(state, p, px, "stop", p["entry_date"])
+    events.append(f"🛑 {p['ticker']}: стоп в день покупки после {t0} "
+                  f"({hit.index[0]:%H:%M}) по {rec['exit']} ({r_txt(rec)})")
 
 
 def reconcile_live(state, broker, today, events):
@@ -426,8 +484,17 @@ def cmd_plan():
 # =====================================================================
 # MORNING: time exits + buys at the open
 # =====================================================================
-def run_execute(state, broker, today, events):
+def committed_before_open(plan) -> bool:
+    """The plan (and, in paper mode, its auto-approval) was fixed before the open of the
+    session it is for — so a late run may still model fills at that open."""
+    created = str(plan.get("created") or "")
+    return bool(created) and created < f"{plan.get('for')} {OPEN_HM[0]:02d}:{OPEN_HM[1]:02d}"
+
+
+def run_execute(state, broker, today, events, now=None):
     dry = getattr(broker, "dry", False)
+    now = now or now_ny()
+    late = (now.hour, now.minute) >= OPEN_HM
     # 1. sell positions held HOLD_DAYS (at the open)
     for p in [p for p in state["positions"] if is_dry(p) == dry and not p.get("exiting")]:
         if busdays(p["entry_date"], today) >= HOLD_DAYS:
@@ -444,6 +511,12 @@ def run_execute(state, broker, today, events):
         return
     if busdays(plan["date"], today) != 1:
         plan["status"] = "expired"
+        return
+    if late and not (dry and committed_before_open(plan)):
+        # a decision made after the open is never given the past opening price
+        plan["status"] = "expired"
+        events.append("⏭ План не исполнен: запуск после открытия, а план не был "
+                      "зафиксирован до открытия.")
         return
     if MODE == "manual" and not plan.get("approved"):
         plan["status"] = "rejected" if plan.get("rejected") else "not_approved"
@@ -479,11 +552,15 @@ def run_execute(state, broker, today, events):
         state["orders"].append({"kind": "open", "ticker": t, "mode": it["mode"], "rs": it["rs"],
                                 "date": today, "est": round(est, 2), "stop": it["stop"],
                                 "qty": qty, "order_id": oid, "dry": dry,
-                                "signal_date": plan["date"]})
+                                "signal_date": plan["date"], "fill_session": today,
+                                "committed_at": plan.get("created"),
+                                "run_at": now.strftime("%Y-%m-%d %H:%M"), "late_run": late})
         room -= 1
         results.append((t, "ok"))
         events.append(f"📌 {t} ({NAMES[it['mode']]}): покупка {qty} шт на открытии "
-                      f"(~{est:.2f}), стоп {it['stop']}")
+                      f"(~{est:.2f}), стоп {it['stop']}"
+                      + (f" — запуск опоздал ({now:%H:%M} ET), заявка из плана от "
+                         f"{plan.get('created')}, исполнение по открытию {today}" if late else ""))
     for t, why in results:
         if why != "ok":
             events.append(f"⏭ {t}: {why}")
@@ -519,7 +596,8 @@ def cmd_execute():
     state = load_state()
     now = now_ny()
     today = now.strftime("%Y-%m-%d")
-    if not check_day(now, state, "last_execute", ((8, 0), (9, 29)), "pre-market", "execute"):
+    window = DRY_EXECUTE_WINDOW if MODE == "dry" else LIVE_EXECUTE_WINDOW
+    if not check_day(now, state, "last_execute", window, "pre-market", "execute"):
         return
     events = []
     if MODE == "dry":
@@ -531,11 +609,15 @@ def cmd_execute():
             vault.save_file(STATE_FILE, state, PASSWORD)
             return
 
-    run_execute(state, broker, today, events)
+    run_execute(state, broker, today, events, now)
     state["last_execute"] = today
     plan = state.get("plan") or {}
-    record_run(state, "execute", "ok", plan.get("status") or "плана нет",
-               plan_date=plan.get("date"), orders=len(state["orders"]))
+    late = (now.hour, now.minute) >= OPEN_HM
+    record_run(state, "execute", "ok",
+               (plan.get("status") or "плана нет")
+               + (f"; запуск опоздал ({now:%H:%M} ET) — заявки из плана до открытия, "
+                  "исполнение по открытию этой сессии" if late else ""),
+               plan_date=plan.get("date"), orders=len(state["orders"]), late=late)
     vault.log(state, f"execute {today}: {len(events)} events")
     vault.save_file(STATE_FILE, state, PASSWORD)
 
@@ -646,7 +728,7 @@ def cmd_preclose():
         p = {"ticker": r.ticker, "mode": "breakout", "rs": int(r.rs), "entry_date": today,
              "entry": round(px, 2), "stop": round(float(r.stop), 2), "qty": qty,
              "dry": not live, "checked": today, "signal_date": today, "how": "close",
-             "order_id": oid}
+             "order_id": oid, "entry_time": now.strftime("%H:%M")}
         if live:
             p["pending_fill"] = True
         state["positions"].append(p)

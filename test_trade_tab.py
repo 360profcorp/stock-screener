@@ -28,7 +28,8 @@ POSITION = {"ticker": "AAPL", "mode": "retest", "rs": 91, "entry_date": "2026-10
             "entry": 230.5, "stop": 221.0, "qty": 4, "dry": True, "checked": "2026-10-14",
             "signal_date": "2026-10-10", "how": "open"}
 POSITION_CLOSE = dict(POSITION, ticker="NVDA", mode="breakout", how="close", qty=2,
-                      entry=180.0, stop=172.0, dry=False, order_id="1", pending_fill=True)
+                      entry=180.0, stop=172.0, dry=False, order_id="1", pending_fill=True,
+                      entry_day_stop="unverified", entry_time="15:31")
 OLD_POSITION = {k: v for k, v in POSITION.items() if k not in ("how", "dry")}  # older state
 CLOSED = {"ticker": "MSFT", "mode": "vcp", "entry_date": "2026-09-01", "entry": 400.0,
           "exit_date": "2026-09-29", "exit": 420.0, "qty": 2, "reason": "time", "pnl": 40.0,
@@ -87,6 +88,8 @@ class TestLabels(unittest.TestCase):
             self.assertEqual(row[C["entry_date"]], "2026-10-13")
             self.assertEqual(row[C["how"]], tt.TX[lang]["how"]["open"])
             self.assertEqual(pos.iloc[1][C["how"]], tt.TX[lang]["how"]["close"])
+            self.assertEqual(pos.iloc[1][C["entry_day_stop"]],
+                             tt.TX[lang]["eds"]["unverified"])            # limitation visible
             self.assertTrue(pd.isna(pos.iloc[2][C["how"]]))          # old state: empty, kept
             self.assertEqual(row[C["days"]], 2)
             self.assertAlmostEqual(row[C["last"]], 240.0)
