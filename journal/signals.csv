@@ -1,4 +1,20 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-15,breakout,MRNA,99,Health Care,236.5,227.46,220.64,6.71
+2026-10-15,breakout,VEEV,94,Health Care,313.03,309.32,300.04,4.15
+2026-10-15,breakout,IQV,92,Health Care,271.04,266.66,258.66,4.57
+2026-10-15,breakout,TGT,92,Consumer Staples,156.63,155.6,150.93,3.64
+2026-10-15,breakout,VTRS,91,Health Care,18.22,17.82,17.29,5.13
+2026-10-15,breakout,SWKS,90,Information Technology,79.1,77.86,75.52,4.52
+2026-10-15,breakout,WST,90,Health Care,383.02,379.21,367.83,3.96
+2026-10-15,breakout,ABNB,89,Consumer Discretionary,174.28,167.5,162.47,6.77
+2026-10-15,breakout,NOW,88,Information Technology,148.57,148.14,143.7,3.28
+2026-10-15,breakout,BBY,87,Consumer Discretionary,94.17,89.12,86.45,8.2
+2026-10-15,breakout,WAT,87,Health Care,444.15,441.89,428.63,3.49
+2026-10-15,breakout,LLY,86,Health Care,1251.61,1216.71,1180.21,5.7
+2026-10-15,breakout,DVA,85,Health Care,189.16,184.24,178.71,5.52
+2026-10-15,retest,VEEV,94,Health Care,313.03,289.87,281.17,10.18
+2026-10-15,retest,CRM,88,Information Technology,246.74,230.71,223.79,9.3
+2026-10-15,retest,MSFT,86,Information Technology,539.44,537.22,515.28,4.48
 2026-10-14,breakout,VLO,98,Energy,459.78,457.2,443.48,3.54
 2026-10-14,breakout,MPC,98,Energy,484.92,477.73,463.4,4.44
 2026-10-14,breakout,PSX,97,Energy,297.29,292.88,284.09,4.44
