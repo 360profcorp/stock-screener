@@ -1,0 +1,52 @@
+name: Research AI ranking (research branch only)
+
+# Research only: audits the PR #5 dataset and trains a first long-signal ranker on it.
+# No schedule, no state writes, nothing connected to the bot. Results are committed to
+# research/results/ai_rank/runs/<run_id>/ on this branch.
+on:
+  push:
+    branches: [research/ai-rank-v1]
+    paths:
+      - "research/ai_rank/**"
+      - "research/sp1500/engine.py"
+      - ".github/workflows/research-ai-rank.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-ai-rank
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/ai-rank-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests scikit-learn
+      - name: Tests
+        run: python -m unittest research.ai_rank.test_ai_rank research.sp1500.test_sp1500 -v
+      - name: Fetch the PR #5 dataset artifact (run 38773034101)
+        uses: actions/download-artifact@v4
+        with:
+          name: sp1500-dataset-38773034101
+          run-id: 38773034101
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dataset
+      - name: Research run
+        run: python -m research.ai_rank.run --dataset dataset
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/ai_rank || true
+          git diff --cached --quiet || git commit -m "Research AI rank: run $(date -u +%F_%H%M)"
+          git pull --rebase && git push

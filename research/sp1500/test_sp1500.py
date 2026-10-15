@@ -194,9 +194,17 @@ class TestLabels(unittest.TestCase):
         sd = pd.to_datetime(lab["signal_date"])
         cal = pd.DatetimeIndex(self.spy.index)
         pos = {d: k for k, d in enumerate(cal)}
-        hend = sd.map(lambda d: cal[min(pos[d] + 20, len(cal) - 1)])
+        hend = sd.map(lambda d: cal[min(pos[d] + 21, len(cal) - 1)])   # entry + 20 bars
         tr = lab["split"] == "train"
         self.assertTrue((hend[tr] < v0).all())
+        ex = pd.to_datetime(lab["exit_date"], errors="coerce")
+        self.assertTrue((ex[tr].dropna() < v0).all())                  # every label observed
+        self.assertTrue((ex[lab["split"] == "validation"].dropna() < t0).all())
+        # the v1.0 purge (signal + 20 sessions) would have let labels end ON the boundary
+        old = sd.map(lambda d: cal[min(pos[d] + 20, len(cal) - 1)])
+        leak = (sd < v0) & (old < v0) & (hend >= v0)
+        self.assertTrue(leak.any())                                    # the case exists
+        self.assertFalse((tr & leak).any())                            # and is purged now
         self.assertTrue((sd[lab["split"] == "validation"] >= v0).all())
         self.assertTrue((hend[lab["split"] == "validation"] < t0).all())
         self.assertTrue((sd[lab["split"] == "test"] >= t0).all())
