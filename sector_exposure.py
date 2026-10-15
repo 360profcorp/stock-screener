@@ -144,10 +144,10 @@ def sector_breakdown(exposure: pd.DataFrame) -> pd.DataFrame:
     """Share of position-days and of invested value per sector over the window."""
     if exposure is None or exposure.empty:
         return pd.DataFrame(columns=["sector", "position_days", "position_days_pct",
-                                     "value_pct", "max_positions"])
+                                     "value_pct", "max_in_sector"])
     s = exposure.groupby("sector").agg(position_days=("positions", "sum"),
                                        value=("value", "sum"),
-                                       max_positions=("positions", "max")).reset_index()
+                                       max_in_sector=("positions", "max")).reset_index()
     s["position_days_pct"] = 100 * s["position_days"] / s["position_days"].sum()
     s["value_pct"] = 100 * s["value"] / s["value"].sum()
     return s.drop(columns="value").sort_values("position_days", ascending=False,
