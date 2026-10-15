@@ -1,0 +1,373 @@
+{
+  "E1_retest_pit500": {
+    "strategies": [
+      "retest"
+    ],
+    "signals": 7060,
+    "split_counts": {
+      "train": 3914,
+      "test": 1549,
+      "validation": 1300,
+      "purged": 248,
+      "embargo": 49
+    },
+    "train_labels": 3904,
+    "dev_labels": 5199,
+    "trades_validation": 1494,
+    "trades_test": 1579,
+    "validation": {
+      "rs_first": {
+        "return_pct": 31.078861843750126,
+        "cagr_pct": 41.116474096729185,
+        "max_dd_pct": -5.879497833331904,
+        "trades": 50,
+        "closed": 45,
+        "expectancy_r": 0.6321608785069196,
+        "expectancy_usd": 66.6976502204727,
+        "win_rate": 57.77777777777777,
+        "yearly_return_pct": {
+          "2025": 31.08
+        }
+      },
+      "random_return_pct": {
+        "median": 19.723625667431342,
+        "p10": 12.768655073757516,
+        "p90": 30.835830605798115
+      },
+      "grid": [
+        {
+          "kind": "ridge",
+          "params": {
+            "alpha": 1.0
+          },
+          "val_return_pct": 10.099646794162464,
+          "val_max_dd_pct": -7.270426698264753,
+          "val_daily_ic": -0.013508061011185053,
+          "ic_days": 144
+        },
+        {
+          "kind": "ridge",
+          "params": {
+            "alpha": 10.0
+          },
+          "val_return_pct": 10.099646794162464,
+          "val_max_dd_pct": -7.270426698264732,
+          "val_daily_ic": -0.01520168994327713,
+          "ic_days": 144
+        },
+        {
+          "kind": "ridge",
+          "params": {
+            "alpha": 100.0
+          },
+          "val_return_pct": 7.671776090498428,
+          "val_max_dd_pct": -5.1261269311061675,
+          "val_daily_ic": -0.0001342034777768206,
+          "ic_days": 144
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 2,
+            "iter": 100
+          },
+          "val_return_pct": 34.07755332848057,
+          "val_max_dd_pct": -6.1238605277991525,
+          "val_daily_ic": -0.014875640240328792,
+          "ic_days": 144
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 2,
+            "iter": 300
+          },
+          "val_return_pct": 14.590189661680641,
+          "val_max_dd_pct": -5.909943621805169,
+          "val_daily_ic": -0.055635138522618734,
+          "ic_days": 144
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 3,
+            "iter": 100
+          },
+          "val_return_pct": 9.883824485998982,
+          "val_max_dd_pct": -8.002774028921944,
+          "val_daily_ic": -0.04203410897410165,
+          "ic_days": 144
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 3,
+            "iter": 300
+          },
+          "val_return_pct": 29.505786800985767,
+          "val_max_dd_pct": -5.164499953832347,
+          "val_daily_ic": -0.05603885363201525,
+          "ic_days": 144
+        }
+      ],
+      "chosen": {
+        "kind": "hgb",
+        "params": {
+          "depth": 2,
+          "iter": 100
+        },
+        "val_return_pct": 34.07755332848057,
+        "val_max_dd_pct": -6.1238605277991525,
+        "val_daily_ic": -0.014875640240328792,
+        "ic_days": 144
+      }
+    },
+    "test": {
+      "rs_first": {
+        "return_pct": 27.500511583492717,
+        "cagr_pct": 36.08595447419687,
+        "max_dd_pct": -7.716921121764598,
+        "trades": 57,
+        "closed": 53,
+        "expectancy_r": 0.4685045391266353,
+        "expectancy_usd": 46.58896049976795,
+        "win_rate": 54.71698113207547,
+        "yearly_return_pct": {
+          "2025": -0.47,
+          "2026": 28.1
+        }
+      },
+      "model": {
+        "return_pct": 13.742570613603288,
+        "cagr_pct": 17.739782553726393,
+        "max_dd_pct": -19.53203706347898,
+        "trades": 63,
+        "closed": 59,
+        "expectancy_r": 0.2347340778032008,
+        "expectancy_usd": 24.70488524441749,
+        "win_rate": 33.89830508474576,
+        "yearly_return_pct": {
+          "2025": -0.47,
+          "2026": 14.28
+        }
+      },
+      "model_daily_ic": -0.05702623143980294,
+      "ic_days": 135,
+      "random_return_pct": {
+        "median": 7.577472246121097,
+        "p10": -6.046310720137339,
+        "p90": 18.05323591534555
+      },
+      "model_rank_among_random": 0.84
+    },
+    "walk_forward_dev": [
+      {
+        "year": 2024,
+        "train_labels": 1704,
+        "rs_first_return_pct": 22.70628985092533,
+        "model_return_pct": 12.352220798529734,
+        "rs_first_dd": -9.903454671600842,
+        "model_dd": -12.760767252778948
+      },
+      {
+        "year": 2025,
+        "train_labels": 3603,
+        "rs_first_return_pct": 23.866966258373722,
+        "model_return_pct": 20.250823960919284,
+        "rs_first_dd": -8.163883328476407,
+        "model_dd": -6.446337574140015
+      }
+    ]
+  },
+  "E2_all_longs_pit500": {
+    "strategies": [
+      "breakout",
+      "retest",
+      "vcp",
+      "dbottom"
+    ],
+    "signals": 25801,
+    "split_counts": {
+      "train": 14881,
+      "test": 5014,
+      "validation": 4818,
+      "purged": 851,
+      "embargo": 237
+    },
+    "train_labels": 14836,
+    "dev_labels": 19628,
+    "trades_validation": 5406,
+    "trades_test": 5167,
+    "validation": {
+      "rs_first": {
+        "return_pct": 4.472070042250165,
+        "cagr_pct": 5.725699735728607,
+        "max_dd_pct": -11.89566931924092,
+        "trades": 66,
+        "closed": 61,
+        "expectancy_r": 0.16483619783372183,
+        "expectancy_usd": 6.364694546781639,
+        "win_rate": 36.0655737704918,
+        "yearly_return_pct": {
+          "2025": 4.47
+        }
+      },
+      "random_return_pct": {
+        "median": 16.184816508389076,
+        "p10": 1.6032463585683359,
+        "p90": 27.656950133631483
+      },
+      "grid": [
+        {
+          "kind": "ridge",
+          "params": {
+            "alpha": 1.0
+          },
+          "val_return_pct": -5.221698389405372,
+          "val_max_dd_pct": -13.66169519786995,
+          "val_daily_ic": -0.022161151626595068,
+          "ic_days": 159
+        },
+        {
+          "kind": "ridge",
+          "params": {
+            "alpha": 10.0
+          },
+          "val_return_pct": -5.221698389405372,
+          "val_max_dd_pct": -13.66169519786995,
+          "val_daily_ic": -0.02250699624618826,
+          "ic_days": 159
+        },
+        {
+          "kind": "ridge",
+          "params": {
+            "alpha": 100.0
+          },
+          "val_return_pct": 4.555518199794317,
+          "val_max_dd_pct": -12.779091523475273,
+          "val_daily_ic": -0.01831606613931115,
+          "ic_days": 159
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 2,
+            "iter": 100
+          },
+          "val_return_pct": 11.935848826389982,
+          "val_max_dd_pct": -7.057710522234862,
+          "val_daily_ic": -0.04672053433910814,
+          "ic_days": 159
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 2,
+            "iter": 300
+          },
+          "val_return_pct": 24.98264912666408,
+          "val_max_dd_pct": -7.042981367378598,
+          "val_daily_ic": -0.03414866416203586,
+          "ic_days": 159
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 3,
+            "iter": 100
+          },
+          "val_return_pct": 1.0625047186651804,
+          "val_max_dd_pct": -8.62026002754982,
+          "val_daily_ic": -0.024392075834481337,
+          "ic_days": 159
+        },
+        {
+          "kind": "hgb",
+          "params": {
+            "depth": 3,
+            "iter": 300
+          },
+          "val_return_pct": -4.14192571508627,
+          "val_max_dd_pct": -13.548500661110086,
+          "val_daily_ic": -0.0200617897241008,
+          "ic_days": 159
+        }
+      ],
+      "chosen": {
+        "kind": "hgb",
+        "params": {
+          "depth": 2,
+          "iter": 300
+        },
+        "val_return_pct": 24.98264912666408,
+        "val_max_dd_pct": -7.042981367378598,
+        "val_daily_ic": -0.03414866416203586,
+        "ic_days": 159
+      }
+    },
+    "test": {
+      "rs_first": {
+        "return_pct": 11.517505408510376,
+        "cagr_pct": 14.826421808229195,
+        "max_dd_pct": -16.86347106194167,
+        "trades": 86,
+        "closed": 83,
+        "expectancy_r": 0.22980758450494415,
+        "expectancy_usd": 12.904990955070312,
+        "win_rate": 27.710843373493976,
+        "yearly_return_pct": {
+          "2025": -2.01,
+          "2026": 13.81
+        }
+      },
+      "model": {
+        "return_pct": -11.267374406256037,
+        "cagr_pct": -14.067436433848346,
+        "max_dd_pct": -26.939640578953473,
+        "trades": 69,
+        "closed": 64,
+        "expectancy_r": -0.25952542466470124,
+        "expectancy_usd": -17.847907820901685,
+        "win_rate": 23.4375,
+        "yearly_return_pct": {
+          "2025": -0.7,
+          "2026": -10.64
+        }
+      },
+      "model_daily_ic": -0.016444458629821062,
+      "ic_days": 149,
+      "random_return_pct": {
+        "median": 10.368887761040202,
+        "p10": -8.298127668826318,
+        "p90": 27.04495382876216
+      },
+      "model_rank_among_random": 0.1
+    },
+    "walk_forward_dev": [
+      {
+        "year": 2023,
+        "train_labels": 607,
+        "rs_first_return_pct": 8.38355889282083,
+        "model_return_pct": -1.1776371661156193,
+        "rs_first_dd": -13.6250761663684,
+        "model_dd": -9.893605671083272
+      },
+      {
+        "year": 2024,
+        "train_labels": 5907,
+        "rs_first_return_pct": 25.335728805719747,
+        "model_return_pct": 8.641653768683199,
+        "rs_first_dd": -18.83704427048104,
+        "model_dd": -10.808311287118855
+      },
+      {
+        "year": 2025,
+        "train_labels": 13814,
+        "rs_first_return_pct": 6.5168735598806204,
+        "model_return_pct": -1.072461720545148,
+        "rs_first_dd": -11.873705641294341,
+        "model_dd": -9.213098665491493
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "run_id": "2026-10-15T2007Z",
+  "generated_at": "2026-10-15T20:07:42+00:00",
+  "dataset": {
+    "signals": "dataset/2026-10-15T1656Z/signals.csv.gz",
+    "bars": "dataset/2026-10-15T1656Z/bars.pkl.gz"
+  },
+  "data_end": "2026-10-14",
+  "validation_start": "2025-03-17",
+  "test_start": "2025-12-30",
+  "blockers": [],
+  "log": [
+    "   14.6s dataset 661469 rows, sessions 2021-10-15..2026-10-14, validation 2025-03-17, test 2025-12-30",
+    "   25.4s audit: {\"features_recomputed_on_truncated_bars\": {\"checked\": 400, \"mismatches\": 0, \"examples\": []}, \"rs_recomputed_on_truncated_closes\": {\"checked\": 1866, \"mismatches\": 0}, \"labels\": {\"closed\": 648319, \"closed_after_data_end\": 0, \"exit_before_entry\": 0, \"entry_not_after_signal\": 0, \"open_or_immature\": 13150}, \"purge_v1_leaks\": {\"train_rows_label_after_validation_start\": 716, \"validation_rows_label_after_",
+    "   36.7s arrays for 1492 tickers",
+    "  161.7s yearly portfolio done",
+    "  385.9s ('retest',): best on validation {'kind': 'hgb', 'params': {'depth': 2, 'iter': 100}, 'val_return_pct': 34.07755332848057, 'val_max_dd_pct': -6.1238605277991525, 'val_daily_ic': -0.014875640240328792, 'ic_days': 144}",
+    " 1064.7s ('breakout', 'retest', 'vcp', 'dbottom'): best on validation {'kind': 'hgb', 'params': {'depth': 2, 'iter': 300}, 'val_return_pct': 24.98264912666408, 'val_max_dd_pct': -7.042981367378598, 'val_daily_ic': -0.03414866416203586, 'ic_days': 159}"
+  ],
+  "git": "a4ba3260ce14c8d589f5f742fba5d7ffaee51b1e",
+  "rules_version": "sp1500-research/1.0",
+  "files": {
+    "2026-10-15T2007Z/audit.json": "8ae16541e95e9799ba8a2f8371fb02125594a144d586ce9e9bdddee8117d4b64",
+    "2026-10-15T2007Z/yearly_signal_stats.csv": "5aa275573d3a2e97448db090c2718d86c1c1c01c2a5eb1ed5b12ba83d806be52",
+    "2026-10-15T2007Z/portfolio_rs_first.csv": "eb11c865a5e6e8707750e39c408e794770b424791e54501ec943a8d3c73e6afa",
+    "2026-10-15T2007Z/portfolio_yearly.json": "e95e68eed88268ab4d6ff22572544eaacc964a8a8c1d2745afe72e79f40306e0",
+    "2026-10-15T2007Z/ranker_results.json": "def96cc142830b35ce35873403b817fff2375b14b68865e341e53b25feccfd7f",
+    "2026-10-15T2007Z/REPORT.md": "f47aa47c591c396ffa1e0a6a8d0b5acd2109be5aa7210f5067ec5ee5ed15cc21"
+  }
+}

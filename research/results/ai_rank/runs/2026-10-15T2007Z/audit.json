@@ -1,0 +1,28 @@
+{
+  "features_recomputed_on_truncated_bars": {
+    "checked": 400,
+    "mismatches": 0,
+    "examples": []
+  },
+  "rs_recomputed_on_truncated_closes": {
+    "checked": 1866,
+    "mismatches": 0
+  },
+  "labels": {
+    "closed": 648319,
+    "closed_after_data_end": 0,
+    "exit_before_entry": 0,
+    "entry_not_after_signal": 0,
+    "open_or_immature": 13150
+  },
+  "purge_v1_leaks": {
+    "train_rows_label_after_validation_start": 716,
+    "validation_rows_label_after_test_start": 483,
+    "fixed": "purge by label end (exit date, >= signal + 21 sessions)"
+  },
+  "overlap": {
+    "eligible_long": 87736,
+    "non_overlapping": 26157,
+    "repeats_share": 0.702
+  }
+}
