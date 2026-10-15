@@ -75,6 +75,18 @@ TX = {
 }
 
 
+RULES = {
+    "ru": "Правила этого контура (бумажный портфель Retest RS-first): вход по открытию "
+          "следующей сессии, выход по стопу или по **закрытию 20-го бара**. Бот во вкладке "
+          "«Торговля» продаёт на **открытии 21-й сессии** — это разные правила, статистику "
+          "двух контуров не объединять.",
+    "en": "Rules of this book (Retest RS-first paper portfolio): entry at the next session's "
+          "open, exit by the stop or at the **close of bar 20**. The bot on the Trading tab "
+          "sells at the **open of session 21** — different rules, never combine the two "
+          "books' statistics.",
+}
+
+
 def _fmt(v, f="{:+.1f}%"):
     return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f.format(v)
 
@@ -83,6 +95,7 @@ def render(lang="ru"):
     X = TX[lang]
     st.subheader(X["title"])
     st.caption(X["note"])
+    st.caption(RULES[lang])
     state = store.load_state(store.STATE_FILE)
     if not state or not state.get("equity") or state.get("kind") != "forward":
         st.info(X["empty"])
@@ -95,9 +108,14 @@ def render(lang="ru"):
     g = R["genuine_forward"]
     try:
         summ = json.loads((store.STATE_DIR / "summary.json").read_text())
-        st.caption(X["updated"].format(u=summ.get("updated", "?"), d=summ.get("data_date", "?")))
-    except Exception:
-        pass
+    except (OSError, ValueError):
+        summ = {}
+    st.caption(X["updated"].format(u=summ.get("updated", "?"), d=summ.get("data_date", "?")))
+    from datetime import datetime, timezone
+    import bot_status
+    S = bot_status.paper_status(state, summ, lang, datetime.now(timezone.utc))
+    (st.success if S["flag"] == "ok" else st.warning)(S["lines"][2])
+    st.caption("  \n".join(S["lines"][:2] + S["lines"][3:]))
     st.caption(X["exp_id"].format(e=state.get("experiment"), s=state.get("start"),
                                   f=(state.get("code_fingerprint") or {}).get("combined")))
 
@@ -166,7 +184,9 @@ def render(lang="ru"):
     if len(pos):
         lp = state["last_prices"]
         pos["last"] = pos["ticker"].map(lp)
-        pos["unrealized"] = (pos["last"] - pos["entry"]) * pos["qty"]
+        # same model as equity (cash + qty * last close): entry fee already in entry_cost,
+        # exit fee not yet paid
+        pos["unrealized"] = pos["qty"] * pos["last"] - pos["entry_cost"]
         st.dataframe(pos[["ticker", "signal_date", "entry_date", "entry", "stop", "qty",
                           "bars_held", "last", "unrealized", "rs"]].round(2),
                      hide_index=True, use_container_width=True)

@@ -4,10 +4,13 @@ name: UI tests (Trading tab tables)
 # real PyArrow and checks the Trading tab tables. Also shows the old crash on main's trade_tab.py.
 on:
   push:
-    branches: [fix/trade-tab-duplicate-columns]
+    branches: [main, fix/trade-tab-duplicate-columns, fix/paper-cycle-audit]
+    paths: ["app.py", "trade_tab.py", "paper_tab.py", "bot_status.py", "trader.py", "vault.py",
+            "paper_run.py", "scripts/**", "test_*.py", ".github/workflows/ui-tests.yml"]
   pull_request:
     branches: [main]
-    paths: ["app.py", "trade_tab.py", "test_trade_tab.py", ".github/workflows/ui-tests.yml"]
+    paths: ["app.py", "trade_tab.py", "paper_tab.py", "bot_status.py", "trader.py", "vault.py",
+            "paper_run.py", "scripts/**", "test_*.py", ".github/workflows/**"]
 
 permissions:
   contents: read
@@ -15,7 +18,7 @@ permissions:
 jobs:
   ui:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,13 +31,46 @@ jobs:
       - name: Regression + app tests (all tabs, RU/EN, open position and empty tables)
         env:
           REQUIRE_UI_TESTS: "1"
-        run: python -m unittest test_trade_tab -v
+        run: |
+          set +e
+          python -m unittest test_trade_tab -v > ui.log 2>&1
+          rc=$?
+          cat ui.log
+          if [ $rc -ne 0 ]; then
+            python -c "import sys; t=open('ui.log').read()[-3500:].replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=UI tests::'+t)"
+          fi
+          exit $rc
+      - name: Audit cycle tests (trade cycle, data gaps, reruns, concurrency, accounting)
+        run: python -m unittest test_audit_cycle -v
+      - name: Execution rules unchanged vs the pre-audit bot (randomized differential test)
+        run: python -m unittest test_trader_equivalence -v
       - name: Existing test suites
         run: python -m unittest test_paper test_task6_engine test_portfolio_bt
-      - name: Reproduce the crash with main's trade_tab.py (expected to fail there)
+      - name: Strategy fingerprint unchanged (forward experiment can continue)
+        run: |
+          python - <<'PY'
+          import json
+          from paper import store
+          fp = store.code_fingerprint()["combined"]
+          st = json.load(open("paper/state/portfolio.json"))["code_fingerprint"]["combined"]
+          print("fingerprint", fp, "stored", st)
+          assert fp == st
+          PY
+      - name: Paper portfolio == replay engine on real data (no state written)
+        if: github.ref != 'refs/heads/main'
+        run: |
+          set +e
+          python paper_run.py verify > verify.log 2>&1
+          rc=$?
+          head -20 verify.log
+          python -c "import json;r=json.load(open('research/results/task10/verify.json'));print('::notice title=paper verify::all_ok=%s screener=%s/%s fills=%s/%s decisions=%s'%(r['all_ok'],r['screener']['ok'],r['screener']['days'],r['portfolio_full_period']['fills_new'],r['portfolio_full_period']['fills_ref'],r['portfolio_full_period']['decisions_ok']))" || true
+          git status --porcelain paper/state paper/data
+          test -z "$(git status --porcelain paper/state paper/data)" || { echo "::error::paper state changed"; exit 1; }
+          exit $rc
+      - name: Reproduce the crash with the pre-fix trade_tab.py (d95ccd4, expected to fail there)
         run: |
           mkdir -p /tmp/old && cp -r . /tmp/old/repo && cd /tmp/old/repo
-          git show origin/main:trade_tab.py > trade_tab.py
+          git show d95ccd4:trade_tab.py > trade_tab.py
           python - <<'PY'
           from streamlit.testing.v1 import AppTest
           import test_trade_tab as t
