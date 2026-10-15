@@ -205,7 +205,7 @@ def pit_mask(timeline, index, columns) -> pd.DataFrame:
 
 
 def detect(frames: dict, spy: pd.DataFrame, meta: pd.DataFrame, ref500: list,
-           pit500=None, strategies=None, start_i=bt.WARMUP) -> tuple:
+           pit500=None, strategies=None, start_i=bt.WARMUP, pit_other=None) -> tuple:
     """
     frames: {ticker: OHLCV(+Dividends)}; meta: DataFrame[ticker, group, sector];
     ref500: tickers forming the production RS reference; pit500: universe.pit timeline.
@@ -217,6 +217,8 @@ def detect(frames: dict, spy: pd.DataFrame, meta: pd.DataFrame, ref500: list,
     rs_all = rs_percentile(scores)
     pmask = pit_mask(pit500, scores.index, scores.columns)
     rs_pit = rs_percentile(scores, ref_mask=pmask) if pmask is not None else None
+    other = {g: pit_mask(tl, scores.index, scores.columns)
+             for g, tl in (pit_other or {}).items() if tl is not None}
     reg = core.market_regime(spy)
     spy_c = reg["close"]
     spy_r20 = spy_c / spy_c.shift(20) - 1
@@ -235,6 +237,7 @@ def detect(frames: dict, spy: pd.DataFrame, meta: pd.DataFrame, ref500: list,
         rp = rs_pit[t].reindex(dates).values if rs_pit is not None else \
             np.full(len(dates), np.nan)
         pm = pmask[t].reindex(dates).values if pmask is not None else None
+        om = {g: mk[t].reindex(dates).values for g, mk in other.items()}
         a50 = reg["above50"].reindex(dates).values
         a200 = reg["above200"].reindex(dates).values
         sr20 = spy_r20.reindex(dates).values
@@ -261,7 +264,9 @@ def detect(frames: dict, spy: pd.DataFrame, meta: pd.DataFrame, ref500: list,
                            spy_above50=a50[i], spy_above200=a200[i], spy_ret_20d=sr20[i],
                            dist_level_pct=(C / level - 1) * 100,
                            risk_at_close_pct=sgn * (C - stop) / C * 100,
-                           pit_member_sp500=pit, **_features(x, i))
+                           pit_member_sp500=pit,
+                           **{f"pit_member_{g}": bool(v[i]) for g, v in om.items()},
+                           **_features(x, i))
                 rows.append(row)
     sig = pd.DataFrame(rows)
     return sig, data
@@ -358,6 +363,28 @@ def assign_splits(df: pd.DataFrame, calendar, frac=(0.6, 0.2), purge=R.HOLD,
 # =====================================================================
 # Statistics (signal level)
 # =====================================================================
+def non_overlapping(df: pd.DataFrame) -> pd.Series:
+    """Production signal-level convention (backtest.simulate one_per_ticker=True): per ticker
+    and strategy, a signal is skipped while the previous model trade is still open."""
+    keep = pd.Series(False, index=df.index)
+    if not len(df):
+        return keep
+    bh = df["bars_held"] if "bars_held" in df else pd.Series(np.nan, index=df.index)
+    d = df.assign(_bh=bh).sort_values(["ticker", "strategy", "i"])
+    for _, g in d.groupby(["ticker", "strategy"], sort=False):
+        busy = -1
+        for idx, i, st, b in zip(g.index, g["i"], g["trade_status"], g["_bh"]):
+            if i <= busy:
+                continue
+            if st == "closed":
+                keep.at[idx] = True
+                busy = i + 1 + int(b)
+            elif st == "open":
+                keep.at[idx] = True
+                busy = np.inf
+    return keep
+
+
 def trade_stats(df: pd.DataFrame, col: str) -> dict:
     if not len(df) or col not in df or "trade_status" not in df:
         return dict(trades=0)

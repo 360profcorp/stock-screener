@@ -122,6 +122,23 @@ class TestTrades(unittest.TestCase):
             np.testing.assert_allclose(mine["gross_r"].values, ref["r"].values, rtol=1e-9)
 
 
+class TestNonOverlap(unittest.TestCase):
+    def test_matches_production_one_per_ticker(self):
+        frames, spy, meta = universe_frames()
+        sig, data = E.detect(frames, spy, meta, ref500=list(frames)[:4])
+        lab = E.add_outcomes(sig[sig["strategy"] == "breakout"], data, spy.index,
+                             spy.index[-1])
+        keep = lab[E.non_overlapping(lab) & (lab["trade_status"] == "closed")]
+        raw = pd.DataFrame(dict(ticker=lab["ticker"], mode="breakout", i=lab["i"],
+                                date=lab["signal_date"], close=lab["close"], level=lab["level"],
+                                stop_base=lab["stop_base"], rs=99, vol_ratio=1.0))
+        tr = bt.simulate(raw, data, "breakout", hold=20, stop_buf=3.0, min_rs=0,
+                         entry_at="open", one_per_ticker=True)
+        self.assertGreater(len(tr), 0)
+        self.assertEqual(len(keep), len(tr))
+        np.testing.assert_allclose(np.sort(keep["gross_r"].values), np.sort(tr["r"].values))
+
+
 class TestLabels(unittest.TestCase):
     def setUp(self):
         self.frames, self.spy, self.meta = universe_frames()
@@ -367,3 +384,16 @@ class TestRun(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPitSnapshots(unittest.TestCase):
+    def test_snapshots_timeline_and_press_release_evidence(self):
+        snaps = U.parse_pit500('date,tickers\n2024-01-02,"A,B,BRK.B"\n2025-03-01,"A,C,BRK.B"\n')
+        tl = U.pit_from_snapshots(snaps, {"A", "C", "D"}, "2026-10-14")
+        self.assertEqual(U.member_on(tl, "2024-06-01"), {"A", "B", "BRK-B"})
+        self.assertEqual(U.member_on(tl, "2025-03-01"), {"A", "C", "BRK-B"})
+        self.assertEqual(U.member_on(tl, "2026-10-14"), {"A", "C", "D"})
+        ev = U.load_evidence()
+        res = U.resolve_overlaps({"sp400": {"FORM"}, "sp600": {"FORM"}},
+                                 {"sp400": None, "sp600": None}, {}, ev).iloc[0]
+        self.assertEqual((res["group"], res["resolution"]), ("sp400", "press_release"))

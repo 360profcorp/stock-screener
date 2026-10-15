@@ -95,6 +95,10 @@ def stat_rows(df, keys, col, extra=None):
         for c in ("win_rate", "mean_r", "median_r", "mean_r_ex_top5", "profit_factor",
                   "se_mean_r", "stopped_pct", "avg_bars"):
             row[c] = st.get(c, np.nan)
+        nd = d[E.non_overlapping(d)]
+        sn = E.trade_stats(nd, col)
+        row.update(nonoverlap_trades=sn.get("trades", 0), nonoverlap_mean_r=sn.get("mean_r"),
+                   nonoverlap_pf=sn.get("profit_factor"), nonoverlap_se=sn.get("se_mean_r"))
         if extra:
             row.update(extra)
         out.append(row)
@@ -196,19 +200,34 @@ def main(argv=None):
     for att in fetched["attempts"]:
         if att.get("_raw"):
             name = f"sources/{att['group']}_{att['source']}" + \
-                (".csv" if att["source"] == "ishares" else ".html")
+                (".html" if att["source"] == "wikipedia" else ".csv")
             write_once(dsd / name, att["_raw"], dmanifest, dsd.parent)
     if umeta["missing_groups"]:
         blockers.append(f"membership unavailable for {umeta['missing_groups']}")
     say(f"universe: {len(uni)} tickers; sources "
         f"{ {g: v['source'] for g, v in umeta['sources'].items()} }")
-    ch500 = changes.get("sp500")
-    cur500 = set(uni.loc[uni["group"] == "sp500", "ticker"])
-    listed500 = set(t for t, gl in zip(uni["ticker"], uni["groups_listed"]) if "sp500" in gl)
+    # point-in-time timelines: S&P 500 from dated full snapshots (else Wikipedia changes),
+    # 400 / 600 from the dated Wikipedia change tables (best effort, flagged)
+    pit_att = next((x for x in fetched["attempts"] if x["source"] == "pit_fja05680"), {})
+    snaps = pit_att.get("_snaps")
+    current = {g: set(t for t, gl in zip(uni["ticker"], uni["groups_listed"])
+                      if g in gl.split("|") and t not in
+                      set(uni.loc[(uni["group"] != g) & (uni["group"] != "ambiguous"), "ticker"]))
+               for g in GROUPS}
+    pit_src = {}
 
     # 2) prices ------------------------------------------------------------------------------
     start_hint = pd.Timestamp(now.date()) - pd.DateOffset(years=int(a.period.rstrip("y")))
-    removed = U.removed_since(ch500, start_hint, set(uni["ticker"]))
+    removed_by = {}
+    for g in GROUPS:
+        if g == "sp500" and snaps is not None:
+            old = set().union(*snaps[snaps["date"] >= start_hint]["members"])
+            gone = sorted(old - set(uni["ticker"]))
+        else:
+            gone = U.removed_since(changes.get(g), start_hint, set(uni["ticker"]))
+        for t in gone:
+            removed_by.setdefault(t, f"{g}_removed")
+    removed = sorted(removed_by)
     tickers = list(uni["ticker"]) + removed
     if a.max_tickers:
         tickers = tickers[:a.max_tickers]
@@ -223,7 +242,8 @@ def main(argv=None):
     cal = pd.DatetimeIndex(spy.index)
     rep = rep[rep["ticker"] != "SPY"]
     meta = pd.concat([uni[["ticker", "group", "sector"]],
-                      pd.DataFrame(dict(ticker=removed, group="sp500_removed", sector=""))],
+                      pd.DataFrame(dict(ticker=removed, group=[removed_by[t] for t in removed],
+                                        sector=""))],
                      ignore_index=True)
     cov = D.coverage(rep, meta, cal)
     miss = D.missing_sessions(frames, cal)
@@ -234,11 +254,30 @@ def main(argv=None):
                    dsd.parent)
 
     # 3) detection + outcomes ------------------------------------------------------------------
-    pit = U.pit_members(cur500 | (listed500 & set(uni.loc[uni["group"] == "ambiguous",
-                                                        "ticker"])),
-                        ch500, cal[0], end) if ch500 is not None else None
+    timelines = {}
+    for g in GROUPS:
+        if g == "sp500" and snaps is not None:
+            timelines[g] = U.pit_from_snapshots(snaps, current[g], end)
+            pit_src[g] = f"fja05680/sp500 snapshots {pit_att.get('first')}..{pit_att.get('last')}"
+        elif changes.get(g) is not None:
+            timelines[g] = U.pit_members(current[g], changes[g], cal[0], end)
+            pit_src[g] = "wikipedia change table (best effort)"
+        else:
+            timelines[g] = None
+            pit_src[g] = None
+    pit = timelines["sp500"]
+    pit_sanity = []
+    for g, tl in timelines.items():
+        if tl is None:
+            continue
+        for d in cal[::63]:
+            pit_sanity.append(dict(group=g, date=str(d.date()), members=len(U.member_on(tl, d)),
+                                   with_prices=len(U.member_on(tl, d) & set(frames))))
+    pit_sanity = pd.DataFrame(pit_sanity)
+    cur500 = set(uni.loc[uni["group"] == "sp500", "ticker"])
     ref500 = sorted(cur500 & set(frames))
-    sig, data = E.detect(frames, spy, meta, ref500, pit500=pit)
+    sig, data = E.detect(frames, spy, meta, ref500, pit500=pit,
+                         pit_other={g: timelines[g] for g in ("sp400", "sp600")})
     say(f"detections: {len(sig)}")
     variants = {"primary": ("rs_ref500", "primary"), "off": ("rs_ref500", "off"),
                 "rs1500_primary": ("rs_1500", "primary"), "pit_primary": ("rs_pit500", "primary")}
@@ -275,14 +314,19 @@ def main(argv=None):
     long_slip = pd.concat([stat_rows(longs[longs["eligible_primary"]], ["strategy"],
                                      f"net_r_{s}", dict(slippage=s))
                            for s in R.SLIPPAGE_SCENARIOS_BPS], ignore_index=True)
-    # PIT vs current S&P 500 (the production universe definition)
+    # PIT vs current membership, per index (RS: PIT S&P 500 reference)
     l_all = lab[lab["direction"] == "long"]
-    pit_cmp = pd.concat([
-        stat_rows(l_all[l_all["eligible_primary"] & (l_all["group"] == "sp500")], ["strategy"],
-                  "net_r_base", dict(universe="current_sp500_rs_ref500")),
-        stat_rows(l_all[l_all["eligible_pit_primary"] & (l_all["pit_member_sp500"] == True)],  # noqa
-                  ["strategy"], "net_r_base", dict(universe="pit_sp500_rs_pit500")),
-    ], ignore_index=True) if pit is not None else pd.DataFrame()
+    parts = []
+    for g in GROUPS:
+        col = f"pit_member_{g}"
+        if col not in l_all or timelines.get(g) is None:
+            continue
+        parts.append(stat_rows(l_all[l_all["eligible_primary"] & (l_all["group"] == g)],
+                               ["strategy"], "net_r_base", dict(universe=f"current_{g}")))
+        rc = "eligible_pit_primary" if pit is not None else "eligible_primary"
+        parts.append(stat_rows(l_all[l_all[rc] & (l_all[col] == True)],  # noqa: E712
+                               ["strategy"], "net_r_base", dict(universe=f"pit_{g}")))
+    pit_cmp = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
     # shorts: cost scenarios
     srows = []
     for mk in ("primary", "off"):
@@ -298,6 +342,13 @@ def main(argv=None):
                 for b in ("gc", "warm", "hot", "htb"):
                     row[f"net_base_{b}"] = E.trade_stats(ds, f"net_r_base_{b}").get("mean_r")
                 row["net_stress_hot"] = E.trade_stats(ds, "net_r_stress_hot").get("mean_r")
+                dn = ds[E.non_overlapping(ds)]
+                row["nonoverlap_trades"] = E.trade_stats(dn, "gross_r").get("trades", 0)
+                row["nonoverlap_gross"] = E.trade_stats(dn, "gross_r").get("mean_r")
+                row["nonoverlap_net_base_warm"] = E.trade_stats(dn, "net_r_base_warm") \
+                    .get("mean_r")
+                row["nonoverlap_net_base_hot"] = E.trade_stats(dn, "net_r_base_hot") \
+                    .get("mean_r")
                 row["gap_no_trade"] = int((ds["trade_status"] == "no_trade_gap_through_stop")
                                           .sum()) if len(ds) else 0
                 row["ambiguous_bar"] = int((ds["barrier"] == "ambiguous_same_bar").sum()) \
@@ -367,6 +418,7 @@ def main(argv=None):
         "price_move_labels.csv": csv_bytes(px_tbl),
         "portfolio_long.csv": csv_bytes(port_tbl),
         "splits.csv": csv_bytes(splits),
+        "pit_membership_sanity.csv": csv_bytes(pit_sanity),
         "equivalence.json": json.dumps(eq, indent=2, default=str),
     }
     for name, b in files.items():
@@ -376,8 +428,9 @@ def main(argv=None):
                 period=a.period, prices_sha256=prices_sha, git=_git_rev(),
                 python=platform.python_version(), pandas=pd.__version__,
                 blockers=blockers, log=log, dataset_files=dmanifest,
-                pit_sp500=pit is not None, removed_sp500_requested=len(removed),
-                removed_sp500_with_data=int(sum(t in frames for t in removed)))
+                pit_sp500=pit is not None, pit_sources=pit_src,
+                removed_requested=len(removed),
+                removed_with_data=int(sum(t in frames for t in removed)))
     report = build_report(info, umeta, uni, cov, miss, counts, rej, long_ref, long_1500,
                           long_slip, pit_cmp, short_tbl, px_tbl, port_tbl, splits, eq, lab)
     write_once(out / "REPORT.md", report, manifest, root)
@@ -399,9 +452,10 @@ def _git_rev():
 def build_report(info, umeta, uni, cov, miss, counts, rej, long_ref, long_1500, long_slip,
                  pit_cmp, short_tbl, px_tbl, port_tbl, splits, eq, lab) -> str:
     keep = ["group", "strategy", "detected", "mature_trades", "win_rate", "mean_r",
-            "median_r", "mean_r_ex_top5", "profit_factor", "se_mean_r"]
+            "median_r", "mean_r_ex_top5", "profit_factor", "se_mean_r", "nonoverlap_trades",
+            "nonoverlap_mean_r", "nonoverlap_pf", "nonoverlap_se"]
     src = pd.DataFrame([dict(group=g, **v) for g, v in umeta["sources"].items()])
-    sb = ", ".join(f"{g}: {'YES' if v else 'no'}" for g, v in umeta["survivorship_bias"].items())
+    sb = "; ".join(f"{g}: {v or 'none'}" for g, v in info["pit_sources"].items())
     ov = pd.DataFrame(umeta["overlaps"])
     L = [f"# S&P 1500 / shorts / AI dataset — research run `{info['run_id']}`", "",
          f"Rules `{info['rules_version']}` (pre-registered in `research/sp1500/RULES.md`, "
@@ -415,12 +469,12 @@ def build_report(info, umeta, uni, cov, miss, counts, rej, long_ref, long_1500, 
     if info["blockers"]:
         L += ["## Blockers", ""] + [f"- {b}" for b in info["blockers"]] + [""]
     L += ["## 1. Universe and sources", "", md_table(src),
-          f"Retrieved {umeta['retrieved_at']}. Survivorship bias (current membership only, no "
-          f"dated change table): {sb}. Point-in-time S&P 500: "
-          f"{'reconstructed from the dated Wikipedia change table' if info['pit_sp500'] else 'unavailable'}"
-          f"; removed members requested {info['removed_sp500_requested']}, with Yahoo data "
-          f"{info['removed_sp500_with_data']} (delisted names are mostly missing — the PIT "
-          "test still carries survivorship in that part).", "",
+          f"Retrieved {umeta['retrieved_at']}. All main comparisons use **today's** lists "
+          f"(survivorship bias). Point-in-time sources: {sb}. Former members requested "
+          f"{info['removed_requested']}, with Yahoo data {info['removed_with_data']} "
+          "(delisted names are mostly missing, so the PIT comparison still carries "
+          "survivorship in that part). Membership counts over time: "
+          "`pit_membership_sanity.csv`.", "",
           "Overlaps (ticker listed in two indices):", "",
           md_table(ov[["ticker", "groups_listed", "group", "resolution", "evidence"]])
           if len(ov) else "_(none)_\n",
@@ -433,14 +487,18 @@ def build_report(info, umeta, uni, cov, miss, counts, rej, long_ref, long_1500, 
           md_table(rej),
           "## 4. Long strategies — signal level, RS vs S&P 500 reference (production meaning)",
           "", "Net R after 10 bps/side, next-open entry, stop or 20 sessions. Mature (closed) "
-          "trades only.", "", md_table(long_ref[keep]),
+          "trades only. `mean_r` etc. use every eligible signal (consecutive-day repeats of "
+          "one setup included, so they overlap); `nonoverlap_*` follows the production "
+          "signal-level convention (one model trade per ticker and strategy at a time).", "",
+          md_table(long_ref[keep]),
           "### RS base change: percentile vs the full 1500", "", md_table(long_1500[keep]),
           "### Slippage sensitivity (combined universe, RS vs 500)", "",
           md_table(long_slip[["slippage", "strategy", "mature_trades", "mean_r",
-                              "profit_factor"]]),
-          "### Point-in-time S&P 500 vs current S&P 500", "",
+                              "profit_factor", "nonoverlap_mean_r"]]),
+          "### Point-in-time vs current membership (per index)", "",
           md_table(pit_cmp[["universe", "strategy", "detected", "mature_trades", "mean_r",
-                            "profit_factor", "se_mean_r"]]) if len(pit_cmp) else
+                            "profit_factor", "se_mean_r", "nonoverlap_trades",
+                            "nonoverlap_mean_r"]]) if len(pit_cmp) else
           "_PIT unavailable_\n",
           "## 5. Long portfolio backtests (production engine, separate from signal stats)", "",
           "`backtest.simulate(entry_at='open')` + RS-first order + `portfolio_bt.replay` with "
@@ -464,9 +522,14 @@ def build_report(info, umeta, uni, cov, miss, counts, rej, long_ref, long_1500, 
           "Split: chronological 60/20/20 by signal date, 20-session purge before each "
           "boundary and 5-session embargo after it. No model was trained.", "",
           "## 10. Limitations", "",
-          "- Membership is today's (except reconstructed PIT S&P 500); delisted stocks are "
-          "largely absent from Yahoo → survivorship bias, likely optimistic for longs and "
-          "pessimistic for shorts.",
+          "- Main comparisons use today's membership. PIT membership is reconstructed only "
+          "for the PIT section: S&P 500 from a community snapshot dataset (not S&P), 400/600 "
+          "from Wikipedia change tables (best effort). Delisted stocks are largely absent "
+          "from Yahoo → survivorship bias, likely optimistic for longs and pessimistic for "
+          "shorts.",
+          "- iShares holdings files (dated) were requested but return an HTML page from the "
+          "runner, so membership dates are retrieval dates; overlaps were resolved with "
+          "dated S&P DJI press releases (`membership_evidence.csv`).",
           "- Yahoo daily bars, split-adjusted; vendor revisions possible (bars + checksums "
           "saved in the artifact).",
           "- Daily candles: intrabar order unknown; shared stop/target bars resolved as stop.",

@@ -16,6 +16,7 @@ import io
 import json
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -121,9 +122,23 @@ def parse_wiki(html: str) -> tuple:
 
 
 # ---------------------------------------------------------------- overlap resolution
-def resolve_overlaps(lists: dict, as_of: dict, changes: dict) -> pd.DataFrame:
+EVIDENCE_CSV = Path(__file__).with_name("membership_evidence.csv")
+PIT500_API = "https://api.github.com/repos/fja05680/sp500/contents"
+
+
+def load_evidence(path=EVIDENCE_CSV) -> pd.DataFrame:
+    """Hand-checked dated index announcements (S&P DJI press releases) with source URLs."""
+    if not Path(path).exists():
+        return pd.DataFrame(columns=["effective_date", "ticker", "index", "action", "source"])
+    ev = pd.read_csv(path)
+    ev["effective_date"] = pd.to_datetime(ev["effective_date"])
+    return ev
+
+
+def resolve_overlaps(lists: dict, as_of: dict, changes: dict, evidence=None) -> pd.DataFrame:
     """
-    lists: {group: set(tickers)}; as_of: {group: date|None}; changes: {group: DataFrame|None}.
+    lists: {group: set(tickers)}; as_of: {group: date|None}; changes: {group: DataFrame|None};
+    evidence: optional DataFrame from load_evidence() (dated press releases).
     Returns DataFrame[ticker, groups_listed, group, resolution, evidence].
     """
     rows = []
@@ -151,11 +166,18 @@ def resolve_overlaps(lists: dict, as_of: dict, changes: dict) -> pd.DataFrame:
                     ev.append((r.date, g, "added"))
                 if r.removed == t:
                     ev.append((r.date, g, "removed"))
+        src = "change_table"
+        if evidence is not None and len(evidence):
+            pr = evidence[(evidence["ticker"] == t) & evidence["index"].isin(listed)]
+            for r in pr.itertuples():
+                ev.append((pd.Timestamp(r.effective_date), r.index, r.action))
+            if len(pr):
+                src = "press_release"
         if ev:
             d, g, kind = max(ev)
             target = g if kind == "added" else next((x for x in listed if x != g), None)
             if target:
-                rows.append((t, "|".join(listed), target, "change_table",
+                rows.append((t, "|".join(listed), target, src,
                              json.dumps([(str(a.date()), b, c) for a, b, c in sorted(ev)])))
                 continue
         rows.append((t, "|".join(listed), "ambiguous", "unresolved", ""))
@@ -178,6 +200,56 @@ def pit_members(current: set, changes: pd.DataFrame, start, end) -> dict:
         cur = (cur - added) | removed            # membership just before date d
         timeline.append((d, set(cur)))
     return timeline                               # newest first: (boundary_date, members_before)
+
+
+def parse_pit500(text: str) -> pd.DataFrame:
+    """fja05680/sp500 'Historical Components & Changes' CSV: date, comma-separated tickers."""
+    df = pd.read_csv(io.StringIO(text))
+    df["date"] = pd.to_datetime(df["date"])
+    df["members"] = df["tickers"].map(lambda s: {norm_ticker(t) for t in str(s).split(",")
+                                                 if t.strip()})
+    return df[["date", "members"]].sort_values("date").reset_index(drop=True)
+
+
+def pit_from_snapshots(snaps: pd.DataFrame, current: set, end) -> list:
+    """member_on()-compatible timeline from dated full-membership snapshots; after the last
+    snapshot the current list applies (changes after it are therefore approximate)."""
+    if snaps is None or not len(snaps):
+        return None
+    last = snaps.iloc[-1]
+    tl = [(pd.Timestamp(end) + pd.Timedelta(days=1), set(current)),
+          (last["date"] + pd.Timedelta(days=1), set(last["members"]))]
+    for k in range(len(snaps) - 1, 0, -1):
+        tl.append((snaps.iloc[k]["date"], set(snaps.iloc[k - 1]["members"])))
+    return tl
+
+
+def fetch_pit500(session=None, timeout=30) -> dict:
+    """Newest 'S&P 500 Historical Components & Changes(MM-DD-YYYY).csv' (community dataset,
+    not S&P). Never raises; the attempt is recorded."""
+    s = session or requests.Session()
+    rec = dict(group="sp500", source="pit_fja05680", url=PIT500_API, ok=False)
+    try:
+        r = s.get(PIT500_API, headers=UA, timeout=timeout)
+        rec["http"] = r.status_code
+        files = [f for f in r.json() if "Historical Components" in f.get("name", "")
+                 and f["name"].endswith(".csv")]
+
+        def stamp(f):
+            m = re.search(r"(\d{2})-(\d{2})-(\d{4})", f["name"])
+            return (m.group(3), m.group(1), m.group(2)) if m else ("0",)
+        f = max(files, key=stamp)
+        rec["url"] = f["download_url"]
+        r = s.get(f["download_url"], headers=UA, timeout=timeout)
+        rec["http"] = r.status_code
+        rec["sha256"] = hashlib.sha256(r.content).hexdigest()
+        rec["_raw"] = r.content
+        snaps = parse_pit500(r.text)
+        rec.update(ok=len(snaps) > 100, rows=len(snaps), first=str(snaps["date"].iloc[0].date()),
+                   last=str(snaps["date"].iloc[-1].date()), _snaps=snaps)
+    except Exception as e:
+        rec["error"] = f"{type(e).__name__}: {str(e)[:200]}"
+    return rec
 
 
 def member_on(timeline, day) -> set:
@@ -221,6 +293,7 @@ def fetch_all(session=None, timeout=30) -> dict:
             except Exception as e:                       # recorded, not raised
                 rec["error"] = f"{type(e).__name__}: {str(e)[:200]}"
             out["attempts"].append(rec)
+    out["attempts"].append(fetch_pit500(s, timeout))
     return out
 
 
@@ -250,9 +323,9 @@ def build_universe(fetched: dict) -> tuple:
     """(universe DataFrame, meta dict). Prefers dated iShares lists, else Wikipedia."""
     lists, as_of, changes, names, sectors, source = {}, {}, {}, {}, {}, {}
     for g in GROUPS:
-        ish = next((a for a in fetched["attempts"] if a["group"] == g and
+        ish = next((a for a in fetched["attempts"] if a["group"] == g and "_df" in a and
                     a["source"] == "ishares" and a["ok"]), None)
-        wik = next((a for a in fetched["attempts"] if a["group"] == g and
+        wik = next((a for a in fetched["attempts"] if a["group"] == g and "_df" in a and
                     a["source"] == "wikipedia" and a["ok"]), None)
         pick = ish or wik
         if pick is None:
@@ -269,7 +342,8 @@ def build_universe(fetched: dict) -> tuple:
         for r in df.itertuples():
             names.setdefault(r.ticker, r.name)
             sectors.setdefault(r.ticker, wsec.get(r.ticker) or r.sector)  # GICS name if known
-    res = resolve_overlaps(lists, as_of, changes)
+    evidence = load_evidence()
+    res = resolve_overlaps(lists, as_of, changes, evidence)
     res["name"] = res["ticker"].map(names)
     res["sector"] = res["ticker"].map(sectors)
     meta = dict(retrieved_at=fetched["retrieved_at"],
@@ -278,7 +352,8 @@ def build_universe(fetched: dict) -> tuple:
                                  has_change_table=changes.get(g) is not None)
                          for g in GROUPS},
                 overlaps=res[res["resolution"] != "single"].to_dict("records"),
-                survivorship_bias={g: changes.get(g) is None for g in GROUPS},
+                survivorship_bias={g: True for g in GROUPS},   # current lists
+                change_table={g: changes.get(g) is not None for g in GROUPS},
                 attempts=[{k: v for k, v in a.items() if not k.startswith("_")}
                           for a in fetched["attempts"]],
                 missing_groups=[g for g in GROUPS if g not in lists])
