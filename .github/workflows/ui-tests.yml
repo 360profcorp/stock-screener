@@ -29,7 +29,15 @@ jobs:
       - name: Regression + app tests (all tabs, RU/EN, open position and empty tables)
         env:
           REQUIRE_UI_TESTS: "1"
-        run: python -m unittest test_trade_tab -v
+        run: |
+          set +e
+          python -m unittest test_trade_tab -v > ui.log 2>&1
+          rc=$?
+          cat ui.log
+          if [ $rc -ne 0 ]; then
+            python -c "import sys; t=open('ui.log').read()[-3500:].replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=UI tests::'+t)"
+          fi
+          exit $rc
       - name: Audit cycle tests (trade cycle, data gaps, reruns, concurrency, accounting)
         run: python -m unittest test_audit_cycle -v
       - name: Existing test suites
