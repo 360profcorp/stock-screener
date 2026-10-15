@@ -335,10 +335,22 @@ def add_outcomes(sig: pd.DataFrame, data: dict, calendar, data_end) -> pd.DataFr
     return pd.DataFrame(out)
 
 
-def assign_splits(df: pd.DataFrame, calendar, frac=(0.6, 0.2), purge=R.HOLD,
-                  embargo=5) -> pd.DataFrame:
-    """Chronological train/validation/test by signal date; rows whose 20-session horizon reaches
-    the next split start are 'purged'; the first `embargo` sessions of val/test are 'embargo'."""
+def label_end(df: pd.DataFrame, calendar, horizon=R.HOLD + 1) -> pd.Series:
+    """Date the model-trade label is fully known: its exit date if closed, never earlier than
+    signal + (HOLD + 1) sessions (entry is the next session, then HOLD bars)."""
+    cal = pd.DatetimeIndex(calendar)
+    pos = {d: k for k, d in enumerate(cal)}
+    sd = pd.to_datetime(df["signal_date"])
+    base = sd.map(lambda d: cal[min(pos[d] + horizon, len(cal) - 1)] if d in pos else d)
+    ex = pd.to_datetime(df["exit_date"], errors="coerce") if "exit_date" in df else base
+    return pd.concat([base, ex], axis=1).max(axis=1)
+
+
+def assign_splits(df: pd.DataFrame, calendar, frac=(0.6, 0.2), embargo=5) -> pd.DataFrame:
+    """Chronological train/validation/test by signal date. A row whose label is only known on
+    or after the next split's start is 'purged' (label_end: exit date, at least signal + 21
+    sessions); the first `embargo` sessions of validation/test are 'embargo'.
+    (v1.0 purged 20 sessions after the signal — one session short of the trade horizon.)"""
     cal = pd.DatetimeIndex(calendar)
     days = sorted(pd.to_datetime(df["signal_date"]).unique())
     if len(days) < 10:
@@ -351,13 +363,14 @@ def assign_splits(df: pd.DataFrame, calendar, frac=(0.6, 0.2), purge=R.HOLD,
         k = pos.get(pd.Timestamp(d))
         return cal[min(k + n, len(cal) - 1)] if k is not None else pd.Timestamp(d)
     sd = pd.to_datetime(df["signal_date"])
-    hend = sd.map(lambda d: shift(d, purge))
+    hend = label_end(df, cal)
     split = np.where(sd < v0, "train", np.where(sd < t0, "validation", "test")).astype(object)
     split[(split == "train") & (hend >= v0)] = "purged"
     split[(split == "validation") & (hend >= t0)] = "purged"
     split[(split == "validation") & (sd < shift(v0, embargo))] = "embargo"
     split[(split == "test") & (sd < shift(t0, embargo))] = "embargo"
-    return df.assign(split=split, split_validation_start=v0, split_test_start=t0)
+    return df.assign(split=split, split_validation_start=v0, split_test_start=t0,
+                     label_end=hend)
 
 
 # =====================================================================

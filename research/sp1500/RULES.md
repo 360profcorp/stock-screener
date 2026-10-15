@@ -72,4 +72,7 @@ A label is written only when its observation date <= data end, with that date st
 Every detection (incl. rejected, with reason), unique ID, decision-time features only,
 historical kind only (never mixed with forward data), chronological train / validation / test
 (60 / 20 / 20 % of signal dates) with a purge of 20 sessions + 5-session embargo between splits.
+**Correction (before any model training):** the model-trade label is known only at its exit,
+i.e. up to signal + 21 sessions (entry next session + 20 bars). The purge now removes every
+row whose label end (exit date, at least signal + 21 sessions) reaches the next split.
 No model is trained; nothing is connected to the bot.
