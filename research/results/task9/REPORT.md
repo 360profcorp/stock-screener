@@ -1,6 +1,6 @@
 # Task 9 — sector limits, Retest RS-first portfolio (auto-generated)
 
-Generated 2026-10-14T21:34-04:00 from commit `7e1425d`. Signals ['2024-10-28', '2026-10-14'], 503 tickers, 21449 raw retest signals; sector unknown for 0 tickers.
+Generated 2026-10-14T22:05-04:00 from commit `1c9acaa`. Signals ['2024-10-28', '2026-10-14'], 503 tickers, 21449 raw retest signals; sector unknown for 0 tickers.
 
 Frozen: {"mode": "retest", "min_rs": 85, "stop_buf": 3.0, "hold": 20, "market": "ma50", "min_vol": 0.0, "max_risk": 0.0, "lookback": 3}  
 Portfolio: {"initial_cash": 10000.0, "risk_fraction": 0.01, "max_position_fraction": 0.2, "max_new_per_day": 3, "cost_bps": 10.0}

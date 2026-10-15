@@ -1,6 +1,6 @@
 {
-  "generated": "2026-10-14T21:34-04:00",
-  "git_sha": "7e1425d",
+  "generated": "2026-10-14T22:05-04:00",
+  "git_sha": "1c9acaa",
   "tickers_with_data": 503,
   "universe": 503,
   "unknown_sector": 0,
@@ -58,5 +58,5 @@
   "ranking": "RS descending within each day, ties by ticker (MC: random ties)",
   "candidates_open": 3760,
   "candidates_close": 3790,
-  "runtime_sec": 1845
+  "runtime_sec": 1742
 }
