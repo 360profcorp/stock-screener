@@ -1,0 +1,34 @@
+name: Paper portfolio (Retest RS-first)
+
+# Paper trading only — no broker, no orders. NOT scheduled yet: enable the cron line after the
+# PR is reviewed and merged (Task 10: do not deploy).
+on:
+  # schedule:
+  #   - cron: "45 21 * * 1-5"   # ~5:45 PM New York (summer) / 4:45 PM (winter), after the close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-portfolio
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Run paper session(s)
+        run: python paper_run.py daily
+      - name: Save state
+        run: |
+          git config user.name "visar-paper"
+          git config user.email "visar-paper@users.noreply.github.com"
+          git add paper/state paper/data || true
+          git diff --cached --quiet || git commit -m "Paper portfolio $(date -u +%F_%H%M)"
+          git pull --rebase && git push

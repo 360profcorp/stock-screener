@@ -1,0 +1,45 @@
+name: Task 10 paper verification
+
+# Research/verification only: runs the unit tests and the real-data equivalence check for the
+# Task 10 branch and commits research/results/task10. Places no orders, touches no live state.
+on:
+  push:
+    branches: [feature/task10-paper-retest]
+    paths:
+      - "paper/**.py"
+      - "paper_run.py"
+      - "backtest.py"
+      - "portfolio_bt.py"
+      - "test_paper.py"
+      - ".github/workflows/paper-verify.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-verify
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/feature/task10-paper-retest'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Unit tests
+        run: python -m unittest test_paper test_task6_engine test_portfolio_bt -v
+      - name: Real-data equivalence
+        run: python paper_run.py verify
+      - name: Commit verification report
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/task10 || true
+          git diff --cached --quiet || git commit -m "Task 10: real-data verification $(date -u +%F_%H%M)"
+          git pull --rebase && git push
