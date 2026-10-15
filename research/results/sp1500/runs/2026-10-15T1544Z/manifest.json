@@ -1,0 +1,53 @@
+{
+  "run_id": "2026-10-15T1544Z",
+  "rules_version": "sp1500-research/1.0",
+  "generated_at": "2026-10-15T16:10:57+00:00",
+  "data_end": "2026-10-14",
+  "first_session": "2021-10-15",
+  "period": "5y",
+  "prices_sha256": "a202c038a262185dc76fb7f010985546fc7e3b9920871844401ab949efe68f07",
+  "git": "3e12942d66cd7ecb35b00509130e93189f3a2802",
+  "python": "3.12.15",
+  "pandas": "3.0.6",
+  "blockers": [],
+  "log": [
+    "    1.7s universe: 1503 tickers; sources {'sp500': 'wikipedia', 'sp400': 'wikipedia', 'sp600': 'wikipedia'}",
+    "  164.4s prices: 1502/1503 tickers, sessions 2021-10-15..2026-10-14",
+    "  391.6s detections: 601635",
+    " 1594.7s outcomes: 601635 rows",
+    " 1890.7s portfolio backtests done",
+    " 1897.0s equivalence: {'production_rows': 43214, 'research_rows': 43214, 'same_keys': True, 'level_equal': True, 'stop_base_equal': True, 'rs_equal': True, 'ok': True}"
+  ],
+  "dataset_files": {
+    "2026-10-15T1544Z/sources/sp500_ishares.csv": "0ea3158259dc33c99286a89aadd589ea6d709579a199647dcb7fdfc5cddab2be",
+    "2026-10-15T1544Z/sources/sp500_wikipedia.html": "bab0dcd8c12bf8d3ec1e16b97d7bca0f96723aee00001ffec78cfdee33763243",
+    "2026-10-15T1544Z/sources/sp400_ishares.csv": "f53d0c70107fccfdcb49f8ed4c23c7d23cd01e23530b5be60d4ac113ce4ce08a",
+    "2026-10-15T1544Z/sources/sp400_wikipedia.html": "29a655ecd203253d2d7766853cacd6ace70232a0274b84acf372a0be252ebd0a",
+    "2026-10-15T1544Z/sources/sp600_ishares.csv": "8e92bbf4d45f39ccc351a4f43eb71ab760948d6fec36601912bacc473fef9da2",
+    "2026-10-15T1544Z/sources/sp600_wikipedia.html": "0810296d16091c21011929e2be4c04702435a33ed35282233fea48c81e9deafc",
+    "2026-10-15T1544Z/bars.pkl.gz": "ba93459a3db7f4ca7306b85480e2d38cbd9fefd0854220243e5f39d80359fc79",
+    "2026-10-15T1544Z/signals.csv.gz": "77e151daa49a610b6e930cb18b90e9c70f3220d3b599aedcdd96ce084cfb1e7f"
+  },
+  "pit_sp500": false,
+  "removed_sp500_requested": 0,
+  "removed_sp500_with_data": 0,
+  "files": {
+    "2026-10-15T1544Z/universe.csv": "c8c9d7200133120cddd4f20ec65b9665196c2ebb92a98cc01c3f78f17bd685fd",
+    "2026-10-15T1544Z/universe_meta.json": "b065d945f516507ec18bf2750cd72bfa054e68bfcfbf053001b9821275e56d73",
+    "2026-10-15T1544Z/coverage.csv": "de53b0a985d6c7494fea6cce1eb26aed3c2abc12e796197bf31e61b888efa1c9",
+    "2026-10-15T1544Z/download_report.csv": "c030fd947c8fc9d8cac98a2cdb3f851861d1795d93d10f19ca30794efd7f733f",
+    "2026-10-15T1544Z/missing_sessions.csv": "4ad3d6f29ccc164bc4acc18e72c107ca37de24d6c05b8278f10a5e8ac3441b4f",
+    "2026-10-15T1544Z/counts.csv": "89153f2edfd5b2d6272a5aa63e31d20e69b95e019280dfe054bc1c8d2d28b9ce",
+    "2026-10-15T1544Z/rejections.csv": "a7fd44bf21d6a68af848edef86d18c621fa1ebc63a0ee7aabe339038dbca20b4",
+    "2026-10-15T1544Z/long_rs_ref500.csv": "e6c5b6b92f3a15d1953c0a5f03523d944fcccba51f19a71b1006ff9304df32b8",
+    "2026-10-15T1544Z/long_rs_1500.csv": "b4e7f39bb856931a2b684146e7905d4ff4dee9d60fe28e09d7e56ffac88ab03d",
+    "2026-10-15T1544Z/long_slippage.csv": "f35c13b3fb3973538dd256014fdfd0772878217286c5fe96772f12b0ed9b3204",
+    "2026-10-15T1544Z/long_pit_vs_current.csv": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "2026-10-15T1544Z/short_cost_scenarios.csv": "b27f5cb36f0d31a55bb9b009218baaf8df7105190ab3849934ef12746faaf51d",
+    "2026-10-15T1544Z/price_move_labels.csv": "f999c467b6b3bee610ea3c789320100a021942c6ff2f4df38f9484416d9c9bb8",
+    "2026-10-15T1544Z/portfolio_long.csv": "bbb2f3daf6600dddb32184ef4fe698366ac6c72c6921dc03fb520b27324eeeb1",
+    "2026-10-15T1544Z/splits.csv": "b6f89270cb96e670d7345601fed28f4f2b6e1df5e8264ab1d58db758066bbcfd",
+    "2026-10-15T1544Z/equivalence.json": "aa924293081bb7fff03a0ef6c4514d6e95cf20acaaeb0e3133b3912b574056d2",
+    "2026-10-15T1544Z/REPORT.md": "9a524d02bea2179f8fc429d117f18e47be24056999ba1ca8434994f0615d5385"
+  }
+}
