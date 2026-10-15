@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-15T02:48:25+00:00",
+ "generated": "2026-10-15T02:55:44+00:00",
  "tickers": 503,
  "raw_signals": 21449,
  "window": [
@@ -139,6 +139,19 @@
  },
  "portfolio_full_period": {
   "ok": true,
+  "decisions_ref": 3760,
+  "decisions_new": 3760,
+  "decisions_ok": true,
+  "first_decision_diff": null,
+  "decision_outcomes": {
+   "positions": 3239,
+   "ticker_open": 342,
+   "entered": 140,
+   "daily_entries": 37,
+   "capital_or_risk": 2
+  },
+  "cash_ok": true,
+  "holdings_ok": true,
   "fills_ref": 136,
   "fills_new": 136,
   "fills_ok": true,
@@ -186,6 +199,18 @@
  },
  "portfolio_live_path": {
   "ok": true,
+  "decisions_ref": 261,
+  "decisions_new": 261,
+  "decisions_ok": true,
+  "first_decision_diff": null,
+  "decision_outcomes": {
+   "positions": 215,
+   "ticker_open": 24,
+   "entered": 15,
+   "daily_entries": 7
+  },
+  "cash_ok": true,
+  "holdings_ok": true,
   "fills_ref": 12,
   "fills_new": 12,
   "fills_ok": true,
@@ -224,5 +249,5 @@
   "final_new": 9754.764223869632
  },
  "all_ok": true,
- "runtime_sec": 118
+ "runtime_sec": 128
 }

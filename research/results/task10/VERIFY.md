@@ -1,4 +1,4 @@
-# Task 10 — real-data equivalence (2026-10-15T02:48:25+00:00)
+# Task 10 — real-data equivalence (2026-10-15T02:55:44+00:00)
 
 Tickers 503, raw Retest signals 21449, window 2024-10-29 → 2026-10-14.
 
@@ -6,7 +6,8 @@ Tickers 503, raw Retest signals 21449, window 2024-10-29 → 2026-10-14.
 
 A) Scanner vs history: 25/25 days identical
 B) Paper portfolio vs replay, full period: fills 136/136, open positions equal True, equity identical on 491 days (True), final 19252.99 vs 19252.99
-C) Live path (daily scan) vs replay, last 30 sessions: fills 12/12, equity identical True, open positions equal True
+   decisions identical in order/outcome/shares: True (3760/3760; outcomes {'positions': 3239, 'ticker_open': 342, 'entered': 140, 'daily_entries': 37, 'capital_or_risk': 2}), cash every close True, holdings every close True
+C) Live path (daily scan) vs replay, last 30 sessions: fills 12/12, decisions True (261/261), cash True, holdings True, equity True, open positions True
 
 | Day | OK | Detail |
 |---|---|---|
