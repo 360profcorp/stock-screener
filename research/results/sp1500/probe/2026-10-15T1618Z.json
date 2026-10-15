@@ -1,0 +1,252 @@
+{
+  "retrieved_at": "2026-10-15T16:18:29+00:00",
+  "sources": {
+    "sp500": {
+      "source": "wikipedia",
+      "as_of": "None",
+      "count": 503,
+      "has_change_table": false
+    },
+    "sp400": {
+      "source": "wikipedia",
+      "as_of": "None",
+      "count": 400,
+      "has_change_table": true
+    },
+    "sp600": {
+      "source": "wikipedia",
+      "as_of": "None",
+      "count": 603,
+      "has_change_table": true
+    }
+  },
+  "overlaps": [
+    {
+      "ticker": "CORT",
+      "groups_listed": "sp400|sp600",
+      "group": "sp400",
+      "resolution": "change_table",
+      "evidence": "[[\"2026-09-21\", \"sp400\", \"added\"]]",
+      "name": "Corcept Therapeutics",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "EAT",
+      "groups_listed": "sp400|sp600",
+      "group": "sp400",
+      "resolution": "change_table",
+      "evidence": "[[\"2020-06-25\", \"sp400\", \"removed\"], [\"2020-06-25\", \"sp600\", \"added\"], [\"2026-09-21\", \"sp400\", \"added\"]]",
+      "name": "Brinker International",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "FORM",
+      "groups_listed": "sp400|sp600",
+      "group": "ambiguous",
+      "resolution": "unresolved",
+      "evidence": "",
+      "name": "FormFactor, Inc.",
+      "sector": "Information Technology"
+    }
+  ],
+  "survivorship_bias": {
+    "sp500": true,
+    "sp400": false,
+    "sp600": false
+  },
+  "attempts": [
+    {
+      "group": "sp500",
+      "source": "ishares",
+      "url": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf/1467271812596.ajax?fileType=csv&fileName=IVV_holdings&dataType=fund",
+      "ok": false,
+      "http": 200,
+      "sha256": "5af016e229b557492956541dc9ac9edb0d9a35e066e26b7a29c7a0bae3a084b4",
+      "error": "ValueError: no Ticker header in iShares file; starts with '<!DOCTYPE html>\\n<html xmlns=\"http://www.w3.org/1999/xhtml\" prefix=\"og: http://ogp.me/ns#\" lang=\"en-US\" xml:lang=\"en-US\">\\n<head>\\n<link rel=\"preload\" hr"
+    },
+    {
+      "group": "sp500",
+      "source": "wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+      "ok": true,
+      "http": 200,
+      "sha256": "6ee7a506654e3b9f63142f712d270ee4021ccce0cdf3a4a55446386f9b7fb1ae",
+      "tables": [
+        {
+          "columns": [
+            "Symbol",
+            "Security",
+            "GICS Sector",
+            "GICS Sub-Industry",
+            "Headquarters Location",
+            "Date added",
+            "CIK",
+            "Founded"
+          ],
+          "rows": 503,
+          "first": [
+            "MMM",
+            "3M",
+            "Industrials",
+            "Industrial Conglomerates",
+            "Saint Paul, Minnesota",
+            "1957-03-04",
+            "66740",
+            "1902"
+          ]
+        },
+        {
+          "columns": [
+            "vteS&P 500 companies",
+            "vteS&P 500 companies.1"
+          ],
+          "rows": 11,
+          "first": [
+            "Communication services",
+            "Alphabet Inc. AT&T Charter Communication"
+          ]
+        }
+      ],
+      "rows": 503,
+      "change_rows": 0
+    },
+    {
+      "group": "sp400",
+      "source": "ishares",
+      "url": "https://www.ishares.com/us/products/239763/ishares-core-sp-midcap-etf/1467271812596.ajax?fileType=csv&fileName=IJH_holdings&dataType=fund",
+      "ok": false,
+      "http": 200,
+      "sha256": "e6586b2f8bcf4c6420325d30330a73165462b2abe901398e21ae3cebee06dfa0",
+      "error": "ValueError: no Ticker header in iShares file; starts with '<!DOCTYPE html>\\n<html xmlns=\"http://www.w3.org/1999/xhtml\" prefix=\"og: http://ogp.me/ns#\" lang=\"en-US\" xml:lang=\"en-US\">\\n<head>\\n<link rel=\"preload\" hr"
+    },
+    {
+      "group": "sp400",
+      "source": "wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies",
+      "ok": true,
+      "http": 200,
+      "sha256": "bb676c401420c162acfb498d728e838516b62e8fb17123c4274d2eba8221e61d",
+      "tables": [
+        {
+          "columns": [
+            "Symbol",
+            "Security",
+            "GICS Sector",
+            "GICS Sub-Industry",
+            "Headquarters Location",
+            "SEC filings"
+          ],
+          "rows": 400,
+          "first": [
+            "AA",
+            "Alcoa",
+            "Materials",
+            "Aluminum",
+            "Pittsburgh, Pennsylvania",
+            "reports"
+          ]
+        },
+        {
+          "columns": [
+            "Date Date",
+            "Added Ticker",
+            "Added Security",
+            "Removed Ticker",
+            "Removed Security",
+            "Reason Reason"
+          ],
+          "rows": 623,
+          "first": [
+            "September 21, 2026",
+            "HUBS",
+            "HubSpot",
+            "SAM",
+            "Boston Beer Company",
+            "Market capitalization change.[3]"
+          ]
+        },
+        {
+          "columns": [
+            "vteS&P 400 companies",
+            "vteS&P 400 companies.1"
+          ],
+          "rows": 11,
+          "first": [
+            "Energy",
+            "Antero Midstream Antero Resources Chord "
+          ]
+        }
+      ],
+      "rows": 400,
+      "change_rows": 623
+    },
+    {
+      "group": "sp600",
+      "source": "ishares",
+      "url": "https://www.ishares.com/us/products/239774/ishares-core-sp-smallcap-etf/1467271812596.ajax?fileType=csv&fileName=IJR_holdings&dataType=fund",
+      "ok": false,
+      "http": 200,
+      "sha256": "ba8e0cb0e7daba97cf139178b8fa31b6bf1779937a35266797318d696e0058f3",
+      "error": "ValueError: no Ticker header in iShares file; starts with '<!DOCTYPE html>\\n<html xmlns=\"http://www.w3.org/1999/xhtml\" prefix=\"og: http://ogp.me/ns#\" lang=\"en-US\" xml:lang=\"en-US\">\\n<head>\\n<link rel=\"preload\" hr"
+    },
+    {
+      "group": "sp600",
+      "source": "wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_S%26P_600_companies",
+      "ok": true,
+      "http": 200,
+      "sha256": "92b6e01003f6953381e87f565a286963a1b7a6900abf45477f509a44b755a098",
+      "tables": [
+        {
+          "columns": [
+            "Symbol",
+            "Security",
+            "GICS Sector",
+            "GICS Sub-Industry",
+            "Headquarters Location",
+            "SEC filings",
+            "CIK"
+          ],
+          "rows": 603,
+          "first": [
+            "AAMI",
+            "Acadian Asset Management Inc.",
+            "Financials",
+            "Asset Management & Custody Banks",
+            "Boston, Massachusetts",
+            "view",
+            "1748824"
+          ]
+        },
+        {
+          "columns": [
+            "Date Date",
+            "Added Ticker",
+            "Added Security",
+            "Removed Ticker",
+            "Removed Security",
+            "Reason Reason"
+          ],
+          "rows": 491,
+          "first": [
+            "August 4, 2026",
+            "ADIG",
+            "ADI Global Distribution",
+            "HTZ",
+            "Hertz Global Holdings",
+            "ADIG was spun off from Resideo and repla"
+          ]
+        }
+      ],
+      "rows": 603,
+      "change_rows": 491
+    }
+  ],
+  "missing_groups": [],
+  "universe_counts": {
+    "sp600": 600,
+    "sp500": 503,
+    "sp400": 399,
+    "ambiguous": 1
+  }
+}
