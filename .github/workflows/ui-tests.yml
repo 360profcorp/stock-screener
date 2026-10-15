@@ -4,10 +4,11 @@ name: UI tests (Trading tab tables)
 # real PyArrow and checks the Trading tab tables. Also shows the old crash on main's trade_tab.py.
 on:
   push:
-    branches: [fix/trade-tab-duplicate-columns]
+    branches: [fix/trade-tab-duplicate-columns, fix/paper-cycle-audit]
   pull_request:
     branches: [main]
-    paths: ["app.py", "trade_tab.py", "test_trade_tab.py", ".github/workflows/ui-tests.yml"]
+    paths: ["app.py", "trade_tab.py", "paper_tab.py", "bot_status.py", "trader.py", "vault.py",
+            "paper_run.py", "scripts/**", "test_*.py", ".github/workflows/**"]
 
 permissions:
   contents: read
@@ -29,8 +30,20 @@ jobs:
         env:
           REQUIRE_UI_TESTS: "1"
         run: python -m unittest test_trade_tab -v
+      - name: Audit cycle tests (trade cycle, data gaps, reruns, concurrency, accounting)
+        run: python -m unittest test_audit_cycle -v
       - name: Existing test suites
         run: python -m unittest test_paper test_task6_engine test_portfolio_bt
+      - name: Strategy fingerprint unchanged (forward experiment can continue)
+        run: |
+          python - <<'PY'
+          import json
+          from paper import store
+          fp = store.code_fingerprint()["combined"]
+          st = json.load(open("paper/state/portfolio.json"))["code_fingerprint"]["combined"]
+          print("fingerprint", fp, "stored", st)
+          assert fp == st
+          PY
       - name: Reproduce the crash with main's trade_tab.py (expected to fail there)
         run: |
           mkdir -p /tmp/old && cp -r . /tmp/old/repo && cd /tmp/old/repo

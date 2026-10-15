@@ -133,6 +133,8 @@ class TestApp(unittest.TestCase):
             self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
             subs = [s.value for s in at.subheader]
             self.assertIn(X["pos"], subs)
+            md = [m.value for m in at.markdown]
+            self.assertIn(f"**{X['status']}**", md)                # status block rendered
             self.assertGreaterEqual(len(at.dataframe), 4)
             at = self.run_app(lang, empty)
             self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])

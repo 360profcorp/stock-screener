@@ -95,9 +95,14 @@ def render(lang="ru"):
     g = R["genuine_forward"]
     try:
         summ = json.loads((store.STATE_DIR / "summary.json").read_text())
-        st.caption(X["updated"].format(u=summ.get("updated", "?"), d=summ.get("data_date", "?")))
-    except Exception:
-        pass
+    except (OSError, ValueError):
+        summ = {}
+    st.caption(X["updated"].format(u=summ.get("updated", "?"), d=summ.get("data_date", "?")))
+    from datetime import datetime, timezone
+    import bot_status
+    S = bot_status.paper_status(state, summ, lang, datetime.now(timezone.utc))
+    (st.success if S["flag"] == "ok" else st.warning)(S["lines"][2])
+    st.caption("  \n".join(S["lines"][:2] + S["lines"][3:]))
     st.caption(X["exp_id"].format(e=state.get("experiment"), s=state.get("start"),
                                   f=(state.get("code_fingerprint") or {}).get("combined")))
 
@@ -166,7 +171,9 @@ def render(lang="ru"):
     if len(pos):
         lp = state["last_prices"]
         pos["last"] = pos["ticker"].map(lp)
-        pos["unrealized"] = (pos["last"] - pos["entry"]) * pos["qty"]
+        # same model as equity (cash + qty * last close): entry fee already in entry_cost,
+        # exit fee not yet paid
+        pos["unrealized"] = pos["qty"] * pos["last"] - pos["entry_cost"]
         st.dataframe(pos[["ticker", "signal_date", "entry_date", "entry", "stop", "qty",
                           "bars_held", "last", "unrealized", "rs"]].round(2),
                      hide_index=True, use_container_width=True)

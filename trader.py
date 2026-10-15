@@ -153,6 +153,20 @@ def r_txt(rec):
         f"${rec['pnl']:+.0f}"
 
 
+ORDER_DATA_WAIT_DAYS = 3                 # a dry order waits this long for its open bar
+
+
+def record_run(state, cmd, result, reason="", **extra):
+    """Facts about the last attempt of each command (shown in the app's status block).
+    result: ok | skipped | error. The last successful run is kept separately."""
+    now = now_ny()
+    rec = {"at": now.strftime("%Y-%m-%d %H:%M"), "result": result, "reason": reason, **extra}
+    runs = state.setdefault("runs", {})
+    runs[cmd] = rec
+    if result == "ok":
+        state.setdefault("runs_ok", {})[cmd] = rec
+
+
 def load_state():
     state = vault.load_file(STATE_FILE, PASSWORD)
     state.setdefault("orders", [])
@@ -211,11 +225,17 @@ class DryBroker:
 def reconcile_dry(state, broker, today, events):
     # 1. morning buys at the open
     for o in [o for o in state["orders"] if is_dry(o) and o["date"] <= today]:
-        state["orders"].remove(o)
         b = broker.bar(o["ticker"], o["date"])
-        if b is None:
-            events.append(f"❔ {o['ticker']}: нет данных за {o['date']} — покупка не засчитана")
+        if b is None:                    # no open bar yet: never invent a fill, wait for data
+            if busdays(o["date"], today) < ORDER_DATA_WAIT_DAYS:
+                o["waiting_data"] = True
+                events.append(f"❔ {o['ticker']}: нет котировки за {o['date']} — ждём данные")
+            else:
+                state["orders"].remove(o)
+                events.append(f"❔ {o['ticker']}: нет котировки за {o['date']} "
+                              f"{ORDER_DATA_WAIT_DAYS} дн. — покупка не засчитана")
             continue
+        state["orders"].remove(o)
         fill = float(b["Open"])
         if fill <= o["stop"]:
             events.append(f"⏭ {o['ticker']}: открылась {fill:.2f} — ниже стопа, не куплено")
@@ -236,24 +256,32 @@ def reconcile_dry(state, broker, today, events):
 
     # 2. open positions: time exits sold at today's open, stops from daily lows
     for p in [p for p in state["positions"] if is_dry(p)]:
-        if p.get("exiting"):
-            b = broker.bar(p["ticker"], p["exiting"])
-            px = float(b["Open"]) if b is not None else p["entry"]
-            rec = close_position(state, p, px, "time", p["exiting"])
-            events.append(f"⏱ {p['ticker']}: продано через {HOLD_DAYS} дн. ~{rec['exit']} "
-                          f"({r_txt(rec)})")
+        upto = today
+        if p.get("exiting"):             # sold at the open of the exit day: stops before it first
+            upto = str(np.busday_offset(p["exiting"], -1, roll="backward", holidays=HOLIDAYS))
+        bars = broker.bars(p["ticker"], p.get("checked", p["entry_date"]), upto)
+        stopped = False
+        if bars is not None:
+            for d, b in bars.iterrows():
+                if b["Low"] <= p["stop"]:
+                    px = min(float(b["Open"]), p["stop"])
+                    rec = close_position(state, p, px, "stop", d.strftime("%Y-%m-%d"))
+                    events.append(f"🛑 {p['ticker']}: стоп по {rec['exit']} ({r_txt(rec)})")
+                    stopped = True
+                    break
+            else:
+                if len(bars):
+                    p["checked"] = bars.index[-1].strftime("%Y-%m-%d")
+        if stopped or not p.get("exiting"):
             continue
-        bars = broker.bars(p["ticker"], p.get("checked", p["entry_date"]), today)
-        if bars is None:
+        b = broker.bar(p["ticker"], p["exiting"])
+        if b is None:                    # never invent an exit price: retry at the next check
+            events.append(f"❔ {p['ticker']}: нет котировки открытия за {p['exiting']} — "
+                          "выход по времени будет засчитан, когда появятся данные")
             continue
-        for d, b in bars.iterrows():
-            if b["Low"] <= p["stop"]:
-                px = min(float(b["Open"]), p["stop"])
-                rec = close_position(state, p, px, "stop", d.strftime("%Y-%m-%d"))
-                events.append(f"🛑 {p['ticker']}: стоп по {rec['exit']} ({r_txt(rec)})")
-                break
-        else:
-            p["checked"] = today
+        rec = close_position(state, p, float(b["Open"]), "time", p["exiting"])
+        events.append(f"⏱ {p['ticker']}: продано через {HOLD_DAYS} дн. ~{rec['exit']} "
+                      f"({r_txt(rec)})")
 
 
 def reconcile_live(state, broker, today, events):
@@ -305,18 +333,21 @@ def build_plan(signals: pd.DataFrame, state: dict, today: str) -> dict | None:
     if fallback:                       # the pre-close run didn't happen → breakouts at the open
         modes.append("breakout")
     s = signals[(signals["date"].astype(str) == day) & signals["mode"].isin(modes)]
+    n_signals = int(s["ticker"].nunique())
     busy = {x["ticker"] for x in state["positions"]} | {o["ticker"] for o in state["orders"]}
+    n_busy = int(s[s["ticker"].isin(busy)]["ticker"].nunique())
     s = s[~s["ticker"].isin(busy)].copy()
     s["prio"] = s["mode"].map({m: i for i, m in enumerate(modes)})
     s = s.sort_values(["prio", "rs"], ascending=[True, False]).drop_duplicates("ticker")
     room = max(0, min(MAX_NEW_PER_DAY, MAX_POSITIONS - len(state["positions"])))
-    items = []
+    items, too_small = [], 0
     for r in s.itertuples():
         if len(items) >= room:
             break
         close, stop = float(r.close), round(float(r.stop), 2)
         qty = sizing(close, stop)
         if qty < 1:
+            too_small += 1
             continue
         items.append({"ticker": r.ticker, "mode": r.mode, "rs": int(r.rs), "close": round(close, 2),
                       "level": round(float(r.level), 2), "stop": stop, "est_qty": qty,
@@ -325,7 +356,9 @@ def build_plan(signals: pd.DataFrame, state: dict, today: str) -> dict | None:
             "for": str(np.busday_offset(day, 1, roll="forward", holidays=HOLIDAYS)),
             "created": now_ny().strftime("%Y-%m-%d %H:%M"), "items": items,
             "skipped_full": max(0, len(s) - len(items)), "status": "new",
-            "approved": MODE in ("auto", "dry"), "fallback_breakouts": fallback}
+            "approved": MODE in ("auto", "dry"), "fallback_breakouts": fallback,
+            "signals": n_signals, "already_held": n_busy, "too_small": too_small,
+            "room": room}
 
 
 def cmd_plan():
@@ -357,6 +390,13 @@ def cmd_plan():
             state["plan"] = plan
     vault.log(state, f"plan {today}: events {len(events)}, "
                      f"items {[i['ticker'] for i in plan['items']] if fresh else '—'}")
+    sig_day = str(signals["date"].astype(str).max()) if signals is not None and len(signals) \
+        else None
+    record_run(state, "plan", "ok",
+               "" if fresh else f"автоскан не записал сигналов за {today} "
+                                f"(последние сигналы: {sig_day or 'нет'})",
+               data_date=sig_day, events=len(events),
+               plan_items=len(plan["items"]) if fresh else 0)
     vault.save_file(STATE_FILE, state, PASSWORD)
 
     # ---- 3. push
@@ -450,8 +490,10 @@ def run_execute(state, broker, today, events):
     plan["status"], plan["results"] = "done", results
 
 
-def check_day(now, state, key, window, label):
-    """Common guards: mode, weekend, holiday, time window, already ran today."""
+def check_day(now, state, key, window, label, cmd=None):
+    """Common guards: mode, weekend, holiday, time window, already ran today.
+    A skip that leaves today's work undone (outside the window with no successful run today)
+    is recorded in the state with its reason, so the app can show it; benign skips are not."""
     today = now.strftime("%Y-%m-%d")
     if MODE == "off":
         print("TRADING=off")
@@ -460,7 +502,12 @@ def check_day(now, state, key, window, label):
         print("market closed today")
         return False
     if not FORCE and not (window[0] <= (now.hour, now.minute) < window[1]):
+        why = (f"запуск в {now:%H:%M} ET вне окна {window[0][0]}:{window[0][1]:02d}–"
+               f"{window[1][0]}:{window[1][1]:02d}")
         print(f"outside the {label} window ({now:%H:%M} ET)")
+        if cmd and state.get(key) != today:
+            record_run(state, cmd, "skipped", why)
+            vault.save_file(STATE_FILE, state, PASSWORD)
         return False
     if state.get(key) == today and not FORCE:
         print(f"{label}: already ran today")
@@ -472,7 +519,7 @@ def cmd_execute():
     state = load_state()
     now = now_ny()
     today = now.strftime("%Y-%m-%d")
-    if not check_day(now, state, "last_execute", ((8, 0), (9, 29)), "pre-market"):
+    if not check_day(now, state, "last_execute", ((8, 0), (9, 29)), "pre-market", "execute"):
         return
     events = []
     if MODE == "dry":
@@ -480,11 +527,15 @@ def cmd_execute():
     else:
         broker = schwab_or_none(state)
         if broker is None:
+            record_run(state, "execute", "skipped", "вход в Schwab истёк")
             vault.save_file(STATE_FILE, state, PASSWORD)
             return
 
     run_execute(state, broker, today, events)
     state["last_execute"] = today
+    plan = state.get("plan") or {}
+    record_run(state, "execute", "ok", plan.get("status") or "плана нет",
+               plan_date=plan.get("date"), orders=len(state["orders"]))
     vault.log(state, f"execute {today}: {len(events)} events")
     vault.save_file(STATE_FILE, state, PASSWORD)
 
@@ -535,7 +586,8 @@ def cmd_preclose():
     state = load_state()
     now = now_ny()
     today = now.strftime("%Y-%m-%d")
-    if not check_day(now, state, "last_preclose", ((15, 10), (15, 58)), "pre-close"):
+    if not check_day(now, state, "last_preclose", ((15, 10), (15, 58)), "pre-close",
+                     "preclose"):
         return
     if "breakout" not in TRADE_SETUPS:
         print("breakouts are not traded (TRADE_SETUPS)")
@@ -543,6 +595,8 @@ def cmd_preclose():
 
     res, mkt_line, mkt_ok, note = breakouts_now(today)
     if res is None:
+        record_run(state, "preclose", "skipped", note)
+        vault.save_file(STATE_FILE, state, PASSWORD)
         push(f"VISAR бот: пробои {today}", f"{note} — пробои купим завтра на открытии.",
              tags="warning")
         return
@@ -605,6 +659,10 @@ def cmd_preclose():
     if note:
         lines.append(note)
     lines.append(f"Открыто позиций: {len(state['positions'])}/{MAX_POSITIONS}")
+    record_run(state, "preclose", "ok",
+               "" if bought else ("рынок не проходит фильтр" if not mkt_ok
+                                  else "нет пробоев" if res.empty else "нет новых покупок"),
+               data_date=today, candidates=int(len(res)), bought=len(bought))
     vault.log(state, f"preclose {today}: bought {bought}")
     vault.save_file(STATE_FILE, state, PASSWORD)
     title = f"VISAR бот {mode_label(MODE)}: пробои {now:%H:%M}"
@@ -629,6 +687,12 @@ def main():
     except Exception as e:
         traceback.print_exc()
         push("VISAR бот: ошибка", f"{cmd}: {str(e)[:300]}", tags="rotating_light")
+        try:                             # record the failure on the last SAVED state only
+            st = vault.load_file(STATE_FILE, PASSWORD)
+            record_run(st, cmd, "error", f"{type(e).__name__}: {str(e)[:200]}")
+            vault.save_file(STATE_FILE, st, PASSWORD)
+        except Exception:
+            traceback.print_exc()
         return 1
     return 0
 

@@ -91,6 +91,37 @@ class StrategyChanged(RuntimeError):
     pass
 
 
+class DataError(RuntimeError):
+    """Market data is not good enough to process a session: nothing is saved."""
+
+
+MIN_SESSION_COVERAGE = 0.9        # share of the universe that must have a bar on a session
+
+
+def data_problems(frames: dict, day, held) -> list:
+    """Why session `day` cannot be processed safely (empty list = OK).
+    A held position without a bar on `day` whose download ends BEFORE `day` means a stale or
+    failed download (not a trading halt): its stop/time exit would silently be skipped."""
+    day = pd.Timestamp(day)
+    out = []
+    n = sum(day in df.index for df in frames.values())
+    if frames and n < MIN_SESSION_COVERAGE * len(frames):
+        out.append(f"{day.date()}: only {n}/{len(frames)} tickers have a bar")
+    for t in sorted(held):
+        f = frames.get(t)
+        if f is None or not len(f) or (day not in f.index and f.index[-1] < day):
+            last = None if f is None or not len(f) else str(f.index[-1].date())
+            out.append(f"{day.date()}: held {t} has no bar (download ends {last})")
+    return out
+
+
+def _refetch(frames: dict, tickers) -> dict:
+    """Download `tickers` again (bounded) and replace their frames."""
+    fresh, _, _ = load_market(pd.DataFrame({"ticker": sorted(tickers)}),
+                              core.get_prices(tuple(sorted(tickers)), period="3y"))
+    return {**frames, **fresh}
+
+
 def _slug(x: str) -> str:
     import re
     return re.sub(r"[^A-Za-z0-9._+-]+", "-", str(x)).strip("-")
@@ -110,7 +141,7 @@ def _archive(P, root, label):
 
 
 def daily(universe=None, prices=None, now=None, root=ROOT, cfg=DEFAULT,
-          new_experiment: str = None, scan_fn=None) -> dict:
+          new_experiment: str = None, scan_fn=None, refetch="auto") -> dict:
     """
     FORWARD paper trading, run after the US close.
 
@@ -128,6 +159,8 @@ def daily(universe=None, prices=None, now=None, root=ROOT, cfg=DEFAULT,
     """
     now = now or datetime.now(timezone.utc)
     scan_fn = scan_fn or scan_day
+    if refetch == "auto":
+        refetch = _refetch if prices is None else None      # tests inject prices: no network
     P = store.paths("forward", root)
     universe = core.get_sp500() if universe is None else universe
     frames, spy, sectors = load_market(universe, prices)
@@ -168,6 +201,18 @@ def daily(universe=None, prices=None, now=None, root=ROOT, cfg=DEFAULT,
                           ).hexdigest()[:12]
     report = dict(run_id=run_id, data_date=str(data_date.date()), sessions=[], events=[])
     for day in sessions:
+        probs = data_problems(frames, day, port.s["positions"])
+        tries = 0
+        while probs and refetch is not None and tries < 2:
+            tries += 1
+            missing = [p.split("held ")[1].split(" ")[0] for p in probs if "held " in p]
+            if not missing:
+                break
+            time.sleep(5 * tries)
+            frames = refetch(frames, missing)
+            probs = data_problems(frames, day, port.s["positions"])
+        if probs:
+            raise DataError("session not processed, state not saved: " + "; ".join(probs))
         tr = truncate(frames, day)
         bars = {t: {"O": df["Open"].iloc[-1], "H": df["High"].iloc[-1],
                     "L": df["Low"].iloc[-1], "C": df["Close"].iloc[-1]}

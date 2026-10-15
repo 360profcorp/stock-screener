@@ -101,3 +101,51 @@ class GitHubStore:
             raise RuntimeError("state changed in the meantime — reload and try again")
         r.raise_for_status()
         return r.json()["content"]["sha"]
+
+
+# ---------------------------------------------------------------- concurrent updates
+APP_KEYS = ("token", "auto_breakouts")      # written by the app (Trading tab)
+APP_PLAN_KEYS = ("approved", "rejected")     # plan approval written by the app
+
+
+class StateConflict(RuntimeError):
+    pass
+
+
+def merge_states(base: dict, ours: dict, theirs: dict) -> dict:
+    """3-way merge after the app saved while the bot was running.
+    base: state the bot started from; ours: the bot's result; theirs: what is now saved.
+    App-owned fields changed in `theirs` (Schwab login, breakout toggle, plan approval) are
+    taken from it; log entries are united; every other field is the bot's. If `theirs`
+    changed a bot-owned field, nothing is guessed: StateConflict is raised."""
+    out = json.loads(json.dumps(ours, default=str))
+    skip = set(APP_KEYS) | {"log", "plan", "updated"}
+    for k in set(base) | set(theirs):
+        if k in skip:
+            continue
+        if base.get(k) != theirs.get(k):
+            raise StateConflict(f"saved state changed bot field {k!r} during the run")
+    for k in APP_KEYS:
+        if base.get(k) != theirs.get(k):
+            out[k] = theirs.get(k)
+    bp, op, tp = base.get("plan") or {}, out.get("plan") or {}, theirs.get("plan") or {}
+    plan_app = {k for k in APP_PLAN_KEYS if bp.get(k) != tp.get(k)}
+    if any(bp.get(k) != tp.get(k) for k in set(bp) | set(tp) if k not in APP_PLAN_KEYS):
+        raise StateConflict("saved state changed the plan itself during the run")
+    if plan_app:
+        if op.get("date") == tp.get("date") and op.get("status") == "new":
+            for k in plan_app:
+                op[k] = tp.get(k)
+            out["plan"] = op
+        else:
+            raise StateConflict("plan approval changed for a plan the bot already replaced "
+                                "or executed")
+    seen, merged = set(), []
+    for row in sorted((base.get("log") or []) + (ours.get("log") or []) +
+                      (theirs.get("log") or []), key=lambda r: r.get("t", "")):
+        key = (row.get("t"), row.get("msg"))
+        if key not in seen:
+            seen.add(key)
+            merged.append(row)
+    out["log"] = merged[-200:]
+    return out

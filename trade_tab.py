@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+import bot_status
 import vault
 from schwab_api import auth_url, exchange_code, refresh_age_days
 
@@ -55,6 +56,7 @@ TX = {
                    "rejected": "отклонён", "expired": "устарел"},
         "approve": "✅ Подтвердить покупки", "reject": "❌ Отменить план",
         "approved": "Подтверждён — утром бот купит на открытии.", "rejected_msg": "План отменён.",
+        "status": "Статус бота",
         "pos": "Открытые позиции", "pos_none": "Открытых позиций нет.",
         "closed": "Закрытые сделки", "closed_none": "Закрытых сделок пока нет.",
         "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
@@ -106,6 +108,7 @@ TX = {
                    "rejected": "rejected", "expired": "expired"},
         "approve": "✅ Approve buys", "reject": "❌ Cancel plan",
         "approved": "Approved — the bot buys in the morning.", "rejected_msg": "Plan cancelled.",
+        "status": "Bot status",
         "pos": "Open positions", "pos_none": "No open positions.",
         "closed": "Closed trades", "closed_none": "No closed trades yet.",
         "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
@@ -183,6 +186,22 @@ def closed_table(closed, T, X) -> pd.DataFrame:
     return _view(df.iloc[::-1], CLOSED_COLS, X["cols"])
 
 
+def render_status(state, lang, now=None):
+    """Compact status block: facts recorded by the bot only (see bot_status.py)."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    now = now or datetime.now(ZoneInfo("America/New_York"))
+    S = bot_status.bot_status(state, lang, now.strftime("%Y-%m-%d"),
+                              after_open=(now.hour, now.minute) >= (9, 30))
+    st.markdown(f"**{TX[lang]['status']}**")
+    st.markdown("  \n".join(f"{a}: {b}" for a, b in S["runs"]))
+    st.caption(" · ".join(x for x in (S["data"], S["counts"]) if x))
+    if S["reasons"]:
+        st.markdown(f"_{bot_status.L[lang]['reasons']}:_  \n" +
+                    "  \n".join(f"• {r}" for r in S["reasons"]))
+    return S
+
+
 def _secret(name):
     try:
         return st.secrets.get(name, "")
@@ -230,6 +249,7 @@ def render(T, lang, get_prices):
     st.markdown(f"**{X['mode']}:** {X['modes'].get(state.get('mode'), state.get('mode'))}")
     if sha is None:
         st.caption(X["no_state"])
+    render_status(state, lang)
 
     # ---------- Schwab ----------
     with st.expander(X["schwab"], expanded=False):
