@@ -1,0 +1,228 @@
+{
+ "generated": "2026-10-15T02:48:25+00:00",
+ "tickers": 503,
+ "raw_signals": 21449,
+ "window": [
+  "2024-10-29",
+  "2026-10-14"
+ ],
+ "screener": {
+  "days": 25,
+  "ok": 25,
+  "detail": [
+   [
+    "2024-10-28",
+    true,
+    "raw 56/56 eligible 13/13"
+   ],
+   [
+    "2024-11-25",
+    true,
+    "raw 28/28 eligible 5/5"
+   ],
+   [
+    "2024-12-26",
+    true,
+    "raw 6/6 eligible 1/1"
+   ],
+   [
+    "2025-01-29",
+    true,
+    "raw 63/63 eligible 13/13"
+   ],
+   [
+    "2025-02-27",
+    true,
+    "raw 40/40 eligible 0/0"
+   ],
+   [
+    "2025-03-27",
+    true,
+    "raw 33/33 eligible 0/0"
+   ],
+   [
+    "2025-04-29",
+    true,
+    "raw 98/98 eligible 0/0"
+   ],
+   [
+    "2025-05-28",
+    true,
+    "raw 13/13 eligible 10/10"
+   ],
+   [
+    "2025-06-27",
+    true,
+    "raw 43/43 eligible 10/10"
+   ],
+   [
+    "2025-07-28",
+    true,
+    "raw 23/23 eligible 9/9"
+   ],
+   [
+    "2025-08-25",
+    true,
+    "raw 6/6 eligible 1/1"
+   ],
+   [
+    "2025-09-24",
+    true,
+    "raw 22/22 eligible 3/3"
+   ],
+   [
+    "2025-10-22",
+    true,
+    "raw 18/18 eligible 4/4"
+   ],
+   [
+    "2025-11-19",
+    true,
+    "raw 26/26 eligible 0/0"
+   ],
+   [
+    "2025-12-19",
+    true,
+    "raw 68/68 eligible 22/22"
+   ],
+   [
+    "2026-01-21",
+    true,
+    "raw 127/127 eligible 31/31"
+   ],
+   [
+    "2026-02-20",
+    true,
+    "raw 95/95 eligible 15/15"
+   ],
+   [
+    "2026-03-20",
+    true,
+    "raw 4/4 eligible 0/0"
+   ],
+   [
+    "2026-04-20",
+    true,
+    "raw 58/58 eligible 7/7"
+   ],
+   [
+    "2026-05-19",
+    true,
+    "raw 20/20 eligible 9/9"
+   ],
+   [
+    "2026-06-17",
+    true,
+    "raw 16/16 eligible 9/9"
+   ],
+   [
+    "2026-07-17",
+    true,
+    "raw 28/28 eligible 0/0"
+   ],
+   [
+    "2026-08-17",
+    true,
+    "raw 38/38 eligible 13/13"
+   ],
+   [
+    "2026-09-15",
+    true,
+    "raw 22/22 eligible 0/0"
+   ],
+   [
+    "2026-10-14",
+    true,
+    "raw 28/28 eligible 6/6"
+   ]
+  ]
+ },
+ "portfolio_full_period": {
+  "ok": true,
+  "fills_ref": 136,
+  "fills_new": 136,
+  "fills_ok": true,
+  "open_ref": [
+   [
+    "FIX",
+    1
+   ],
+   [
+    "NTAP",
+    8
+   ],
+   [
+    "RVTY",
+    9
+   ],
+   [
+    "VLO",
+    8
+   ]
+  ],
+  "open_new": [
+   [
+    "FIX",
+    1
+   ],
+   [
+    "NTAP",
+    8
+   ],
+   [
+    "RVTY",
+    9
+   ],
+   [
+    "VLO",
+    8
+   ]
+  ],
+  "open_ok": true,
+  "equity_days": 491,
+  "equity_ok": true,
+  "final_ref": 19252.98896840124,
+  "final_new": 19252.98896840124
+ },
+ "portfolio_live_path": {
+  "ok": true,
+  "fills_ref": 12,
+  "fills_new": 12,
+  "fills_ok": true,
+  "open_ref": [
+   [
+    "FTNT",
+    9
+   ],
+   [
+    "NTAP",
+    4
+   ],
+   [
+    "VLO",
+    2
+   ]
+  ],
+  "open_new": [
+   [
+    "FTNT",
+    9
+   ],
+   [
+    "NTAP",
+    4
+   ],
+   [
+    "VLO",
+    2
+   ]
+  ],
+  "open_ok": true,
+  "equity_days": 30,
+  "equity_ok": true,
+  "final_ref": 9754.764223869633,
+  "final_new": 9754.764223869632
+ },
+ "all_ok": true,
+ "runtime_sec": 118
+}
