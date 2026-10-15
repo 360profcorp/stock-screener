@@ -1,0 +1,249 @@
+entry,max_positions,sector_limit,reason,sector,count
+open,5,none,daily_entries,,37
+open,5,none,ticker_open,,342
+open,5,none,positions,,3239
+open,5,none,capital_or_risk,,2
+open,5,1,daily_entries,,39
+open,5,1,ticker_open,,311
+open,5,1,sector_limit,,333
+open,5,1,positions,,2931
+open,5,1,sector_limit_by_sector,Industrials,59
+open,5,1,sector_limit_by_sector,Energy,7
+open,5,1,sector_limit_by_sector,Information Technology,192
+open,5,1,sector_limit_by_sector,Consumer Discretionary,20
+open,5,1,sector_limit_by_sector,Communication Services,5
+open,5,1,sector_limit_by_sector,Financials,10
+open,5,1,sector_limit_by_sector,Consumer Staples,1
+open,5,1,sector_limit_by_sector,Health Care,36
+open,5,1,sector_limit_by_sector,Materials,3
+open,5,2,daily_entries,,35
+open,5,2,ticker_open,,337
+open,5,2,positions,,3168
+open,5,2,sector_limit,,75
+open,5,2,capital_or_risk,,2
+open,5,2,sector_limit_by_sector,Industrials,5
+open,5,2,sector_limit_by_sector,Financials,1
+open,5,2,sector_limit_by_sector,Information Technology,61
+open,5,2,sector_limit_by_sector,Consumer Discretionary,2
+open,5,2,sector_limit_by_sector,Health Care,6
+open,5,3,daily_entries,,37
+open,5,3,ticker_open,,335
+open,5,3,positions,,3222
+open,5,3,sector_limit,,20
+open,5,3,capital_or_risk,,2
+open,5,3,sector_limit_by_sector,Information Technology,20
+open,10,none,daily_entries,,70
+open,10,none,ticker_open,,636
+open,10,none,capital_or_risk,,473
+open,10,none,positions,,2296
+open,10,1,daily_entries,,77
+open,10,1,ticker_open,,512
+open,10,1,sector_limit,,2878
+open,10,1,capital_or_risk,,68
+open,10,1,positions,,6
+open,10,1,sector_limit_by_sector,Industrials,522
+open,10,1,sector_limit_by_sector,Financials,282
+open,10,1,sector_limit_by_sector,Energy,105
+open,10,1,sector_limit_by_sector,Consumer Discretionary,271
+open,10,1,sector_limit_by_sector,Information Technology,1093
+open,10,1,sector_limit_by_sector,Utilities,35
+open,10,1,sector_limit_by_sector,Materials,89
+open,10,1,sector_limit_by_sector,Communication Services,183
+open,10,1,sector_limit_by_sector,Health Care,244
+open,10,1,sector_limit_by_sector,Consumer Staples,53
+open,10,1,sector_limit_by_sector,Real Estate,1
+open,10,2,daily_entries,,59
+open,10,2,ticker_open,,588
+open,10,2,sector_limit,,641
+open,10,2,capital_or_risk,,96
+open,10,2,positions,,2098
+open,10,2,sector_limit_by_sector,Industrials,93
+open,10,2,sector_limit_by_sector,Information Technology,395
+open,10,2,sector_limit_by_sector,Utilities,3
+open,10,2,sector_limit_by_sector,Consumer Discretionary,31
+open,10,2,sector_limit_by_sector,Communication Services,15
+open,10,2,sector_limit_by_sector,Financials,26
+open,10,2,sector_limit_by_sector,Health Care,65
+open,10,2,sector_limit_by_sector,Energy,13
+open,10,3,daily_entries,,62
+open,10,3,ticker_open,,592
+open,10,3,capital_or_risk,,396
+open,10,3,sector_limit,,227
+open,10,3,positions,,2207
+open,10,3,sector_limit_by_sector,Industrials,27
+open,10,3,sector_limit_by_sector,Information Technology,153
+open,10,3,sector_limit_by_sector,Financials,25
+open,10,3,sector_limit_by_sector,Communication Services,1
+open,10,3,sector_limit_by_sector,Health Care,19
+open,10,3,sector_limit_by_sector,Energy,2
+open,20,none,daily_entries,,361
+open,20,none,ticker_open,,862
+open,20,none,capital_or_risk,,2000
+open,20,none,positions,,121
+open,20,1,daily_entries,,77
+open,20,1,ticker_open,,512
+open,20,1,sector_limit,,2884
+open,20,1,capital_or_risk,,68
+open,20,1,sector_limit_by_sector,Industrials,522
+open,20,1,sector_limit_by_sector,Financials,283
+open,20,1,sector_limit_by_sector,Energy,105
+open,20,1,sector_limit_by_sector,Consumer Discretionary,271
+open,20,1,sector_limit_by_sector,Information Technology,1095
+open,20,1,sector_limit_by_sector,Utilities,35
+open,20,1,sector_limit_by_sector,Materials,89
+open,20,1,sector_limit_by_sector,Communication Services,184
+open,20,1,sector_limit_by_sector,Health Care,246
+open,20,1,sector_limit_by_sector,Consumer Staples,53
+open,20,1,sector_limit_by_sector,Real Estate,1
+open,20,2,daily_entries,,182
+open,20,2,ticker_open,,692
+open,20,2,sector_limit,,2057
+open,20,2,capital_or_risk,,502
+open,20,2,sector_limit_by_sector,Industrials,372
+open,20,2,sector_limit_by_sector,Consumer Discretionary,180
+open,20,2,sector_limit_by_sector,Information Technology,966
+open,20,2,sector_limit_by_sector,Energy,59
+open,20,2,sector_limit_by_sector,Financials,175
+open,20,2,sector_limit_by_sector,Utilities,5
+open,20,2,sector_limit_by_sector,Communication Services,108
+open,20,2,sector_limit_by_sector,Materials,31
+open,20,2,sector_limit_by_sector,Health Care,150
+open,20,2,sector_limit_by_sector,Consumer Staples,11
+open,20,3,daily_entries,,213
+open,20,3,ticker_open,,779
+open,20,3,capital_or_risk,,1117
+open,20,3,sector_limit,,1202
+open,20,3,positions,,79
+open,20,3,sector_limit_by_sector,Industrials,207
+open,20,3,sector_limit_by_sector,Information Technology,716
+open,20,3,sector_limit_by_sector,Financials,66
+open,20,3,sector_limit_by_sector,Consumer Discretionary,57
+open,20,3,sector_limit_by_sector,Communication Services,22
+open,20,3,sector_limit_by_sector,Health Care,99
+open,20,3,sector_limit_by_sector,Materials,6
+open,20,3,sector_limit_by_sector,Energy,27
+open,20,3,sector_limit_by_sector,Consumer Staples,2
+close,5,none,daily_entries,,42
+close,5,none,ticker_open,,330
+close,5,none,positions,,3265
+close,5,none,capital_or_risk,,6
+close,5,1,daily_entries,,36
+close,5,1,ticker_open,,337
+close,5,1,sector_limit,,328
+close,5,1,positions,,2945
+close,5,1,capital_or_risk,,1
+close,5,1,sector_limit_by_sector,Industrials,47
+close,5,1,sector_limit_by_sector,Energy,6
+close,5,1,sector_limit_by_sector,Information Technology,198
+close,5,1,sector_limit_by_sector,Consumer Discretionary,15
+close,5,1,sector_limit_by_sector,Financials,6
+close,5,1,sector_limit_by_sector,Communication Services,11
+close,5,1,sector_limit_by_sector,Consumer Staples,1
+close,5,1,sector_limit_by_sector,Health Care,43
+close,5,1,sector_limit_by_sector,Materials,1
+close,5,2,daily_entries,,41
+close,5,2,ticker_open,,320
+close,5,2,positions,,3194
+close,5,2,sector_limit,,86
+close,5,2,capital_or_risk,,2
+close,5,2,sector_limit_by_sector,Information Technology,67
+close,5,2,sector_limit_by_sector,Industrials,7
+close,5,2,sector_limit_by_sector,Health Care,12
+close,5,3,daily_entries,,42
+close,5,3,ticker_open,,333
+close,5,3,positions,,3234
+close,5,3,capital_or_risk,,6
+close,5,3,sector_limit,,30
+close,5,3,sector_limit_by_sector,Information Technology,28
+close,5,3,sector_limit_by_sector,Industrials,2
+close,10,none,daily_entries,,109
+close,10,none,ticker_open,,646
+close,10,none,capital_or_risk,,325
+close,10,none,positions,,2424
+close,10,1,daily_entries,,92
+close,10,1,ticker_open,,483
+close,10,1,sector_limit,,2768
+close,10,1,capital_or_risk,,127
+close,10,1,positions,,98
+close,10,1,sector_limit_by_sector,Industrials,489
+close,10,1,sector_limit_by_sector,Financials,266
+close,10,1,sector_limit_by_sector,Energy,102
+close,10,1,sector_limit_by_sector,Consumer Discretionary,250
+close,10,1,sector_limit_by_sector,Information Technology,1084
+close,10,1,sector_limit_by_sector,Utilities,36
+close,10,1,sector_limit_by_sector,Materials,88
+close,10,1,sector_limit_by_sector,Communication Services,163
+close,10,1,sector_limit_by_sector,Health Care,235
+close,10,1,sector_limit_by_sector,Consumer Staples,54
+close,10,1,sector_limit_by_sector,Real Estate,1
+close,10,2,daily_entries,,82
+close,10,2,ticker_open,,583
+close,10,2,sector_limit,,795
+close,10,2,capital_or_risk,,246
+close,10,2,positions,,1804
+close,10,2,sector_limit_by_sector,Industrials,111
+close,10,2,sector_limit_by_sector,Information Technology,462
+close,10,2,sector_limit_by_sector,Consumer Discretionary,52
+close,10,2,sector_limit_by_sector,Financials,42
+close,10,2,sector_limit_by_sector,Energy,17
+close,10,2,sector_limit_by_sector,Communication Services,33
+close,10,2,sector_limit_by_sector,Materials,1
+close,10,2,sector_limit_by_sector,Health Care,75
+close,10,2,sector_limit_by_sector,Consumer Staples,2
+close,10,3,daily_entries,,73
+close,10,3,ticker_open,,625
+close,10,3,capital_or_risk,,229
+close,10,3,positions,,2275
+close,10,3,sector_limit,,297
+close,10,3,sector_limit_by_sector,Information Technology,213
+close,10,3,sector_limit_by_sector,Industrials,49
+close,10,3,sector_limit_by_sector,Financials,6
+close,10,3,sector_limit_by_sector,Communication Services,2
+close,10,3,sector_limit_by_sector,Consumer Discretionary,3
+close,10,3,sector_limit_by_sector,Health Care,23
+close,10,3,sector_limit_by_sector,Energy,1
+close,20,none,daily_entries,,408
+close,20,none,ticker_open,,866
+close,20,none,capital_or_risk,,2061
+close,20,none,positions,,28
+close,20,1,daily_entries,,92
+close,20,1,ticker_open,,483
+close,20,1,sector_limit,,2863
+close,20,1,capital_or_risk,,130
+close,20,1,sector_limit_by_sector,Industrials,506
+close,20,1,sector_limit_by_sector,Financials,276
+close,20,1,sector_limit_by_sector,Energy,109
+close,20,1,sector_limit_by_sector,Consumer Discretionary,258
+close,20,1,sector_limit_by_sector,Information Technology,1111
+close,20,1,sector_limit_by_sector,Utilities,37
+close,20,1,sector_limit_by_sector,Materials,91
+close,20,1,sector_limit_by_sector,Communication Services,172
+close,20,1,sector_limit_by_sector,Health Care,248
+close,20,1,sector_limit_by_sector,Consumer Staples,54
+close,20,1,sector_limit_by_sector,Real Estate,1
+close,20,2,daily_entries,,162
+close,20,2,ticker_open,,690
+close,20,2,sector_limit,,2022
+close,20,2,capital_or_risk,,590
+close,20,2,sector_limit_by_sector,Industrials,374
+close,20,2,sector_limit_by_sector,Information Technology,976
+close,20,2,sector_limit_by_sector,Consumer Discretionary,171
+close,20,2,sector_limit_by_sector,Financials,169
+close,20,2,sector_limit_by_sector,Energy,49
+close,20,2,sector_limit_by_sector,Communication Services,97
+close,20,2,sector_limit_by_sector,Consumer Staples,16
+close,20,2,sector_limit_by_sector,Health Care,147
+close,20,2,sector_limit_by_sector,Materials,23
+close,20,3,daily_entries,,226
+close,20,3,ticker_open,,762
+close,20,3,capital_or_risk,,1156
+close,20,3,sector_limit,,1276
+close,20,3,sector_limit_by_sector,Information Technology,800
+close,20,3,sector_limit_by_sector,Financials,49
+close,20,3,sector_limit_by_sector,Industrials,209
+close,20,3,sector_limit_by_sector,Consumer Discretionary,56
+close,20,3,sector_limit_by_sector,Communication Services,26
+close,20,3,sector_limit_by_sector,Health Care,104
+close,20,3,sector_limit_by_sector,Materials,4
+close,20,3,sector_limit_by_sector,Consumer Staples,4
+close,20,3,sector_limit_by_sector,Energy,24

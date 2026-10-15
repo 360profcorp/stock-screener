@@ -1,0 +1,504 @@
+ticker,sector,as_of
+A,Health Care,2026-10-15
+AAPL,Information Technology,2026-10-15
+ABBV,Health Care,2026-10-15
+ABNB,Consumer Discretionary,2026-10-15
+ABT,Health Care,2026-10-15
+ACGL,Financials,2026-10-15
+ACN,Information Technology,2026-10-15
+ADBE,Information Technology,2026-10-15
+ADI,Information Technology,2026-10-15
+ADM,Consumer Staples,2026-10-15
+ADP,Industrials,2026-10-15
+ADSK,Information Technology,2026-10-15
+AEE,Utilities,2026-10-15
+AEP,Utilities,2026-10-15
+AES,Utilities,2026-10-15
+AFL,Financials,2026-10-15
+AIG,Financials,2026-10-15
+AIZ,Financials,2026-10-15
+AJG,Financials,2026-10-15
+AKAM,Information Technology,2026-10-15
+ALB,Materials,2026-10-15
+ALGN,Health Care,2026-10-15
+ALL,Financials,2026-10-15
+ALLE,Industrials,2026-10-15
+AMAT,Information Technology,2026-10-15
+AMCR,Materials,2026-10-15
+AMD,Information Technology,2026-10-15
+AME,Industrials,2026-10-15
+AMGN,Health Care,2026-10-15
+AMP,Financials,2026-10-15
+AMT,Real Estate,2026-10-15
+AMZN,Consumer Discretionary,2026-10-15
+ANET,Information Technology,2026-10-15
+AON,Financials,2026-10-15
+AOS,Industrials,2026-10-15
+APA,Energy,2026-10-15
+APD,Materials,2026-10-15
+APH,Information Technology,2026-10-15
+APO,Financials,2026-10-15
+APP,Communication Services,2026-10-15
+APTV,Consumer Discretionary,2026-10-15
+ARE,Real Estate,2026-10-15
+ARES,Financials,2026-10-15
+ATO,Utilities,2026-10-15
+AVGO,Information Technology,2026-10-15
+AVY,Materials,2026-10-15
+AWK,Utilities,2026-10-15
+AXON,Industrials,2026-10-15
+AXP,Financials,2026-10-15
+AZO,Consumer Discretionary,2026-10-15
+BA,Industrials,2026-10-15
+BAC,Financials,2026-10-15
+BALL,Materials,2026-10-15
+BAX,Health Care,2026-10-15
+BBY,Consumer Discretionary,2026-10-15
+BDX,Health Care,2026-10-15
+BE,Industrials,2026-10-15
+BEN,Financials,2026-10-15
+BF-B,Consumer Staples,2026-10-15
+BG,Consumer Staples,2026-10-15
+BIIB,Health Care,2026-10-15
+BKNG,Consumer Discretionary,2026-10-15
+BKR,Energy,2026-10-15
+BLK,Financials,2026-10-15
+BMY,Health Care,2026-10-15
+BNY,Financials,2026-10-15
+BR,Industrials,2026-10-15
+BRK-B,Financials,2026-10-15
+BRO,Financials,2026-10-15
+BSX,Health Care,2026-10-15
+BX,Financials,2026-10-15
+BXP,Real Estate,2026-10-15
+C,Financials,2026-10-15
+CAH,Health Care,2026-10-15
+CARR,Industrials,2026-10-15
+CASY,Consumer Staples,2026-10-15
+CAT,Industrials,2026-10-15
+CB,Financials,2026-10-15
+CBOE,Financials,2026-10-15
+CBRE,Real Estate,2026-10-15
+CCI,Real Estate,2026-10-15
+CCL,Consumer Discretionary,2026-10-15
+CDNS,Information Technology,2026-10-15
+CDW,Information Technology,2026-10-15
+CEG,Utilities,2026-10-15
+CF,Materials,2026-10-15
+CFG,Financials,2026-10-15
+CHD,Consumer Staples,2026-10-15
+CHRW,Industrials,2026-10-15
+CHTR,Communication Services,2026-10-15
+CI,Health Care,2026-10-15
+CIEN,Information Technology,2026-10-15
+CINF,Financials,2026-10-15
+CL,Consumer Staples,2026-10-15
+CLX,Consumer Staples,2026-10-15
+CMCSA,Communication Services,2026-10-15
+CME,Financials,2026-10-15
+CMG,Consumer Discretionary,2026-10-15
+CMI,Industrials,2026-10-15
+CMS,Utilities,2026-10-15
+CNC,Health Care,2026-10-15
+CNP,Utilities,2026-10-15
+COF,Financials,2026-10-15
+COHR,Information Technology,2026-10-15
+COIN,Financials,2026-10-15
+COO,Health Care,2026-10-15
+COP,Energy,2026-10-15
+COR,Health Care,2026-10-15
+COST,Consumer Staples,2026-10-15
+CPAY,Financials,2026-10-15
+CPRT,Industrials,2026-10-15
+CPT,Real Estate,2026-10-15
+CRH,Materials,2026-10-15
+CRL,Health Care,2026-10-15
+CRM,Information Technology,2026-10-15
+CRWD,Information Technology,2026-10-15
+CSCO,Information Technology,2026-10-15
+CSGP,Real Estate,2026-10-15
+CSX,Industrials,2026-10-15
+CTAS,Industrials,2026-10-15
+CTSH,Information Technology,2026-10-15
+CVNA,Consumer Discretionary,2026-10-15
+CVS,Health Care,2026-10-15
+CVX,Energy,2026-10-15
+D,Utilities,2026-10-15
+DAL,Industrials,2026-10-15
+DASH,Consumer Discretionary,2026-10-15
+DD,Industrials,2026-10-15
+DDOG,Information Technology,2026-10-15
+DE,Industrials,2026-10-15
+DECK,Consumer Discretionary,2026-10-15
+DELL,Information Technology,2026-10-15
+DG,Consumer Staples,2026-10-15
+DGX,Health Care,2026-10-15
+DHI,Consumer Discretionary,2026-10-15
+DHR,Health Care,2026-10-15
+DIS,Communication Services,2026-10-15
+DLR,Real Estate,2026-10-15
+DLTR,Consumer Staples,2026-10-15
+DOC,Real Estate,2026-10-15
+DOV,Industrials,2026-10-15
+DOW,Materials,2026-10-15
+DPZ,Consumer Discretionary,2026-10-15
+DRI,Consumer Discretionary,2026-10-15
+DTE,Utilities,2026-10-15
+DUK,Utilities,2026-10-15
+DVA,Health Care,2026-10-15
+DVN,Energy,2026-10-15
+DXCM,Health Care,2026-10-15
+EBAY,Consumer Discretionary,2026-10-15
+ECHO,Communication Services,2026-10-15
+ECL,Materials,2026-10-15
+ED,Utilities,2026-10-15
+EFX,Industrials,2026-10-15
+EG,Financials,2026-10-15
+EIX,Utilities,2026-10-15
+EL,Consumer Staples,2026-10-15
+ELV,Health Care,2026-10-15
+EME,Industrials,2026-10-15
+EMR,Industrials,2026-10-15
+EOG,Energy,2026-10-15
+EQIX,Real Estate,2026-10-15
+EQT,Energy,2026-10-15
+ERIE,Financials,2026-10-15
+ES,Utilities,2026-10-15
+ESS,Real Estate,2026-10-15
+ETN,Industrials,2026-10-15
+ETR,Utilities,2026-10-15
+EVRG,Utilities,2026-10-15
+EW,Health Care,2026-10-15
+EXC,Utilities,2026-10-15
+EXE,Energy,2026-10-15
+EXPD,Industrials,2026-10-15
+EXPE,Consumer Discretionary,2026-10-15
+EXR,Real Estate,2026-10-15
+F,Consumer Discretionary,2026-10-15
+FANG,Energy,2026-10-15
+FAST,Industrials,2026-10-15
+FCX,Materials,2026-10-15
+FDS,Financials,2026-10-15
+FDX,Industrials,2026-10-15
+FDXF,Industrials,2026-10-15
+FE,Utilities,2026-10-15
+FERG,Industrials,2026-10-15
+FFIV,Information Technology,2026-10-15
+FICO,Information Technology,2026-10-15
+FIS,Financials,2026-10-15
+FISV,Financials,2026-10-15
+FITB,Financials,2026-10-15
+FIX,Industrials,2026-10-15
+FLEX,Information Technology,2026-10-15
+FOX,Communication Services,2026-10-15
+FOXA,Communication Services,2026-10-15
+FRT,Real Estate,2026-10-15
+FSLR,Information Technology,2026-10-15
+FTNT,Information Technology,2026-10-15
+FTV,Industrials,2026-10-15
+GD,Industrials,2026-10-15
+GDDY,Information Technology,2026-10-15
+GE,Industrials,2026-10-15
+GEHC,Health Care,2026-10-15
+GEN,Information Technology,2026-10-15
+GEV,Industrials,2026-10-15
+GILD,Health Care,2026-10-15
+GIS,Consumer Staples,2026-10-15
+GL,Financials,2026-10-15
+GLW,Information Technology,2026-10-15
+GM,Consumer Discretionary,2026-10-15
+GNRC,Industrials,2026-10-15
+GOOG,Communication Services,2026-10-15
+GOOGL,Communication Services,2026-10-15
+GPC,Consumer Discretionary,2026-10-15
+GPN,Financials,2026-10-15
+GRMN,Consumer Discretionary,2026-10-15
+GS,Financials,2026-10-15
+GWW,Industrials,2026-10-15
+HAL,Energy,2026-10-15
+HAS,Consumer Discretionary,2026-10-15
+HBAN,Financials,2026-10-15
+HCA,Health Care,2026-10-15
+HD,Consumer Discretionary,2026-10-15
+HIG,Financials,2026-10-15
+HII,Industrials,2026-10-15
+HLT,Consumer Discretionary,2026-10-15
+HON,Industrials,2026-10-15
+HONA,Industrials,2026-10-15
+HOOD,Financials,2026-10-15
+HPE,Information Technology,2026-10-15
+HPQ,Information Technology,2026-10-15
+HRL,Consumer Staples,2026-10-15
+HSIC,Health Care,2026-10-15
+HST,Real Estate,2026-10-15
+HSY,Consumer Staples,2026-10-15
+HUBB,Industrials,2026-10-15
+HUM,Health Care,2026-10-15
+HWM,Industrials,2026-10-15
+IBKR,Financials,2026-10-15
+IBM,Information Technology,2026-10-15
+ICE,Financials,2026-10-15
+IDXX,Health Care,2026-10-15
+IEX,Industrials,2026-10-15
+IFF,Materials,2026-10-15
+ILMN,Health Care,2026-10-15
+INCY,Health Care,2026-10-15
+INTC,Information Technology,2026-10-15
+INTU,Information Technology,2026-10-15
+INVH,Real Estate,2026-10-15
+IP,Materials,2026-10-15
+IQV,Health Care,2026-10-15
+IR,Industrials,2026-10-15
+IRM,Real Estate,2026-10-15
+ISRG,Health Care,2026-10-15
+IT,Information Technology,2026-10-15
+ITW,Industrials,2026-10-15
+IVZ,Financials,2026-10-15
+J,Industrials,2026-10-15
+JBHT,Industrials,2026-10-15
+JBL,Information Technology,2026-10-15
+JCI,Industrials,2026-10-15
+JKHY,Financials,2026-10-15
+JNJ,Health Care,2026-10-15
+JPM,Financials,2026-10-15
+KDP,Consumer Staples,2026-10-15
+KEY,Financials,2026-10-15
+KEYS,Information Technology,2026-10-15
+KHC,Consumer Staples,2026-10-15
+KIM,Real Estate,2026-10-15
+KKR,Financials,2026-10-15
+KLAC,Information Technology,2026-10-15
+KMB,Consumer Staples,2026-10-15
+KMI,Energy,2026-10-15
+KO,Consumer Staples,2026-10-15
+KR,Consumer Staples,2026-10-15
+KVUE,Consumer Staples,2026-10-15
+L,Financials,2026-10-15
+LDOS,Industrials,2026-10-15
+LEN,Consumer Discretionary,2026-10-15
+LH,Health Care,2026-10-15
+LHX,Industrials,2026-10-15
+LII,Industrials,2026-10-15
+LIN,Materials,2026-10-15
+LITE,Information Technology,2026-10-15
+LLY,Health Care,2026-10-15
+LMT,Industrials,2026-10-15
+LNT,Utilities,2026-10-15
+LOW,Consumer Discretionary,2026-10-15
+LRCX,Information Technology,2026-10-15
+LULU,Consumer Discretionary,2026-10-15
+LUV,Industrials,2026-10-15
+LVS,Consumer Discretionary,2026-10-15
+LYB,Materials,2026-10-15
+LYV,Communication Services,2026-10-15
+MA,Financials,2026-10-15
+MAA,Real Estate,2026-10-15
+MAR,Consumer Discretionary,2026-10-15
+MAS,Industrials,2026-10-15
+MCD,Consumer Discretionary,2026-10-15
+MCHP,Information Technology,2026-10-15
+MCK,Health Care,2026-10-15
+MCO,Financials,2026-10-15
+MDLZ,Consumer Staples,2026-10-15
+MDT,Health Care,2026-10-15
+MET,Financials,2026-10-15
+META,Communication Services,2026-10-15
+MGM,Consumer Discretionary,2026-10-15
+MKC,Consumer Staples,2026-10-15
+MLM,Materials,2026-10-15
+MMM,Industrials,2026-10-15
+MNST,Consumer Staples,2026-10-15
+MO,Consumer Staples,2026-10-15
+MOS,Materials,2026-10-15
+MPC,Energy,2026-10-15
+MPWR,Information Technology,2026-10-15
+MRK,Health Care,2026-10-15
+MRNA,Health Care,2026-10-15
+MRSH,Financials,2026-10-15
+MRVL,Information Technology,2026-10-15
+MS,Financials,2026-10-15
+MSCI,Financials,2026-10-15
+MSFT,Information Technology,2026-10-15
+MSI,Information Technology,2026-10-15
+MTB,Financials,2026-10-15
+MTD,Health Care,2026-10-15
+MU,Information Technology,2026-10-15
+NCLH,Consumer Discretionary,2026-10-15
+NDAQ,Financials,2026-10-15
+NDSN,Industrials,2026-10-15
+NEE,Utilities,2026-10-15
+NEM,Materials,2026-10-15
+NFLX,Communication Services,2026-10-15
+NI,Utilities,2026-10-15
+NKE,Consumer Discretionary,2026-10-15
+NOC,Industrials,2026-10-15
+NOW,Information Technology,2026-10-15
+NRG,Utilities,2026-10-15
+NSC,Industrials,2026-10-15
+NTAP,Information Technology,2026-10-15
+NTRS,Financials,2026-10-15
+NUE,Materials,2026-10-15
+NVDA,Information Technology,2026-10-15
+NVR,Consumer Discretionary,2026-10-15
+NWS,Communication Services,2026-10-15
+NWSA,Communication Services,2026-10-15
+NXPI,Information Technology,2026-10-15
+O,Real Estate,2026-10-15
+ODFL,Industrials,2026-10-15
+OKE,Energy,2026-10-15
+OMC,Communication Services,2026-10-15
+ON,Information Technology,2026-10-15
+ORCL,Information Technology,2026-10-15
+ORLY,Consumer Discretionary,2026-10-15
+OTIS,Industrials,2026-10-15
+OXY,Energy,2026-10-15
+P,Information Technology,2026-10-15
+PANW,Information Technology,2026-10-15
+PAYX,Industrials,2026-10-15
+PCAR,Industrials,2026-10-15
+PCG,Utilities,2026-10-15
+PEG,Utilities,2026-10-15
+PEP,Consumer Staples,2026-10-15
+PFE,Health Care,2026-10-15
+PFG,Financials,2026-10-15
+PG,Consumer Staples,2026-10-15
+PGR,Financials,2026-10-15
+PH,Industrials,2026-10-15
+PHM,Consumer Discretionary,2026-10-15
+PKG,Materials,2026-10-15
+PLD,Real Estate,2026-10-15
+PLTR,Information Technology,2026-10-15
+PM,Consumer Staples,2026-10-15
+PNC,Financials,2026-10-15
+PNR,Industrials,2026-10-15
+PNW,Utilities,2026-10-15
+PODD,Health Care,2026-10-15
+PPG,Materials,2026-10-15
+PPL,Utilities,2026-10-15
+PRU,Financials,2026-10-15
+PSA,Real Estate,2026-10-15
+PSX,Energy,2026-10-15
+PTC,Information Technology,2026-10-15
+PWR,Industrials,2026-10-15
+PYPL,Financials,2026-10-15
+Q,Information Technology,2026-10-15
+QCOM,Information Technology,2026-10-15
+RCL,Consumer Discretionary,2026-10-15
+RDDT,Communication Services,2026-10-15
+REG,Real Estate,2026-10-15
+REGN,Health Care,2026-10-15
+RF,Financials,2026-10-15
+RJF,Financials,2026-10-15
+RL,Consumer Discretionary,2026-10-15
+RMD,Health Care,2026-10-15
+ROK,Industrials,2026-10-15
+ROL,Industrials,2026-10-15
+ROP,Information Technology,2026-10-15
+ROST,Consumer Discretionary,2026-10-15
+RSG,Industrials,2026-10-15
+RTX,Industrials,2026-10-15
+RVTY,Health Care,2026-10-15
+SBAC,Real Estate,2026-10-15
+SBUX,Consumer Discretionary,2026-10-15
+SCHW,Financials,2026-10-15
+SHW,Materials,2026-10-15
+SJM,Consumer Staples,2026-10-15
+SKYD,Communication Services,2026-10-15
+SLB,Energy,2026-10-15
+SMCI,Information Technology,2026-10-15
+SNA,Industrials,2026-10-15
+SNDK,Information Technology,2026-10-15
+SNPS,Information Technology,2026-10-15
+SO,Utilities,2026-10-15
+SOLV,Health Care,2026-10-15
+SPG,Real Estate,2026-10-15
+SPGI,Financials,2026-10-15
+SRE,Utilities,2026-10-15
+STE,Health Care,2026-10-15
+STLD,Materials,2026-10-15
+STT,Financials,2026-10-15
+STX,Information Technology,2026-10-15
+STZ,Consumer Staples,2026-10-15
+SW,Materials,2026-10-15
+SWK,Industrials,2026-10-15
+SWKS,Information Technology,2026-10-15
+SYF,Financials,2026-10-15
+SYK,Health Care,2026-10-15
+SYY,Consumer Staples,2026-10-15
+T,Communication Services,2026-10-15
+TDG,Industrials,2026-10-15
+TDY,Information Technology,2026-10-15
+TECH,Health Care,2026-10-15
+TEL,Information Technology,2026-10-15
+TER,Information Technology,2026-10-15
+TFC,Financials,2026-10-15
+TGT,Consumer Staples,2026-10-15
+TJX,Consumer Discretionary,2026-10-15
+TKO,Communication Services,2026-10-15
+TMO,Health Care,2026-10-15
+TMUS,Communication Services,2026-10-15
+TPL,Energy,2026-10-15
+TPR,Consumer Discretionary,2026-10-15
+TRGP,Energy,2026-10-15
+TRMB,Information Technology,2026-10-15
+TROW,Financials,2026-10-15
+TRV,Financials,2026-10-15
+TSCO,Consumer Discretionary,2026-10-15
+TSLA,Consumer Discretionary,2026-10-15
+TSN,Consumer Staples,2026-10-15
+TT,Industrials,2026-10-15
+TTWO,Communication Services,2026-10-15
+TWLO,Information Technology,2026-10-15
+TXN,Information Technology,2026-10-15
+TXT,Industrials,2026-10-15
+TYL,Information Technology,2026-10-15
+UAL,Industrials,2026-10-15
+UBER,Industrials,2026-10-15
+UDR,Real Estate,2026-10-15
+UHS,Health Care,2026-10-15
+ULTA,Consumer Discretionary,2026-10-15
+UNH,Health Care,2026-10-15
+UNP,Industrials,2026-10-15
+UPS,Industrials,2026-10-15
+URI,Industrials,2026-10-15
+USB,Financials,2026-10-15
+V,Financials,2026-10-15
+VEEV,Health Care,2026-10-15
+VICI,Real Estate,2026-10-15
+VLO,Energy,2026-10-15
+VLTO,Industrials,2026-10-15
+VMC,Materials,2026-10-15
+VMRK,Real Estate,2026-10-15
+VRSK,Industrials,2026-10-15
+VRSN,Information Technology,2026-10-15
+VRT,Industrials,2026-10-15
+VRTX,Health Care,2026-10-15
+VST,Utilities,2026-10-15
+VTR,Real Estate,2026-10-15
+VTRS,Health Care,2026-10-15
+VYLR,Consumer Staples,2026-10-15
+VZ,Communication Services,2026-10-15
+WAB,Industrials,2026-10-15
+WAT,Health Care,2026-10-15
+WDAY,Information Technology,2026-10-15
+WDC,Information Technology,2026-10-15
+WEC,Utilities,2026-10-15
+WELL,Real Estate,2026-10-15
+WFC,Financials,2026-10-15
+WM,Industrials,2026-10-15
+WMB,Energy,2026-10-15
+WMT,Consumer Staples,2026-10-15
+WRB,Financials,2026-10-15
+WSM,Consumer Discretionary,2026-10-15
+WST,Health Care,2026-10-15
+WTW,Financials,2026-10-15
+WY,Real Estate,2026-10-15
+WYNN,Consumer Discretionary,2026-10-15
+XEL,Utilities,2026-10-15
+XOM,Energy,2026-10-15
+XYL,Industrials,2026-10-15
+XYZ,Financials,2026-10-15
+YUM,Consumer Discretionary,2026-10-15
+ZBH,Health Care,2026-10-15
+ZBRA,Information Technology,2026-10-15
+ZTS,Health Care,2026-10-15
