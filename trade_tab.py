@@ -56,7 +56,7 @@ TX = {
                    "rejected": "отклонён", "expired": "устарел"},
         "approve": "✅ Подтвердить покупки", "reject": "❌ Отменить план",
         "approved": "Подтверждён — утром бот купит на открытии.", "rejected_msg": "План отменён.",
-        "status": "Статус бота",
+        "bot_status": "Статус бота",
         "pos": "Открытые позиции", "pos_none": "Открытых позиций нет.",
         "closed": "Закрытые сделки", "closed_none": "Закрытых сделок пока нет.",
         "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
@@ -108,7 +108,7 @@ TX = {
                    "rejected": "rejected", "expired": "expired"},
         "approve": "✅ Approve buys", "reject": "❌ Cancel plan",
         "approved": "Approved — the bot buys in the morning.", "rejected_msg": "Plan cancelled.",
-        "status": "Bot status",
+        "bot_status": "Bot status",
         "pos": "Open positions", "pos_none": "No open positions.",
         "closed": "Closed trades", "closed_none": "No closed trades yet.",
         "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
@@ -193,7 +193,7 @@ def render_status(state, lang, now=None):
     now = now or datetime.now(ZoneInfo("America/New_York"))
     S = bot_status.bot_status(state, lang, now.strftime("%Y-%m-%d"),
                               after_open=(now.hour, now.minute) >= (9, 30))
-    st.markdown(f"**{TX[lang]['status']}**")
+    st.markdown(f"**{TX[lang]['bot_status']}**")
     st.markdown("  \n".join(f"{a}: {b}" for a, b in S["runs"]))
     st.caption(" · ".join(x for x in (S["data"], S["counts"]) if x))
     if S["reasons"]:
