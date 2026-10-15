@@ -1,0 +1,62 @@
+{
+  "generated": "2026-10-14T21:34-04:00",
+  "git_sha": "7e1425d",
+  "tickers_with_data": 503,
+  "universe": 503,
+  "unknown_sector": 0,
+  "sectors": [
+    "Communication Services",
+    "Consumer Discretionary",
+    "Consumer Staples",
+    "Energy",
+    "Financials",
+    "Health Care",
+    "Industrials",
+    "Information Technology",
+    "Materials",
+    "Real Estate",
+    "Utilities"
+  ],
+  "raw_signals": 21449,
+  "signal_window": [
+    "2024-10-28",
+    "2026-10-14"
+  ],
+  "frozen": {
+    "mode": "retest",
+    "min_rs": 85,
+    "stop_buf": 3.0,
+    "hold": 20,
+    "market": "ma50",
+    "min_vol": 0.0,
+    "max_risk": 0.0,
+    "lookback": 3
+  },
+  "portfolio": {
+    "initial_cash": 10000.0,
+    "risk_fraction": 0.01,
+    "max_position_fraction": 0.2,
+    "max_new_per_day": 3,
+    "cost_bps": 10.0
+  },
+  "limits": [
+    null,
+    1,
+    2,
+    3
+  ],
+  "positions": [
+    5,
+    10,
+    20
+  ],
+  "entries": [
+    "open",
+    "close"
+  ],
+  "mc_runs": 100,
+  "ranking": "RS descending within each day, ties by ticker (MC: random ties)",
+  "candidates_open": 3760,
+  "candidates_close": 3790,
+  "runtime_sec": 1845
+}
