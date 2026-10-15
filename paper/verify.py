@@ -128,7 +128,42 @@ def run_stepper(sig, data, market_ok, start, end, cfg=DEFAULT, scanner=None,
     return port
 
 
-def compare(port, ref) -> dict:
+# Every PaperPortfolio outcome is mapped explicitly (Task 10B). Unknown outcomes fail.
+OUTCOME_MAP = {
+    # 1:1 with replay decisions (same order, outcome and shares required)
+    "entered": "replay", "ticker_open": "replay", "positions": "replay",
+    "daily_entries": "replay", "invalid": "replay", "capital_or_risk": "replay",
+    # simulate() never creates these trades, so replay never sees them: they must be
+    # absent from replay decisions and their condition must hold on the logged open
+    "no_trade_open_below_stop": "simulate_excluded", "no_trade_max_risk": "simulate_excluded",
+    # must not occur in a verification run
+    "not_traded_late": "forward_only",        # verification has no late signals
+    "expired_no_bar": "divergent",            # replay would wait for the next bar
+}
+
+
+def map_outcomes(orders_log, ref_decisions, cfg=DEFAULT) -> dict:
+    """Classify every stepper outcome; returns counts and the list of violations."""
+    counts, violations = {}, []
+    ref_keys = {(str(pd.Timestamp(d["day"]).date()), d["ticker"]) for d in ref_decisions}
+    for o in orders_log:
+        cat = OUTCOME_MAP.get(o["outcome"], "unknown")
+        counts[cat] = counts.get(cat, 0) + 1
+        if cat in ("unknown", "forward_only", "divergent"):
+            violations.append(f"{cat}: {o['outcome']} {o['ticker']} {o['session']}")
+        elif cat == "simulate_excluded":
+            if (o["session"], o["ticker"]) in ref_keys:
+                violations.append(f"simulate_excluded but in replay: {o['ticker']} {o['session']}")
+            op, st = o.get("open"), o["stop"]
+            if o["outcome"] == "no_trade_open_below_stop" and not (op is not None and op <= st):
+                violations.append(f"open {op} > stop {st}: {o['ticker']} {o['session']}")
+            if o["outcome"] == "no_trade_max_risk" and not (
+                    cfg.max_risk_pct and op and (op - st) / op * 100 > cfg.max_risk_pct):
+                violations.append(f"max risk not exceeded: {o['ticker']} {o['session']}")
+    return dict(counts=counts, violations=violations)
+
+
+def compare(port, ref, cfg=DEFAULT) -> dict:
     """Field-by-field comparison; returns dict with ok flag and diffs."""
     curve, ex, m = ref
     led = port.ledger_df()
@@ -171,10 +206,14 @@ def compare(port, ref) -> dict:
         if t is None or tuple(t["holdings"]) != tuple(r.holdings):
             hold_ok = False
     reasons = pd.Series([d[2] for d in dec_new]).value_counts().to_dict() if dec_new else {}
-    all_ok = bool(fills_ok and op_ref == op_new and eq_ok and dec_ok and cash_ok and hold_ok)
+    mapped = map_outcomes(port.s["orders_log"], m.get("decisions", []), cfg)
+    all_ok = bool(fills_ok and op_ref == op_new and eq_ok and dec_ok and cash_ok and hold_ok
+                  and not mapped["violations"])
     return dict(ok=all_ok, decisions_ref=len(dec_ref), decisions_new=len(dec_new),
                 decisions_ok=dec_ok, first_decision_diff=first_diff,
-                decision_outcomes=reasons, cash_ok=bool(cash_ok), holdings_ok=bool(hold_ok),
+                decision_outcomes=reasons, outcome_categories=mapped["counts"],
+                outcome_violations=mapped["violations"][:20],
+                cash_ok=bool(cash_ok), holdings_ok=bool(hold_ok),
                 fills_ref=len(a),
                 fills_new=len(b), fills_ok=bool(fills_ok), open_ref=op_ref, open_new=op_new,
                 open_ok=op_ref == op_new, equity_days=len(common), equity_ok=bool(eq_ok),

@@ -11,6 +11,8 @@ on:
       - "backtest.py"
       - "portfolio_bt.py"
       - "test_paper.py"
+      - "scripts/**"
+      - "research/task10b_outage_report.py"
       - ".github/workflows/paper-verify.yml"
 
 permissions:
@@ -35,6 +37,9 @@ jobs:
         run: python -m unittest test_paper test_task6_engine test_portfolio_bt -v
       - name: Real-data equivalence
         run: python paper_run.py verify
+      - name: Outage scenario report
+        if: always()
+        run: python research/task10b_outage_report.py
       - name: Commit verification report
         if: always()
         run: |

@@ -13,10 +13,14 @@ one_per_ticker=False) + portfolio_bt.replay (Task 6 engine, pre-open sizing):
   after the close of D: queue_signals(D, scan) -> orders for the next session
 
 Portfolio kinds (Task 10 acceptance 1 — never mixed):
-  "forward"       genuine forward paper trading. Only signals recorded BEFORE the open of
-                  their execution session are traded; late signals are stored but logged as
-                  not_traded_late. Orders recorded on time but processed later (runner missed
-                  a day) are filled from that session's bars and flagged processed_late.
+  "forward"       forward paper trading. Only signals recorded BEFORE the open of their
+                  execution session are traded; late signals are stored but logged as
+                  not_traded_late. If a session is processed after the next session's open
+                  (runner missed a day), its entry fills of on-time orders, its exits and
+                  marks are RECONSTRUCTED from that session's bars and flagged
+                  entry_processed_late / exit_processed_late / processed_late; they are
+                  reported separately and end the genuine-forward portfolio record
+                  (metrics.forward_report).
   "backfill"      reconstructed history — kept in a separate state, never shown as forward.
   "verification"  in-memory runs used to prove equivalence with the replay engine.
 

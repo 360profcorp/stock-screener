@@ -227,8 +227,15 @@ class PersistenceAndTimestamps(unittest.TestCase):
             self.assertEqual(len(list(P["snapshots"].glob("*.json"))), 5)
             late_logged = [o for o in st["orders_log"] if o["outcome"] == "not_traded_late"]
             self.assertTrue(late_logged)
-            self.assertTrue(all(t["origin"] == "forward" and not t["entry_processed_late"]
-                                or t["entry_processed_late"] for t in st["ledger"]))
+            caught_up = [str(days[k].date()) for k in (301, 302, 303)]
+            flags = {r["date"]: r["processed_late"] for r in st["equity"]}
+            self.assertEqual([flags[d] for d in caught_up], [True, True, True])
+            self.assertFalse(flags[str(days[304].date())])
+            entries = [t for t in st["ledger"]] + list(st["positions"].values())
+            filled_late = [t for t in entries if t["entry_date"] in caught_up]
+            self.assertTrue(filled_late)                       # timely day-300 orders filled
+            self.assertTrue(all(t["entry_processed_late"] for t in filled_late))
+            self.assertFalse(any(t["entry_date"] == str(days[304].date()) for t in entries))
 
     def test_unfinished_bar_is_ignored(self):
         import paper_run
@@ -332,6 +339,335 @@ class Acceptance(unittest.TestCase):
             self.assertEqual(sp.read_text(), before)
 
 
+# =====================================================================
+# Task 10B outage scenarios (deterministic, end-to-end through paper_run.daily)
+# =====================================================================
+SC_DAYS = pd.bdate_range("2026-03-02", periods=12)            # no NYSE holidays in range
+SC_CFG = PaperConfig(hold_days=3, cost_bps=0)
+
+
+def _scenario_prices(low_on=None):
+    """Flat 100 bars for AAA/BBB/CCC (+SPY). low_on={ticker: day_index} forces a stop hit."""
+    fr, n = {}, len(SC_DAYS)
+    k = np.arange(n)
+    paths = {"AAA": 100 * 1.01 ** k,                                   # +1 % a day
+             "BBB": np.where(k < 5, 100., 100 * 0.995 ** (k - 4)),     # falls from d5
+             "CCC": np.full(n, 100.)}
+    for t, c in paths.items():
+        o = np.r_[c[0], c[:-1]]
+        df = pd.DataFrame({"Open": o, "High": np.maximum(o, c) * 1.005,
+                           "Low": np.minimum(o, c) * 0.995, "Close": c, "Volume": 1e6},
+                          index=SC_DAYS)
+        if low_on and t in low_on:
+            df.iloc[low_on[t], df.columns.get_loc("Low")] = 90.
+        fr[t] = df
+    fr["SPY"] = pd.DataFrame({"Open": 400., "High": 401., "Low": 399., "Close": 400.,
+                              "Volume": 1e7}, index=SC_DAYS)
+    return pd.concat(fr, axis=1)
+
+
+def _scan_fn(plan):
+    """Scripted scanner: plan = {day_index: [ticker, ...]} (rs 90, stop 95)."""
+    def fn(tr, spy, day, cfg, sectors, already_truncated=True):
+        k = list(SC_DAYS).index(pd.Timestamp(day))
+        rows = [dict(ticker=t, signal_date=day, close=100., level=98., stop=95., rs=90. - j,
+                     eligible=True, rank=j + 1) for j, t in enumerate(plan.get(k, []))]
+        return pd.DataFrame(rows)
+    return fn
+
+
+def run_scenario(runs, plan, low_on=None):
+    """runs: list of (day_index, 'evening'|'next_morning'). Returns (summary, state)."""
+    import paper_run
+    prices = _scenario_prices(low_on)
+    uni = pd.DataFrame({"ticker": ["AAA", "BBB", "CCC"], "name": "", "sector": "X"})
+    with tempfile.TemporaryDirectory() as d:
+        summ = None
+        for k, when in runs:
+            day = SC_DAYS[k]
+            if when == "evening":                                  # 18:00 New York
+                now = datetime(day.year, day.month, day.day, 18, 0, tzinfo=core.NY)
+                cut = prices[prices.index <= day]
+            else:                                                  # 10:00 NY next session
+                nd = SC_DAYS[k + 1]
+                now = datetime(nd.year, nd.month, nd.day, 10, 0, tzinfo=core.NY)
+                cut = prices[prices.index <= nd]                  # unfinished bar present
+            summ = paper_run.daily(universe=uni, prices=cut, now=now, root=Path(d),
+                                   cfg=SC_CFG, scan_fn=_scan_fn(plan))
+        st = store.load_state(store.paths("forward", Path(d))["state_file"])
+    return summ, st
+
+
+def outage_scenarios() -> dict:
+    """All six scenarios; used by the tests and by research/task10b_outage_report.py."""
+    D = lambda k: str(SC_DAYS[k].date())
+    ev = lambda *ks: [(k, "evening") for k in ks]
+    out = {}
+    # S1 all timely: AAA signal d0 -> fill d1 -> time exit d4
+    out["S1_timely"] = run_scenario(ev(0, 1, 2, 3, 4, 5), {0: ["AAA"]})
+    # S2 late entry: AAA queued on time d0; runner down on d1; d2 run processes d1 late
+    out["S2_late_entry"] = run_scenario(ev(0, 2, 3), {0: ["AAA"]})
+    # S3 late exit: AAA filled d1 on time; runner down on d4 (exit day); d5 processes d4
+    out["S3_late_exit"] = run_scenario(ev(0, 1, 2, 3, 5), {0: ["AAA"]})
+    # S4 late signal: d0 processed only next morning after the open -> BBB never traded
+    out["S4_late_signal"] = run_scenario([(0, "next_morning"), (1, "evening"),
+                                          (2, "evening")], {0: ["BBB"]})
+    # S5 mixed: AAA timely round trip (d0..d4); BBB queued d4 on time, filled d5 late (runner
+    #   down d5); CCC found during the d5 catch-up -> late, never traded
+    out["S5_mixed"] = run_scenario(ev(0, 1, 2, 3, 4, 6, 7), {0: ["AAA"], 4: ["BBB"],
+                                                            5: ["CCC"]})
+    # S6 late stop exit right after a late entry: AAA queued d0, runner down d1-d2,
+    #   d3 run processes d1 (late entry) and d2 (late stop exit, low 90 on d2)
+    out["S6_late_entry_and_stop"] = run_scenario(ev(0, 3, 4), {0: ["AAA"]}, low_on={"AAA": 2})
+    out["_days"] = {k: D(k) for k in range(len(SC_DAYS))}
+    return out
+
+
+class OutageScenarios(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.S = outage_scenarios()
+        cls.D = cls.S["_days"]
+
+    def fwd(self, name):
+        return self.S[name][0]["forward"]
+
+    def test_S1_all_timely(self):
+        f = self.fwd("S1_timely")
+        self.assertTrue(f["genuine_forward"]["available"])
+        self.assertEqual(f["timely"]["trades"]["closed"], 1)
+        self.assertEqual(f["reconstructed"]["trades"]["closed"], 0)
+        self.assertEqual(f["late_not_traded"]["count"], 0)
+        self.assertFalse(f["observed_portfolio"]["contains_reconstructed"])
+
+    def test_S2_late_entry_identified(self):
+        f, st = self.fwd("S2_late_entry"), self.S["S2_late_entry"][1]
+        self.assertTrue(st["positions"]["AAA"]["entry_processed_late"])
+        self.assertEqual(f["reconstructed"]["open_positions"], 1)
+        self.assertEqual(f["timely"]["open_positions"], 0)
+        self.assertEqual(f["reconstructed"]["events"],
+                         [dict(date=self.D[1], kind="entry", ticker="AAA")])
+        g = f["genuine_forward"]
+        self.assertFalse(g["available"])
+        self.assertEqual((g["contaminated_since"], g["genuine_through"]), (self.D[1], self.D[0]))
+
+    def test_S3_late_exit_identified(self):
+        f, st = self.fwd("S3_late_exit"), self.S["S3_late_exit"][1]
+        t = st["ledger"][0]
+        self.assertFalse(t["entry_processed_late"])
+        self.assertTrue(t["exit_processed_late"])
+        self.assertEqual((t["exit_date"], t["reason"]), (self.D[4], "time"))
+        self.assertEqual(f["reconstructed"]["trades"]["closed"], 1)
+        self.assertEqual(f["timely"]["trades"]["closed"], 0)
+        g = f["genuine_forward"]
+        self.assertEqual((g["contaminated_since"], g["genuine_through"]), (self.D[4], self.D[3]))
+
+    def test_S4_late_signal_never_traded(self):
+        f, st = self.fwd("S4_late_signal"), self.S["S4_late_signal"][1]
+        self.assertEqual(f["late_not_traded"]["count"], 1)
+        self.assertEqual(f["late_not_traded"]["signals"][0]["ticker"], "BBB")
+        self.assertEqual(st["positions"], {})
+        self.assertEqual(st["ledger"], [])
+        self.assertTrue(f["genuine_forward"]["available"])       # marks only, no execution
+        self.assertEqual(f["late_processed_sessions"], [self.D[0]])
+
+    def test_S5_mixed_and_no_reconstructed_in_genuine(self):
+        f, st = self.fwd("S5_mixed"), self.S["S5_mixed"][1]
+        self.assertEqual(f["timely"]["trades"]["closed"], 1)               # AAA
+        self.assertEqual(f["reconstructed"]["open_positions"], 1)          # BBB
+        self.assertEqual(f["late_not_traded"]["count"], 1)                 # CCC
+        g = f["genuine_forward"]
+        self.assertEqual((g["contaminated_since"], g["genuine_through"]), (self.D[5], self.D[4]))
+        # genuine metrics are exactly the equity on genuine_through — nothing after it
+        eq = {r["date"]: r["equity"] for r in st["equity"]}
+        self.assertAlmostEqual(g["metrics"]["final_equity"], eq[self.D[4]])
+        self.assertEqual(g["metrics"]["days"], 5)
+        self.assertGreater(g["metrics"]["return_pct"], 0)                  # AAA profit
+        obs = f["observed_portfolio"]["metrics"]["final_equity"]
+        self.assertNotAlmostEqual(obs, g["metrics"]["final_equity"])      # BBB not in genuine
+        self.assertLess(obs, g["metrics"]["final_equity"])
+        # timely trade stats contain only AAA
+        aaa = [t for t in st["ledger"] if t["ticker"] == "AAA"][0]
+        self.assertAlmostEqual(f["timely"]["trades"]["total_pnl_usd"], aaa["net_pnl"])
+
+    def test_S6_late_entry_and_late_stop(self):
+        f, st = self.fwd("S6_late_entry_and_stop"), self.S["S6_late_entry_and_stop"][1]
+        t = st["ledger"][0]
+        self.assertTrue(t["entry_processed_late"] and t["exit_processed_late"])
+        self.assertEqual((t["entry_date"], t["exit_date"], t["reason"]),
+                         (self.D[1], self.D[2], "stop"))
+        self.assertEqual([e["kind"] for e in f["reconstructed"]["events"]], ["entry", "exit"])
+        self.assertEqual(f["timely"]["trades"]["closed"], 0)
+
+    def test_unavailable_from_first_session(self):
+        st = {"config": DEFAULT.as_dict(), "equity": [
+                  {"date": "2026-03-02", "equity": 9990., "positions": 1, "spy_close": 400.}],
+              "ledger": [], "orders_log": [],
+              "positions": {"AAA": {"ticker": "AAA", "entry_date": "2026-03-02",
+                                    "entry_processed_late": True}}}
+        g = pm.forward_report(st)["genuine_forward"]
+        self.assertFalse(g["available"])
+        self.assertIsNone(g["metrics"])
+        self.assertIsNone(g["genuine_through"])
+        self.assertIn("unavailable", g["reason"])
+
+
+class StrategyGuardAndPersistence(unittest.TestCase):
+    def test_fingerprint_change_blocks_until_new_experiment(self):
+        import paper_run
+        prices = _scenario_prices()
+        uni = pd.DataFrame({"ticker": ["AAA", "BBB", "CCC"], "name": "", "sector": "X"})
+        with tempfile.TemporaryDirectory() as d:
+            kw = dict(universe=uni, root=Path(d), cfg=SC_CFG, scan_fn=_scan_fn({}))
+            now = lambda k: datetime(SC_DAYS[k].year, SC_DAYS[k].month, SC_DAYS[k].day, 18,
+                                     tzinfo=core.NY)
+            paper_run.daily(prices=prices[prices.index <= SC_DAYS[0]], now=now(0), **kw)
+            P = store.paths("forward", Path(d))
+            st = json.loads(P["state_file"].read_text())
+            st["code_fingerprint"] = {**st["code_fingerprint"], "combined": "OLDVERSION00",
+                                      "paper.portfolio": "deadbeef0000"}
+            P["state_file"].write_text(json.dumps(st))
+            with self.assertRaises(paper_run.StrategyChanged) as cm:
+                paper_run.daily(prices=prices[prices.index <= SC_DAYS[1]], now=now(1), **kw)
+            self.assertIn("paper.portfolio", str(cm.exception))
+            s2 = paper_run.daily(prices=prices[prices.index <= SC_DAYS[1]], now=now(1),
+                                 new_experiment="v2", **kw)
+            self.assertEqual(s2["experiment"], "v2")
+            archived = list((Path(d) / "paper" / "archive").iterdir())
+            self.assertEqual(len(archived), 1)
+            self.assertTrue((archived[0] / "state" / "portfolio.json").exists())
+
+    def test_parameter_change_also_blocks(self):
+        import paper_run
+        prices = _scenario_prices()
+        uni = pd.DataFrame({"ticker": ["AAA", "BBB", "CCC"], "name": "", "sector": "X"})
+        with tempfile.TemporaryDirectory() as d:
+            now = datetime(SC_DAYS[1].year, SC_DAYS[1].month, SC_DAYS[1].day, 18,
+                           tzinfo=core.NY)
+            paper_run.daily(universe=uni, prices=prices[prices.index <= SC_DAYS[0]],
+                            now=now - pd.Timedelta(days=1), root=Path(d), cfg=SC_CFG,
+                            scan_fn=_scan_fn({}))
+            with self.assertRaises(paper_run.StrategyChanged):
+                paper_run.daily(universe=uni, prices=prices[prices.index <= SC_DAYS[1]],
+                                now=now, root=Path(d), cfg=PaperConfig(hold_days=4),
+                                scan_fn=_scan_fn({}))
+
+    def test_restore_refuses_stale_backup(self):
+        import paper_run
+        prices = _scenario_prices()
+        uni = pd.DataFrame({"ticker": ["AAA", "BBB", "CCC"], "name": "", "sector": "X"})
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as b:
+            kw = dict(universe=uni, root=Path(d), cfg=SC_CFG, scan_fn=_scan_fn({0: ["AAA"]}))
+            now = lambda k: datetime(SC_DAYS[k].year, SC_DAYS[k].month, SC_DAYS[k].day, 18,
+                                     tzinfo=core.NY)
+            P = store.paths("forward", Path(d))
+            paper_run.daily(prices=prices[prices.index <= SC_DAYS[0]], now=now(0), **kw)
+            import shutil
+            shutil.copytree(P["state_dir"], Path(b) / "state")           # backup of revision 1
+            shutil.copytree(P["data_dir"], Path(b) / "data")
+            paper_run.daily(prices=prices[prices.index <= SC_DAYS[1]], now=now(1), **kw)
+            with self.assertRaises(RuntimeError) as cm:                  # stale: refused
+                paper_run.restore(b, root=Path(d))
+            self.assertIn("not newer", str(cm.exception))
+            self.assertEqual(store.load_state(P["state_file"])["revision"], 2)
+            # a strictly newer backup is accepted
+            shutil.rmtree(Path(b) / "state"); shutil.rmtree(Path(b) / "data")
+            shutil.copytree(P["state_dir"], Path(b) / "state")
+            shutil.copytree(P["data_dir"], Path(b) / "data")
+            st = json.loads((Path(b) / "state" / "portfolio.json").read_text())
+            paper_run.daily(prices=prices[prices.index <= SC_DAYS[2]], now=now(2), **kw)
+            newer = store.load_state(P["state_file"])
+            (Path(b) / "state" / "portfolio.json").write_text(json.dumps(newer))
+            P["state_file"].write_text(json.dumps(st))                   # simulate lost push
+            self.assertIn("restored revision 3", paper_run.restore(b, root=Path(d)))
+
+    def test_persist_script_fails_loudly_on_conflict(self):
+        import subprocess
+        sh = str(Path(__file__).resolve().parent / "scripts" / "persist_state.sh")
+        with tempfile.TemporaryDirectory() as d:
+            run = lambda *a, cwd=d: subprocess.run(a, cwd=cwd, capture_output=True, text=True)
+            run("git", "init", "-q", "--bare", "-b", "main", "origin.git")
+
+            def clone(name):
+                run("git", "clone", "-q", "origin.git", name)
+                run("git", "checkout", "-q", "-B", "main", cwd=f"{d}/{name}")
+                for k, v in (("user.name", name), ("user.email", f"{name}@x")):
+                    run("git", "config", k, v, cwd=f"{d}/{name}")
+            clone("a")
+            Path(d, "a", "state.json").write_text('{"rev": 1}')
+            r = run("bash", sh, "init", "state.json", cwd=f"{d}/a")   # first push, empty remote
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            clone("b")                                                  # b starts from rev 1
+            Path(d, "a", "state.json").write_text('{"rev": 2, "by": "a"}')
+            self.assertEqual(run("bash", sh, "a2", "state.json", cwd=f"{d}/a").returncode, 0)
+            Path(d, "b", "state.json").write_text('{"rev": 2, "by": "b"}')    # stale writer
+            r = run("bash", sh, "b2", "state.json", cwd=f"{d}/b")
+            self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+            self.assertIn("CONFLICT", r.stdout)
+            clone("c")                                                  # what the remote holds
+            self.assertIn('"by": "a"', Path(d, "c", "state.json").read_text())  # not overwritten
+
+
+class CalendarAndMapping(unittest.TestCase):
+    OFFICIAL = {   # NYSE published full-day holidays
+        2025: ["2025-01-01", "2025-01-09", "2025-01-20", "2025-02-17", "2025-04-18",
+               "2025-05-26", "2025-06-19", "2025-07-04", "2025-09-01", "2025-11-27",
+               "2025-12-25"],
+        2026: ["2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25",
+               "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25"],
+        2027: ["2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31",
+               "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24"],
+        2028: ["2028-01-17", "2028-02-21", "2028-04-14", "2028-05-29", "2028-06-19",
+               "2028-07-04", "2028-09-04", "2028-11-23", "2028-12-25"]}
+
+    def test_calendar_matches_nyse(self):
+        from paper import nyse
+        for y, days in self.OFFICIAL.items():
+            self.assertEqual(nyse.holiday_list(y, y), days, y)
+        self.assertTrue(nyse.is_session("2027-12-31"))       # New Year 2028 is a Saturday
+        self.assertEqual(store.next_session("2027-12-30"), "2027-12-31")
+        self.assertEqual(store.next_session("2027-12-31"), "2028-01-03")
+        self.assertEqual(store.next_session("2026-11-25"), "2026-11-27")
+
+    def test_outcome_mapping_covers_every_outcome(self):
+        from paper.portfolio import PaperPortfolio
+        import inspect
+        src = inspect.getsource(PaperPortfolio)
+        import re
+        used = set(re.findall(r'_log_order\(o, [a-z_]+, "([a-z_]+)"', src))
+        self.assertTrue(used)
+        self.assertEqual(used - set(V.OUTCOME_MAP), set())
+
+    def test_mapping_flags_excluded_and_divergent_outcomes(self):
+        ref = [dict(day="2026-03-03", ticker="AAA", outcome="entered", shares=5)]
+        base = dict(signal_date="2026-03-02", rs=90, rank=1, generated_at="x", late=False)
+        ok = [dict(base, ticker="AAA", session="2026-03-03", outcome="entered", shares=5, stop=95),
+              dict(base, ticker="BBB", session="2026-03-03", outcome="no_trade_open_below_stop",
+                   open=94., stop=95.)]
+        self.assertEqual(V.map_outcomes(ok, ref)["violations"], [])
+        bad = ok + [dict(base, ticker="CCC", session="2026-03-04", outcome="expired_no_bar",
+                         stop=95.),
+                    dict(base, ticker="DDD", session="2026-03-04", outcome="not_traded_late",
+                         stop=95.),
+                    dict(base, ticker="EEE", session="2026-03-04", outcome="mystery", stop=95.),
+                    dict(base, ticker="FFF", session="2026-03-04",
+                         outcome="no_trade_open_below_stop", open=99., stop=95.)]
+        v = V.map_outcomes(bad, ref)["violations"]
+        self.assertEqual(len(v), 4, v)
+
+    def test_simulate_excluded_outcomes_reconcile_with_replay(self):
+        fr, spy = market(21)
+        sig, data = bt.find_signals(fr, modes=["retest"])
+        mo = core.regime_mask(core.market_regime(spy), "ma50")
+        cfg = PaperConfig(min_rs=0, max_risk_pct=3.5)                # produces max-risk no-trades
+        cal = V.calendar(data)
+        r = V.compare(V.run_stepper(sig, data, mo, cal[270], cal[-1], cfg),
+                      V.reference_replay(sig, data, mo, cal[270], cal[-1], cfg), cfg)
+        self.assertTrue(r["ok"], r)
+        self.assertGreater(r["outcome_categories"].get("simulate_excluded", 0), 0)
+        self.assertEqual(r["outcome_violations"], [])
+
+
 class Metrics(unittest.TestCase):
     def test_performance(self):
         eq = pd.DataFrame({"date": pd.bdate_range("2026-01-05", periods=4),
@@ -344,8 +680,8 @@ class Metrics(unittest.TestCase):
         self.assertAlmostEqual(m["profit_factor"], 1.0)
         self.assertAlmostEqual(m["expectancy_usd"], 0.0)
         self.assertAlmostEqual(m["win_rate_pct"], 100 / 3)
-        self.assertAlmostEqual(m["spy_return_pct"], 5.0)
-        self.assertAlmostEqual(m["excess_return_pct"], -0.5)
+        self.assertAlmostEqual(m["spy_price_return_pct"], 5.0)
+        self.assertAlmostEqual(m["excess_vs_spy_price_pct"], -0.5)
         self.assertAlmostEqual(m["exposure_pct"], 50.0)
 
     def test_labels(self):

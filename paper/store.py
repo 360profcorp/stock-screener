@@ -19,21 +19,15 @@ from datetime import datetime, time, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from paper import nyse
+
 import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 NY = ZoneInfo("America/New_York")
 STRATEGY_VERSION = "retest-rs-first/1.0"
-FINGERPRINT_FILES = ["backtest.py", "core.py", "portfolio_bt.py", "paper/config.py",
-                     "paper/screener.py", "paper/portfolio.py"]
 LABEL_HORIZONS = (1, 5, 10, 20)
-
-# NYSE holidays (weekdays). Same list as trader.py — extend once a year.
-HOLIDAYS = ["2026-11-26", "2026-12-25", "2027-01-01", "2027-01-18", "2027-02-15",
-            "2027-03-26", "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06",
-            "2027-11-25", "2027-12-24"]
-
 
 class ImmutableError(RuntimeError):
     pass
@@ -54,8 +48,8 @@ DATA_DIR, SIGNALS_FILE, LABELS_FILE = _P["data_dir"], _P["signals"], _P["labels"
 
 # ---------------------------------------------------------------- calendar / timing
 def next_session(day) -> str:
-    return str(np.busday_offset(pd.Timestamp(day).strftime("%Y-%m-%d"), 1, roll="forward",
-                                holidays=HOLIDAYS))
+    """Next NYSE session (rule-based exchange calendar, paper/nyse.py)."""
+    return nyse.next_session(day)
 
 
 def session_open_utc(day) -> datetime:
@@ -76,11 +70,29 @@ def config_hash(cfg) -> str:
                           .encode()).hexdigest()[:12]
 
 
+def _strategy_components():
+    """The code that decides what the forward portfolio trades and how. Hashing these objects'
+    source (not whole files) means unrelated edits elsewhere don't block the experiment, while
+    any change to signal, ranking, sizing, execution or calendar logic does."""
+    import backtest as bt
+    import core
+    from paper import config, nyse as cal, portfolio, screener
+    return {
+        "backtest.indicators": bt.indicators, "backtest.retest_at": bt.retest_at,
+        "backtest.rs_history": bt.rs_history, "core.market_regime": core.market_regime,
+        "core.regime_mask": core.regime_mask, "paper.screener": screener,
+        "paper.portfolio": portfolio, "paper.config": config, "paper.nyse": cal,
+        "store.is_late": is_late, "store.session_open_utc": session_open_utc,
+    }
+
+
 def code_fingerprint(root: Path = ROOT) -> dict:
+    import inspect
     out = {}
-    for f in FINGERPRINT_FILES:
-        p = Path(root) / f
-        out[f] = hashlib.sha256(p.read_bytes()).hexdigest()[:12] if p.exists() else None
+    for name, obj in _strategy_components().items():
+        out[name] = hashlib.sha256(inspect.getsource(obj).encode()).hexdigest()[:12]
+    import backtest as bt
+    out["backtest.WARMUP"] = str(bt.WARMUP)
     out["combined"] = hashlib.sha256(json.dumps(out, sort_keys=True).encode()).hexdigest()[:12]
     return out
 
