@@ -1,0 +1,50 @@
+name: UI tests (Trading tab tables)
+
+# Test-only: no schedule, no state writes, no orders. Runs the app in Streamlit AppTest with
+# real PyArrow and checks the Trading tab tables. Also shows the old crash on main's trade_tab.py.
+on:
+  push:
+    branches: [fix/trade-tab-duplicate-columns]
+  pull_request:
+    branches: [main]
+    paths: ["app.py", "trade_tab.py", "test_trade_tab.py", ".github/workflows/ui-tests.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyarrow
+      - run: python -c "import streamlit, pyarrow; print('streamlit', streamlit.__version__, 'pyarrow', pyarrow.__version__)"
+      - name: Regression + app tests (all tabs, RU/EN, open position and empty tables)
+        env:
+          REQUIRE_UI_TESTS: "1"
+        run: python -m unittest test_trade_tab -v
+      - name: Existing test suites
+        run: python -m unittest test_paper test_task6_engine test_portfolio_bt
+      - name: Reproduce the crash with main's trade_tab.py (expected to fail there)
+        run: |
+          mkdir -p /tmp/old && cp -r . /tmp/old/repo && cd /tmp/old/repo
+          git show origin/main:trade_tab.py > trade_tab.py
+          python - <<'PY'
+          from streamlit.testing.v1 import AppTest
+          import test_trade_tab as t
+          at = AppTest.from_file("app.py", default_timeout=180)
+          at.secrets["STATE_PASSWORD"] = "test"
+          at.session_state["bot_unlocked"] = True
+          at.session_state["bot_state"] = {"mode": "dry", "positions": [t.POSITION], "closed": [], "orders": [], "log": []}
+          at.session_state["bot_sha"] = "abc"
+          at.run()
+          msgs = [e.value for e in at.exception]
+          print("main trade_tab.py exceptions:", msgs)
+          assert any("Duplicate column names" in m for m in msgs), "expected the old crash"
+          PY
