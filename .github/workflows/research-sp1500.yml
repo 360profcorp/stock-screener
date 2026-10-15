@@ -33,6 +33,9 @@ jobs:
         run: python -m unittest research.sp1500.test_sp1500 test_paper test_task6_engine test_portfolio_bt -v
       - id: day
         run: echo "d=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Source probe only (commit message contains [probe])
+        if: contains(github.event.head_commit.message, '[probe]')
+        run: python -m research.sp1500.run --probe
       - name: Price cache (same-day reruns do not hit Yahoo again)
         uses: actions/cache@v4
         with:
@@ -40,6 +43,7 @@ jobs:
           key: sp1500-prices-${{ steps.day.outputs.d }}-${{ github.run_id }}
           restore-keys: sp1500-prices-${{ steps.day.outputs.d }}-
       - name: Real-data research run
+        if: "!contains(github.event.head_commit.message, '[probe]')"
         run: python -m research.sp1500.run --period 5y
       - name: Upload dataset (signals, raw sources, bars)
         if: always()

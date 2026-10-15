@@ -165,7 +165,18 @@ def main(argv=None):
     ap.add_argument("--dataset-dir", default=str(ROOT / "dist/sp1500"))
     ap.add_argument("--cache", default=str(ROOT / ".cache/sp1500"))
     ap.add_argument("--max-tickers", type=int, default=0, help="smoke runs only")
+    ap.add_argument("--probe", action="store_true", help="sources only: write diagnostics")
     a = ap.parse_args(argv)
+    if a.probe:
+        f = U.fetch_all()
+        u, m, _ = U.build_universe(f)
+        p = ROOT / "research/results/sp1500/probe" / \
+            (datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%MZ") + ".json")
+        p.parent.mkdir(parents=True, exist_ok=True)
+        m["universe_counts"] = u["group"].value_counts().to_dict()
+        p.write_text(json.dumps(m, indent=2, default=str))
+        print(json.dumps(m["attempts"], indent=1, default=str)[:20000])
+        return 0
     t_start = time.time()
     now = datetime.now(timezone.utc)
     run_id = now.strftime("%Y-%m-%dT%H%MZ")

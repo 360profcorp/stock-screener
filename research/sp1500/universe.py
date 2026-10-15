@@ -53,10 +53,13 @@ def parse_ishares(text: str) -> tuple:
         if m:
             as_of = pd.to_datetime(m.group(1)).date()
             break
-    start = next((k for k, ln in enumerate(lines) if ln.startswith("Ticker")), None)
+    start = next((k for k, ln in enumerate(lines)
+                  if ln.lstrip('\ufeff\xa0 "').startswith("Ticker")), None)
     if start is None:
-        raise ValueError("no Ticker header in iShares file")
-    df = pd.read_csv(io.StringIO("\n".join(lines[start:])), on_bad_lines="skip")
+        raise ValueError("no Ticker header in iShares file; starts with "
+                         + repr(text[:160]))
+    body = "\n".join([lines[start].lstrip('\ufeff\xa0 ')] + lines[start + 1:])
+    df = pd.read_csv(io.StringIO(body), on_bad_lines="skip")
     if "Asset Class" in df:
         df = df[df["Asset Class"].astype(str).str.strip() == "Equity"]
     df = df[df["Ticker"].notna() & (df["Ticker"].astype(str).str.strip() != "-")]
@@ -67,6 +70,19 @@ def parse_ishares(text: str) -> tuple:
 
 
 # ---------------------------------------------------------------- Wikipedia
+def describe_tables(html: str) -> list:
+    """Diagnostics: columns and first row of every HTML table (for the snapshot)."""
+    out = []
+    try:
+        for t in pd.read_html(io.StringIO(html)):
+            cols = [" ".join(map(str, c)) if isinstance(c, tuple) else str(c) for c in t.columns]
+            out.append(dict(columns=cols, rows=len(t),
+                            first=[str(v)[:40] for v in t.iloc[0].tolist()] if len(t) else []))
+    except Exception as e:
+        out.append(dict(error=f"{type(e).__name__}: {e}"[:200]))
+    return out
+
+
 def parse_wiki(html: str) -> tuple:
     """(constituents DataFrame[ticker, name, sector], changes DataFrame[date, added, removed])."""
     tables = pd.read_html(io.StringIO(html))
@@ -91,7 +107,9 @@ def parse_wiki(html: str) -> tuple:
                        ("ticker" in c.lower() or "symbol" in c.lower()))
             rem = next(c for c in cols if "removed" in c.lower() and
                        ("ticker" in c.lower() or "symbol" in c.lower()))
-            changes = pd.DataFrame({"date": pd.to_datetime(t[dcol], errors="coerce"),
+            dates = t[dcol].astype(str).str.replace(r"\[.*?\]", "", regex=True).str.strip()
+            changes = pd.DataFrame({"date": pd.to_datetime(dates, errors="coerce",
+                                                           format="mixed"),
                                     "added": t[add].map(lambda v: norm_ticker(v)
                                                         if isinstance(v, str) else None),
                                     "removed": t[rem].map(lambda v: norm_ticker(v)
@@ -196,6 +214,7 @@ def fetch_all(session=None, timeout=30) -> dict:
                         rec.update(ok=len(df) > 50, rows=len(df), as_of=str(as_of),
                                    _df=df, _as_of=as_of)
                     else:
+                        rec["tables"] = describe_tables(r.text)
                         df, ch = parse_wiki(r.text)
                         rec.update(ok=len(df) > 50, rows=len(df), _df=df, _changes=ch,
                                    change_rows=0 if ch is None else len(ch))
