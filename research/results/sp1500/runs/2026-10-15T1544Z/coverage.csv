@@ -1,0 +1,5 @@
+group,tickers,with_data,missing,coverage_pct,invalid_bars,median_rows,calendar_sessions
+ambiguous,1,1,0,100.0,0,1255.0,1254
+sp400,399,399,0,100.0,50,1255.0,1254
+sp500,503,503,0,100.0,30,1255.0,1254
+sp600,600,599,1,99.83333333333333,63,1255.0,1254
