@@ -1,4 +1,19 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-20,breakout,CRL,95,Health Care,315.45,309.48,300.2,4.84
+2026-10-20,breakout,ZBRA,94,Information Technology,384.08,380.65,369.23,3.87
+2026-10-20,breakout,WDAY,91,Information Technology,203.98,200.23,194.22,4.78
+2026-10-20,breakout,IT,90,Information Technology,219.64,211.54,205.19,6.58
+2026-10-20,breakout,TRV,88,Financials,395.73,390.91,379.18,4.18
+2026-10-20,retest,MRNA,99,Health Care,242.08,212.22,202.65,16.29
+2026-10-20,retest,MPC,98,Energy,475.04,470.0,450.21,5.23
+2026-10-20,retest,PSX,97,Energy,291.03,286.57,276.64,4.94
+2026-10-20,retest,A,89,Health Care,173.01,172.74,164.5,4.92
+2026-10-20,retest,AMGN,89,Health Care,438.94,428.05,412.0,6.14
+2026-10-20,retest,SWKS,88,Information Technology,81.3,79.17,76.79,5.54
+2026-10-20,retest,MCK,86,Health Care,1030.12,979.82,948.55,7.92
+2026-10-20,retest,ABBV,86,Health Care,289.08,283.43,274.11,5.18
+2026-10-20,retest,BDX,85,Health Care,193.8,189.99,183.81,5.16
+2026-10-20,retest,CPAY,85,Financials,408.36,404.89,385.98,5.48
 2026-10-15,breakout,MRNA,99,Health Care,236.5,227.46,220.64,6.71
 2026-10-15,breakout,VEEV,94,Health Care,313.03,309.32,300.04,4.15
 2026-10-15,breakout,IQV,92,Health Care,271.04,266.66,258.66,4.57
