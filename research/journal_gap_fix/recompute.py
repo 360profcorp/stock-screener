@@ -79,17 +79,21 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--prices")
     ap.add_argument("--out", default=str(ROOT / "research/results/journal_gap_fix"))
+    ap.add_argument("--run")
     a = ap.parse_args(argv)
-    run = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%MZ")
+    run = a.run or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%MZ")
     out = Path(a.out) / run
     out.mkdir(parents=True, exist_ok=False)
+    # frozen file given: copy it verbatim (same bytes, same sha256)
     journal = pd.read_csv(ROOT / "journal/signals.csv")
     if a.prices:
+        raw0 = Path(a.prices).read_bytes()
         long = pd.read_csv(a.prices)
     else:
+        raw0 = None
         start = (pd.to_datetime(journal["date"]).min() - timedelta(days=7)).strftime("%Y-%m-%d")
         long = freeze(core.get_prices(tuple(sorted(journal["ticker"].unique())), start=start))
-    raw = long.to_csv(index=False).encode()
+    raw = raw0 if raw0 is not None else long.to_csv(index=False).encode()
     (out / "prices_frozen.csv").write_bytes(raw)
     prices = unfreeze(pd.read_csv(out / "prices_frozen.csv"))
     before = baseline_eval()(journal, prices)
@@ -114,7 +118,12 @@ def main(argv=None):
         changed[f"{c}_after"] *= 100
     changed = changed[key + ["close", "stop", "stop_day", "exit_price", "gap_through_stop"] +
                       [f"{c}_{w}" for c in cols for w in ("before", "after")]]
-    focus = m[m["ticker"].isin(FOCUS)]
+    focus = m[m["ticker"].isin(FOCUS)].copy()
+    for c in cols:
+        focus[f"{c}_before"] *= 100
+        focus[f"{c}_after"] *= 100
+    focus = focus[key + ["close", "stop", "stop_day", "exit_price", "gap_through_stop"] +
+                  [f"{c}_{w}" for c in cols for w in ("before", "after")]]
     sb_, sa_ = summary(before), summary(after)
     tab = sb_.merge(sa_, on="mode", suffixes=("_before", "_after"))
     info = dict(run=run, baseline=BASELINE, git=subprocess.run(
@@ -133,7 +142,7 @@ def main(argv=None):
            "Before = `core.evaluate_journal` at " + BASELINE + " (exit always at the stop); "
            "after = exit at the open when it gapped below the stop.", "",
            "## Per strategy", "", md(tab), "## Changed signals (returns in %)", "",
-           md(changed), "## FAST and BAX", "", md(focus.assign(**{c: focus[c] for c in focus})), ""]
+           md(changed), "## FAST and BAX (returns in %)", "", md(focus), ""]
     (out / "REPORT.md").write_text("\n".join(rep))
     print("\n".join(rep))
     return 0
