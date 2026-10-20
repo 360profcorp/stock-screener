@@ -2,8 +2,8 @@ name: Research AI ranking v2 (research branch only)
 
 # PREREG v2.1: research only. Guards the live paper strategy (fingerprint 17454c61f631,
 # fingerprinted files identical to main, paper/state + paper/data untouched). No schedule,
-# nothing connected to the bot. Model training is NOT part of this workflow until the data
-# audit has passed (a separate, explicit step will be added then).
+# nothing connected to the bot. This workflow BUILDS the v2 dataset only; model training is
+# not part of it until Muse's data audit has passed (a separate, explicit step then).
 on:
   push:
     branches: [research/ai-rank-v2]
@@ -39,7 +39,32 @@ jobs:
           REQUIRE_MAIN: "1"
         run: python -m unittest research.ai_rank.test_guard -v
       - name: Research tests
-        run: python -m unittest research.ai_rank.test_ai_rank research.sp1500.test_sp1500 -v
+        run: python -m unittest research.ai_rank.test_ai_rank research.ai_rank.test_v2_build research.sp1500.test_sp1500 -v
+      - name: Fetch the PR #5 dataset artifact (run 38773034101)
+        uses: actions/download-artifact@v4
+        with:
+          name: sp1500-dataset-38773034101
+          run-id: 38773034101
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dataset
+      - name: Build v2 dataset (BUILD ONLY — no training)
+        run: python -m research.ai_rank.v2_build --dataset dataset
+      - name: Upload v2 dataset
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-rank-v2-dataset-${{ github.run_id }}
+          path: dist/ai_rank_v2
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Commit build report
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/ai_rank/v2_build || true
+          git diff --cached --quiet || git commit -m "Research AI rank v2: data build $(date -u +%F_%H%M)"
+          git pull --rebase && git push
       - name: Live state untouched by this run
         if: always()
         run: test -z "$(git status --porcelain paper/state paper/data state)" || { echo "::error::live state changed"; exit 1; }
