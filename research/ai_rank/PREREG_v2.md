@@ -1,13 +1,16 @@
-# AI ranking v2: pre-registration (written BEFORE any v2 data is built or model trained)
+# AI ranking v2.1: pre-registration (written BEFORE any v2 data is built or model trained)
 
-Status: **draft for audit (Muse).** Nothing below may be changed after the audit without a
+Status: **v2.1. Muse's conditional PASS applied** (P1-1 to P1-3 fixed; P2 items also settled). Nothing below may be changed after the audit without a
 new version number and a note on why.
 
 ## 0. Ground rules
 - **Research and shadow only.** No change to the live paper portfolio, the paper bot, their
   state, schedules, or any fingerprinted code (`paper/*`, `backtest.indicators/retest_at/
   rs_history`, `core.market_regime/regime_mask`, `store.is_late/session_open_utc`). CI asserts
-  that the fingerprint `17454c61f631` is unchanged.
+  that the fingerprint `17454c61f631` is unchanged: the `research-ai-rank-v2.yml` workflow and
+  `research/ai_rank/test_guard.py` compare it against the constant and against main's
+  `paper/state/portfolio.json`. CI also checks that the fingerprinted files are byte-identical to
+  `origin/main` and that a run leaves `paper/state` and `paper/data` untouched.
 - **Base data.** PR #5 dataset (artifact run 38773034101): sessions 2021-10-15 → 2026-10-14.
 - **Splits.** Purge by the label's true end: exit date, at least signal + 21 sessions
   (`engine.label_end`, `pipeline.splits_at`, commit a4ba326). Fixed boundaries:
@@ -33,7 +36,7 @@ Secondary (reported, never a decision basis): all four long setups.
 | Group | Feature | Definition | Look-ahead risk |
 |---|---|---|---|
 | Earnings | `sess_since_earn` | Sessions since the last reported earnings date ≤ signal day | none: the date is in the past |
-| Earnings | `earn_within_5` | 1 if an earnings date falls within the next 5 sessions | **flagged**: we only know the date as eventually reported, not as scheduled at the time. Evaluated with and without it; the decision uses the model **without** it unless the two differ by less than the noise band |
+| Earnings | `earn_within_5` | 1 if an earnings date falls within the next 5 sessions | **flagged**: we only know the date as eventually reported, not as scheduled at the time. **The deciding model never uses it.** It appears only in a separately labelled sensitivity run, which can never pass the gate or be frozen |
 | Sector | `sector_rs_median` | Median `rs_score` of the PIT S&P 500 members of the same sector on the signal day | sector labels are today's GICS (static): mild bias, noted |
 | Sector | `sector_ret20_median` | Median 20-day return of the same members | same as above |
 | Sector | `rs_minus_sector` | Own `rs_score` − `sector_rs_median` | same as above |
@@ -41,8 +44,14 @@ Secondary (reported, never a decision basis): all four long setups.
 | Breadth | `breadth_new_high` | Share at a 252-day high | none |
 | Breadth | `breadth_chg5` | 5-session change of `breadth_ma50` | none |
 
-- **Earnings dates source:** `yfinance.Ticker.get_earnings_dates`. If fewer than 80 % of the
-  signals get a past earnings date, the earnings group is dropped and the report says so.
+- **Earnings dates source:** `yfinance.Ticker.get_earnings_dates`.
+- **Coverage rule:** the denominator is all eligible retest signals of the PIT S&P 500 pool from
+  section 1, for train + validation together. If fewer than 80 % of them get a past earnings
+  date (`sess_since_earn` defined), the earnings group is dropped and the report says so.
+- **Overlap:** repeated signals of one open setup stay in the data (the ranker must order
+  everything the portfolio sees). The daily rank correlation counts each (ticker, day) once,
+  and bootstrap intervals resample whole days, so repeats do not inflate the evidence. The
+  non-overlapping count is reported next to every figure.
 
 ## 3. Models (fixed now)
 - **Ridge** (alpha in 1, 10, 100) and **gradient boosting** (depth 2 or 3; 100 or 300
@@ -71,12 +80,27 @@ Secondary (reported, never a decision basis): all four long setups.
   - the model order;
   - RS-first (it must reproduce the paper portfolio exactly, otherwise the run is invalid);
   - a fixed random order.
-- **Evaluation:**
-  - The first indicator is the forward rank correlation on all eligible signals, including those
-    not traded (labels from `paper/data/labels.csv` once observable).
-  - Portfolio comparison only after at least 6 months **and** at least 30 days on which ranking
-    changed the entered set.
-  - The test is evaluated exactly once, at the pre-agreed date.
+- **Two different evaluations, each done exactly once:**
+  - **(a) Historical window 2025-12-30 → 2026-10-14 (NOT independent):** computed once, in the
+    stage-A report, after the gate decision has been written down. It cannot change that
+    decision.
+  - **(b) Forward shadow test (the independent one):** evaluated once, on the evaluation date
+    **T**:
+    - T is the first paper session on or after shadow start + 6 calendar months on which at
+      least 30 sessions have had the ranking change the entered set;
+    - if that has not happened by shadow start + 12 calendar months, T = that date regardless;
+    - the shadow start date is written into `research/shadow/FROZEN.json` together with the
+      model's sha256 when the model is frozen;
+    - no peeking: until T only the counts (signals scored, ranking-changing days) are
+      published, not performance.
+- **Shadow success threshold (fixed now)** — at T, all three must hold:
+  1. pooled forward daily rank correlation > 0, with a bootstrap 90 % interval by day above 0;
+  2. the model book's return is not below the RS-first book's;
+  3. the model book's max drawdown is not deeper than RS-first's by more than 3 percentage
+     points.
+  
+  Otherwise the model is declined and RS-first stays. In every case only the owner decides
+  whether anything changes in the live bot.
 
 ## 6. Roles
 - **Claude:** builds the dataset, features and runs; **stops before training** for the audit.

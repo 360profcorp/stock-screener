@@ -1,0 +1,45 @@
+name: Research AI ranking v2 (research branch only)
+
+# PREREG v2.1: research only. Guards the live paper strategy (fingerprint 17454c61f631,
+# fingerprinted files identical to main, paper/state + paper/data untouched). No schedule,
+# nothing connected to the bot. Model training is NOT part of this workflow until the data
+# audit has passed (a separate, explicit step will be added then).
+on:
+  push:
+    branches: [research/ai-rank-v2]
+    paths:
+      - "research/ai_rank/**"
+      - "research/sp1500/**"
+      - ".github/workflows/research-ai-rank-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-ai-rank-v2
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/ai-rank-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests scikit-learn
+      - name: Guard — live paper strategy unchanged
+        env:
+          REQUIRE_MAIN: "1"
+        run: python -m unittest research.ai_rank.test_guard -v
+      - name: Research tests
+        run: python -m unittest research.ai_rank.test_ai_rank research.sp1500.test_sp1500 -v
+      - name: Live state untouched by this run
+        if: always()
+        run: test -z "$(git status --porcelain paper/state paper/data state)" || { echo "::error::live state changed"; exit 1; }
