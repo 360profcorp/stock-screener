@@ -363,6 +363,9 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
     """
     For every logged signal: return after 5 and 10 trading days, return now,
     max run-up, and whether the stop was hit (low ≤ stop) after the signal day.
+    Long exit on the FIRST stop day: at the open if it opened below the stop (gap through
+    the stop), otherwise at the stop. That exit price is the result of ret_now and of every
+    horizon reached on or after the stop day; later recoveries are ignored.
     """
     rows = []
     for _, s in journal.iterrows():
@@ -384,13 +387,21 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
         n = len(c)
         rec["ret_now"] = c[-1] / entry - 1
         rec["max_up"] = after["High"].max() / entry - 1
-        hit = after["Low"].values <= float(s["stop"])
+        stop = float(s["stop"])
+        hit = after["Low"].values <= stop
         k = int(np.argmax(hit)) if hit.any() else None
-        stop_ret = float(s["stop"]) / entry - 1
+        exit_px = stop
+        if k is not None:
+            o = float(after["Open"].iloc[k])
+            if o < stop:                                  # gapped through the stop
+                exit_px = o
+            rec["exit_price"] = exit_px
+            rec["gap_through_stop"] = bool(o < stop)
+        stop_ret = exit_px / entry - 1
 
         def ret_at(day):
             # result after `day` trading days — only once that many days have passed;
-            # if the stop was hit earlier, the trade was closed at the stop
+            # if the stop was hit on or before that day, the trade was closed at exit_px
             if n < day:
                 return np.nan
             return stop_ret if (k is not None and k < day) else c[day - 1] / entry - 1
@@ -399,7 +410,7 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
         if k is not None:
             rec["status"] = "stopped"
             rec["stop_day"] = k + 1
-            rec["ret_now"] = stop_ret                     # closed trade: result is the stop
+            rec["ret_now"] = stop_ret                     # closed trade: result is the exit
             rec["max_up"] = after["High"].iloc[:k + 1].max() / entry - 1
         else:
             rec["status"] = "open" if n < 10 else "done10"

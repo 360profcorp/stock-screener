@@ -1,0 +1,40 @@
+name: Journal gap-through-stop fix (branch only)
+
+# Tests + before/after recomputation on one frozen price set. No schedule, no state writes.
+on:
+  push:
+    branches: [fix/journal-gap-stop]
+    paths: ["core.py", "test_journal_gap.py", "research/journal_gap_fix/**",
+            ".github/workflows/journal-gap-fix.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/fix/journal-gap-stop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyarrow
+      - name: Tests (journal stops + existing suites + strategy fingerprint)
+        run: |
+          python -m unittest test_journal_gap test_paper test_task6_engine test_portfolio_bt test_audit_cycle -v
+          python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - name: Before / after on frozen prices
+        run: python -m research.journal_gap_fix.recompute
+      - name: Live state untouched
+        run: test -z "$(git status --porcelain paper/state paper/data state journal)" || { echo "::error::state changed"; exit 1; }
+      - name: Commit results
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/journal_gap_fix
+          git diff --cached --quiet || git commit -m "Journal gap fix: before/after on frozen prices"
+          git pull --rebase && git push
