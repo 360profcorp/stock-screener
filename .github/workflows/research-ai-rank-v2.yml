@@ -47,8 +47,22 @@ jobs:
           run-id: 38773034101
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: dataset
-      - name: Build v2 dataset (BUILD ONLY — no training)
-        run: python -m research.ai_rank.v2_build --dataset dataset
+      - name: Fetch the first v2 build (dataset + saved earnings_raw.json, run 39507927139)
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-rank-v2-dataset-39507927139
+          run-id: 39507927139
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: v2_first
+      - name: Rebuild v2 dataset on the same prices + saved earnings (BUILD ONLY — no training)
+        run: |
+          E=$(ls v2_first/*/earnings_raw.json)
+          python -m research.ai_rank.v2_build --dataset dataset --earnings-json "$E"
+      - name: Compare with the first build (rank_rs fix)
+        run: |
+          OLD=$(ls v2_first/*/dataset_v2.csv.gz); NEW=$(ls -t dist/ai_rank_v2/*/dataset_v2.csv.gz | head -1)
+          sha256sum "$(ls v2_first/*/earnings_raw.json)" "$OLD" "$NEW"
+          python -m research.ai_rank.v2_compare "$OLD" "$NEW" research/results/ai_rank/v2_build/rank_fix_compare_${{ github.run_id }}.json
       - name: Upload v2 dataset
         if: always()
         uses: actions/upload-artifact@v4

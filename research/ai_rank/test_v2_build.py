@@ -64,6 +64,39 @@ class TestV2Build(unittest.TestCase):
                                        log=lambda m: None)
         self.assertEqual((out["A"], failed), (["2026-01-05"], {}))
 
+    def test_retest_rank_ignores_other_strategies_and_matches_v1(self):
+        from research.ai_rank import pipeline as P
+        from research.ai_rank.test_ai_rank import TestAIRank
+        TestAIRank.setUpClass()
+        lab = TestAIRank.lab.copy()
+        lab["eligible_pit_primary"] = lab["eligible_primary"]
+        lab["rs_pit500"] = lab["rs_ref500"]
+        all_longs = B.add_rs_ranks(P.long_pool(lab, "pit500", tuple(P.LONGS)))
+        only_ret = B.add_rs_ranks(P.long_pool(lab, "pit500", ("retest",)))
+        key = ["ticker", "signal_date"]
+        a = all_longs[all_longs["strategy"] == "retest"].set_index(key)["rank_rs"].sort_index()
+        b = only_ret.set_index(key)["rank_rs"].sort_index()
+        self.assertGreater(len(a), 0)
+        self.assertGreater((all_longs["strategy"] != "retest").sum(), 0)   # others really present
+        pd.testing.assert_series_equal(a, b)                 # other setups do not move it
+        v1 = P.long_pool(lab, "pit500", ("retest",)).set_index(key)["rank_rs"].sort_index()
+        pd.testing.assert_series_equal(a, v1)                # identical to v1
+        r = all_longs.set_index(key + ["strategy"])
+        self.assertTrue(((r["rank_rs_all"] > 0) & (r["rank_rs_all"] <= 1)).all())
+        # the all-setups rank is a separate column and does depend on the other setups
+        days = all_longs.groupby("signal_date")["strategy"].nunique()
+        mixed = days[days > 1].index
+        if len(mixed):
+            m = all_longs[all_longs["signal_date"].isin(mixed)]
+            self.assertFalse(np.allclose(m["rank_rs"], m["rank_rs_all"]))
+
+    def test_rank_uses_all_eligible_before_target_filter(self):
+        pool = pd.DataFrame({"signal_date": ["d"] * 4, "strategy": "retest",
+                             "rs": [99., 95., 90., 86.],
+                             "trade_status": ["closed", "open", "closed", "closed"]})
+        r = B.add_rs_ranks(pool)
+        self.assertEqual(list(r["rank_rs"]), [1.0, 0.75, 0.5, 0.25])   # open trade still counted
+
     def test_sensitivity_feature_not_in_deciding_set(self):
         self.assertNotIn("earn_within_5", B.V2_FEATURES)
         self.assertEqual(B.SENSITIVITY_ONLY, ["earn_within_5"])

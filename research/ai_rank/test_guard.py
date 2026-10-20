@@ -31,13 +31,20 @@ class TestGuard(unittest.TestCase):
         self.assertEqual(live, FROZEN_FINGERPRINT)
         self.assertEqual(store.code_fingerprint()["combined"], live)
 
-    def test_fingerprinted_files_identical_to_main(self):
+    def test_branch_never_modifies_fingerprinted_files(self):
+        """This research branch must not touch the files the strategy fingerprint is built
+        from (relative to where it left main). main itself may change unrelated functions in
+        them (e.g. core.evaluate_journal, PR #10); the fingerprint test above still demands
+        the live fingerprint."""
         if git("rev-parse", "--verify", "origin/main").returncode != 0:
             if os.environ.get("REQUIRE_MAIN") == "1":
                 self.fail("origin/main not available")
             self.skipTest("origin/main not fetched")
+        base = git("merge-base", "HEAD", "origin/main").stdout.strip()
+        self.assertTrue(base)
         for f in FINGERPRINTED:
-            self.assertEqual(git("diff", "--quiet", "origin/main", "--", f).returncode, 0, f)
+            self.assertEqual(git("diff", "--quiet", base, "HEAD", "--", f).returncode, 0, f)
+            self.assertEqual(git("diff", "--quiet", "HEAD", "--", f).returncode, 0, f)
 
 
 if __name__ == "__main__":

@@ -9,8 +9,10 @@ new version number and a note on why.
   rs_history`, `core.market_regime/regime_mask`, `store.is_late/session_open_utc`). CI asserts
   that the fingerprint `17454c61f631` is unchanged: the `research-ai-rank-v2.yml` workflow and
   `research/ai_rank/test_guard.py` compare it against the constant and against main's
-  `paper/state/portfolio.json`. CI also checks that the fingerprinted files are byte-identical to
-  `origin/main` and that a run leaves `paper/state` and `paper/data` untouched.
+  `paper/state/portfolio.json`. CI also checks that this branch never modifies the
+  fingerprinted files (relative to its merge base with main; main itself may change unrelated
+  functions in them, e.g. `core.evaluate_journal` in PR #10) and that a run leaves
+  `paper/state` and `paper/data` untouched.
 - **Base data.** PR #5 dataset (artifact run 38773034101): sessions 2021-10-15 → 2026-10-14.
 - **Splits.** Purge by the label's true end: exit date, at least signal + 21 sessions
   (`engine.label_end`, `pipeline.splits_at`, commit a4ba326). Fixed boundaries:
@@ -109,3 +111,10 @@ Secondary (reported, never a decision basis): all four long setups.
 - **ChatGPT:** reviews code and PRs against this pre-registration (protocol deviations,
   look-ahead in code, reproducibility) before anything is merged or frozen.
 - **Owner:** decisions (gate passed or not, shadow start, anything touching the live bot).
+
+## Change log
+- v2.1 (2026-10-20, after the first build, before any training): **`rank_rs` corrected.** It
+  is the RS percentile among eligible signals of the **same strategy** on the same day (the
+  deciding retest task ranks retests only among retests, as in v1). The first build ranked
+  across all four long setups. The secondary all-setups experiment uses a separate
+  `rank_rs_all`. The guard wording was clarified as above. No other protocol change.

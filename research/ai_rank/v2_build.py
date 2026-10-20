@@ -54,6 +54,19 @@ def pit_timeline(dataset_dir, end):
 
 
 # =====================================================================
+# same-day RS ranks (computed on ALL eligible signals, before any closed/target filter)
+# =====================================================================
+def add_rs_ranks(pool: pd.DataFrame) -> pd.DataFrame:
+    """rank_rs: percentile of RS among eligible signals of the SAME strategy on the same day
+    (the deciding retest experiment ranks retests only among retests, as in v1).
+    rank_rs_all: percentile among all eligible long setups of the day (secondary experiment)."""
+    pool = pool.copy()
+    pool["rank_rs"] = pool.groupby(["signal_date", "strategy"])["rs"].rank(pct=True)
+    pool["rank_rs_all"] = pool.groupby("signal_date")["rs"].rank(pct=True)
+    return pool
+
+
+# =====================================================================
 # breadth and sector (cross-sectional, PIT members, causal)
 # =====================================================================
 def market_tables(frames, mask, sectors):
@@ -197,6 +210,7 @@ def build(dataset_dir, earnings_json=None, fetcher=None, log=print):
     br, st, score = market_tables(frames, mask, sectors)
     log(f"market tables: {len(br)} days, {st['sector'].nunique()} sectors")
     pool = P.long_pool(lab, "pit500", tuple(P.LONGS))
+    pool = add_rs_ranks(pool)
     pool["split"], pool["label_end"] = P.splits_at(pool, cal, v0, t0)
     pool["_pit_rebuilt"] = [bool(mask.at[d, t]) if t in mask.columns else False
                             for t, d in zip(pool["ticker"], pool["signal_date"])]
@@ -214,6 +228,12 @@ def build(dataset_dir, earnings_json=None, fetcher=None, log=print):
         earn, failed = fetch_earnings(tick, fetcher=fetcher, log=log)
     pool = pool.join(earnings_features(pool, earn, cal))
     checks = self_checks(pool, frames, mask, sectors, br)
+    v1 = P.long_pool(lab, "pit500", ("retest",)).set_index(["ticker", "signal_date"])["rank_rs"]
+    mine = pool[pool["strategy"] == "retest"].set_index(["ticker", "signal_date"])["rank_rs"]
+    checks["rank_rs_retest_vs_v1"] = dict(
+        rows=len(mine), same_index=bool(mine.sort_index().index.equals(v1.sort_index().index)),
+        mismatches=int((~np.isclose(mine.sort_index().values, v1.sort_index().values)).sum())
+        if len(mine) == len(v1) else -1)
     retest_dev = pool[(pool["strategy"] == "retest") & pool["split"].isin(["train", "validation"])]
     cov = float(retest_dev["sess_since_earn"].notna().mean()) if len(retest_dev) else 0.0
     feats = P.MODEL_FEATURES + V2_FEATURES
@@ -236,10 +256,13 @@ def build(dataset_dir, earnings_json=None, fetcher=None, log=print):
                      median_members=float(br["breadth_members"].median())),
         missing_share={f: round(float(pool[f].isna().mean()), 4) for f in feats + SENSITIVITY_ONLY},
         deciding_features=feats, sensitivity_only=SENSITIVITY_ONLY,
+        rank_features=dict(deciding_retest="rank_rs (same strategy, same day)",
+                           secondary_all_longs="rank_rs_all (all long setups, same day)"),
         self_checks=checks,
         stop_before_training="BUILD ONLY — no model trained (PREREG v2.1: Muse's data audit first)")
     keep = ["ticker", "signal_date", "strategy", "sector", "split", "label_end", "trade_status",
-            "exit_date", "entry_date", P.TARGET, "rs", "i"] + P.MODEL_FEATURES + V2_FEATURES + \
+            "exit_date", "entry_date", P.TARGET, "rs", "i", "rank_rs_all"] + P.MODEL_FEATURES + \
+        V2_FEATURES + \
         SENSITIVITY_ONLY + ["earn_last_date_used", "breadth_members", "sector_members"]
     return pool[keep], report, dict(dates=earn, failed=failed)
 
@@ -264,12 +287,13 @@ def main(argv=None):
     RUN.write_once(out / "build_report.json", json.dumps(rep, indent=2, default=str), {},
                    Path(a.out))
     md = ["# AI ranking v2 — data build (PREREG v2.1)", "",
-          "**Build only. No model was trained.** Next: Muse's data/feature/split audit.", "",
+          "**Build only. No model was trained.** Next: ChatGPT + Muse review.", "",
           "```json", json.dumps(rep, indent=1, default=str), "```", ""]
     RUN.write_once(out / "BUILD_REPORT.md", "\n".join(md), {}, Path(a.out))
     print(json.dumps({k: rep[k] for k in ("rows_retest", "splits_retest", "earnings",
                                           "self_checks")}, default=str))
     ok = (rep["self_checks"]["cut_at_signal_day_recompute"]["mismatches"] == 0 and
+          rep["self_checks"]["rank_rs_retest_vs_v1"]["mismatches"] == 0 and
           rep["self_checks"]["pit_membership_vs_pr5"]["mismatches"] == 0 and
           rep["self_checks"]["earnings_last_date_after_signal"] == 0)
     return 0 if ok else 2
