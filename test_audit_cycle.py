@@ -196,6 +196,23 @@ class TestTradeCycle(unittest.TestCase):
         trader.reconcile_dry(st, FakeBroker(fr), d(3), [])
         self.assertEqual(st["closed"][0]["exit_date"], d(2))
 
+    def test_missing_latest_bar_is_reported(self):
+        fr = {"AAA": frame(n=3)}                               # bars through d2 only
+        st, _ = self.open_position(fr)
+        ev = []
+        gaps = trader.reconcile_dry(st, FakeBroker(fr), d(3), ev)  # evening of d3, no d3 bar
+        self.assertEqual(gaps, ["AAA"])
+        self.assertTrue(any("Нет котировок" in e and "AAA" in e for e in ev))
+        self.assertEqual(st["positions"][0]["checked"], d(2))  # not marked as checked
+        fr["AAA"] = frame()
+        self.assertEqual(trader.reconcile_dry(st, FakeBroker(fr), d(3), []), [])
+        st2 = empty_state()
+        st2["runs"] = {"plan": {"at": f"{d(3)} 20:41", "result": "ok", "reason": "x",
+                                "quote_gaps": ["AAA"]}}
+        r = bot_status.no_trade_reasons(st2, "ru", d(3))
+        self.assertTrue(any("нет котировок" in x and "AAA" in x for x in r))
+        self.assertTrue(any("no quotes" in x for x in bot_status.no_trade_reasons(st2, "en", d(3))))
+
     def test_future_bars_are_never_used(self):
         fr = {"AAA": frame()}
         fr["AAA"].loc[DAYS[5], "Low"] = 80.                    # in the future at d2
