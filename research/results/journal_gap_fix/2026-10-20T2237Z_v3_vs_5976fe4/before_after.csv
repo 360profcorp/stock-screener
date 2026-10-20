@@ -1,0 +1,4 @@
+mode,signals_before,stopped_before,gap_stops_before,avg_now_pct_before,n_5d_before,avg_5d_pct_before,n_10d_before,avg_10d_pct_before,signals_after,stopped_after,gap_stops_after,avg_now_pct_after,n_5d_after,avg_5d_pct_after,n_10d_after,avg_10d_pct_after
+breakout,65,19,3,1.4751153904587961,41,1.8746292851793163,0,,65,19,3,1.4751153904587961,41,1.8746292851793163,0,
+retest,23,5,1,1.1398143206010525,17,0.4962784749655019,0,,23,5,1,1.1398143206010525,17,0.4962784749655019,0,
+vcp,11,8,3,-2.357109701434603,10,-2.9639500047882805,0,,11,8,3,-2.357109701434603,10,-2.9639500047882805,0,

@@ -1,0 +1,13 @@
+{
+  "run": "2026-10-20T2237Z_v3_vs_5976fe4",
+  "baseline": "5976fe4",
+  "git": "76d88a00152694cadaffa63c9f2695ff7522a972",
+  "prices_sha256": "9bbcddc1440b4a3c00b658f98b873334aeb199baaf0c5bf26e1b4cc25f6dcf7e",
+  "tickers": 80,
+  "last_bar": "2026-10-20",
+  "signals": 99,
+  "stop_days_identical": true,
+  "changed_signals": 0,
+  "max_up_changed": 4,
+  "insufficient_data": 0
+}

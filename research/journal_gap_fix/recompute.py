@@ -24,12 +24,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 import core  # noqa: E402
 
-BASELINE = "2895b9b"
+BASELINE = "2895b9b"            # default: main before the fix
 FOCUS = ["FAST", "BAX"]
 
 
-def baseline_eval():
-    src = subprocess.run(["git", "show", f"{BASELINE}:core.py"], cwd=ROOT, check=True,
+def baseline_eval(rev=BASELINE):
+    src = subprocess.run(["git", "show", f"{rev}:core.py"], cwd=ROOT, check=True,
                          capture_output=True, text=True).stdout
     p = Path(tempfile.mkdtemp()) / "core_baseline.py"
     p.write_text(src)
@@ -80,6 +80,7 @@ def main(argv=None):
     ap.add_argument("--prices")
     ap.add_argument("--out", default=str(ROOT / "research/results/journal_gap_fix"))
     ap.add_argument("--run")
+    ap.add_argument("--baseline", default=BASELINE)
     a = ap.parse_args(argv)
     run = a.run or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%MZ")
     out = Path(a.out) / run
@@ -96,7 +97,7 @@ def main(argv=None):
     raw = raw0 if raw0 is not None else long.to_csv(index=False).encode()
     (out / "prices_frozen.csv").write_bytes(raw)
     prices = unfreeze(pd.read_csv(out / "prices_frozen.csv"))
-    before = baseline_eval()(journal, prices)
+    before = baseline_eval(a.baseline)(journal, prices)
     after = core.evaluate_journal(journal, prices)
     key = ["date", "mode", "ticker"]
     assert len(before) == len(after) == len(journal), "signal count changed"
@@ -113,6 +114,13 @@ def main(argv=None):
         on=key, suffixes=("_before", "_after"))
     changed = m[np.any([~np.isclose(m[f"{c}_before"], m[f"{c}_after"], equal_nan=True)
                         for c in cols], axis=0)].copy()
+    mu = before[key + ["max_up"]].merge(after[key + ["max_up"] + (
+        ["insufficient_data"] if "insufficient_data" in after else [])], on=key,
+        suffixes=("_before", "_after"))
+    mu_changed = mu[~np.isclose(mu["max_up_before"], mu["max_up_after"], equal_nan=True)].copy()
+    mu_changed[["max_up_before", "max_up_after"]] *= 100
+    insufficient = int(after.get("insufficient_data", pd.Series(dtype=bool)).fillna(False)
+                       .astype(bool).sum())
     for c in cols:
         changed[f"{c}_before"] *= 100
         changed[f"{c}_after"] *= 100
@@ -126,11 +134,12 @@ def main(argv=None):
                   [f"{c}_{w}" for c in cols for w in ("before", "after")]]
     sb_, sa_ = summary(before), summary(after)
     tab = sb_.merge(sa_, on="mode", suffixes=("_before", "_after"))
-    info = dict(run=run, baseline=BASELINE, git=subprocess.run(
+    info = dict(run=run, baseline=a.baseline, git=subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip(),
                 prices_sha256=hashlib.sha256(raw).hexdigest(), tickers=int(long["ticker"].nunique()),
                 last_bar=str(pd.to_datetime(long["Date"]).max().date()), signals=len(journal),
-                stop_days_identical=bool(same_stops), changed_signals=len(changed))
+                stop_days_identical=bool(same_stops), changed_signals=len(changed),
+                max_up_changed=len(mu_changed), insufficient_data=insufficient)
     (out / "before_after.csv").write_text(tab.to_csv(index=False))
     (out / "changed_signals.csv").write_text(changed.to_csv(index=False))
     (out / "info.json").write_text(json.dumps(info, indent=2))
@@ -139,10 +148,12 @@ def main(argv=None):
            f"`{info['prices_sha256'][:16]}…` (`prices_frozen.csv`). Signals {info['signals']}; "
            f"stop days identical: **{info['stop_days_identical']}**; changed signals: "
            f"**{info['changed_signals']}**.", "",
-           "Before = `core.evaluate_journal` at " + BASELINE + " (exit always at the stop); "
-           "after = exit at the open when it gapped below the stop.", "",
+           "Before = `core.evaluate_journal` at `" + a.baseline + "`; after = current code. "
+           f"max_up changed: **{len(mu_changed)}**; insufficient-data stops: "
+           f"**{insufficient}**.", "",
            "## Per strategy", "", md(tab), "## Changed signals (returns in %)", "",
-           md(changed), "## FAST and BAX (returns in %)", "", md(focus), ""]
+           md(changed), "## max_up changes (%)", "", md(mu_changed),
+           "## FAST and BAX (returns in %)", "", md(focus), ""]
     (out / "REPORT.md").write_text("\n".join(rep))
     print("\n".join(rep))
     return 0

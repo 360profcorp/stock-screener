@@ -365,7 +365,10 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
     max run-up, and whether the stop was hit (low ≤ stop) after the signal day.
     Long exit on the FIRST stop day: at the open if it opened below the stop (gap through
     the stop), otherwise at the stop. That exit price is the result of ret_now and of every
-    horizon reached on or after the stop day; later recoveries are ignored.
+    horizon reached on or after the stop day; later recoveries are ignored. After a gap
+    exit the exit day's High is excluded from max_up (it came after the exit). If the stop
+    day's Open is missing or outside its own Low..High, no exit price is asserted: the
+    result fields reaching that day stay empty and insufficient_data=True.
     """
     rows = []
     for _, s in journal.iterrows():
@@ -390,18 +393,27 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
         stop = float(s["stop"])
         hit = after["Low"].values <= stop
         k = int(np.argmax(hit)) if hit.any() else None
-        exit_px = stop
+        exit_px, gap, bad_open = stop, False, False
         if k is not None:
-            o = float(after["Open"].iloc[k])
-            if o < stop:                                  # gapped through the stop
-                exit_px = o
+            bar = after.iloc[k]
+            o = float(bar["Open"]) if pd.notna(bar["Open"]) else np.nan
+            # a usable open lies inside the bar's own range; otherwise we cannot tell whether
+            # the stop was gapped through, so no exit price is asserted
+            bad_open = not (np.isfinite(o) and o > 0 and
+                            float(bar["Low"]) * (1 - 1e-9) <= o <= float(bar["High"]) * (1 + 1e-9))
+            if bad_open:
+                exit_px = np.nan
+            elif o < stop:                                # gapped through the stop
+                exit_px, gap = o, True
             rec["exit_price"] = exit_px
-            rec["gap_through_stop"] = bool(o < stop)
+            rec["gap_through_stop"] = gap if not bad_open else np.nan
+            rec["insufficient_data"] = bad_open
         stop_ret = exit_px / entry - 1
 
         def ret_at(day):
             # result after `day` trading days — only once that many days have passed;
             # if the stop was hit on or before that day, the trade was closed at exit_px
+            # (NaN when the stop day's open is missing or invalid)
             if n < day:
                 return np.nan
             return stop_ret if (k is not None and k < day) else c[day - 1] / entry - 1
@@ -411,7 +423,14 @@ def evaluate_journal(journal: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFram
             rec["status"] = "stopped"
             rec["stop_day"] = k + 1
             rec["ret_now"] = stop_ret                     # closed trade: result is the exit
-            rec["max_up"] = after["High"].iloc[:k + 1].max() / entry - 1
+            if bad_open:
+                rec["max_up"] = (after["High"].iloc[:k].max() / entry - 1) if k else np.nan
+            elif gap:
+                # exited at the open: the exit day's high came AFTER the exit
+                prior = after["High"].iloc[:k].max() if k else -np.inf
+                rec["max_up"] = max(prior, exit_px) / entry - 1
+            else:
+                rec["max_up"] = after["High"].iloc[:k + 1].max() / entry - 1
         else:
             rec["status"] = "open" if n < 10 else "done10"
         rows.append(rec)
