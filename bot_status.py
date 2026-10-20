@@ -31,6 +31,7 @@ L = {
         "r_error": "ошибка запуска «{c}»: {why}",
         "r_skip": "запуск «{c}» пропущен: {why}",
         "r_none": "причины не записаны",
+        "r_gaps": "⚠️ нет котировок для проверки позиций: {t} (вечерний запуск {at})",
         "reasons": "Почему нет новых сделок",
     },
     "en": {
@@ -54,6 +55,7 @@ L = {
         "r_error": "run '{c}' failed: {why}",
         "r_skip": "run '{c}' skipped: {why}",
         "r_none": "no reasons recorded",
+        "r_gaps": "⚠️ no quotes to check positions: {t} (evening run {at})",
         "reasons": "Why there are no new trades",
     },
 }
@@ -95,6 +97,9 @@ def no_trade_reasons(state: dict, lang: str, today: str, max_positions: int = 5,
     for c, r in runs.items():
         if r.get("result") == "error":
             out.append(X["r_error"].format(c=X["cmd"].get(c, c), why=r.get("reason")))
+    pr = runs.get("plan") or {}
+    if pr.get("quote_gaps"):
+        out.append(X["r_gaps"].format(t=", ".join(pr["quote_gaps"]), at=pr.get("at")))
     plan = state.get("plan") or {}
     status = plan.get("status")
     if plan and status == "new" and plan.get("for") and plan["for"] <= today and \

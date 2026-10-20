@@ -288,6 +288,7 @@ def reconcile_dry(state, broker, today, events):
         check_entry_day_stop(state, broker, p, events)
 
     # 3. open positions: time exits sold at today's open, stops from daily lows
+    gaps = []                            # positions whose latest session bar is missing
     for p in [p for p in state["positions"] if is_dry(p)]:
         upto = today
         if p.get("exiting"):             # sold at the open of the exit day: stops before it first
@@ -305,6 +306,10 @@ def reconcile_dry(state, broker, today, events):
             else:
                 if len(bars):
                     p["checked"] = bars.index[-1].strftime("%Y-%m-%d")
+        if not stopped:
+            need = upto if p.get("exiting") else last_session(today)
+            if need > p.get("checked", p["entry_date"]):     # bars for `need` not received
+                gaps.append(p["ticker"])
         if stopped or not p.get("exiting"):
             continue
         b = broker.bar(p["ticker"], p["exiting"])
@@ -315,6 +320,15 @@ def reconcile_dry(state, broker, today, events):
         rec = close_position(state, p, float(b["Open"]), "time", p["exiting"])
         events.append(f"⏱ {p['ticker']}: продано через {HOLD_DAYS} дн. ~{rec['exit']} "
                       f"({r_txt(rec)})")
+    if gaps:
+        events.append(f"⚠️ Нет котировок за {last_session(today)} для проверки позиций: "
+                      f"{', '.join(gaps)} — стопы проверятся при следующем запуске")
+    return gaps
+
+
+def last_session(day) -> str:
+    """Latest NYSE session on or before `day`."""
+    return str(np.busday_offset(str(day)[:10], 0, roll="backward", holidays=HOLIDAYS))
 
 
 def check_entry_day_stop(state, broker, p, events):
@@ -425,11 +439,12 @@ def cmd_plan():
     events = []
 
     # ---- 1. what happened today
+    gaps = []
     if MODE == "dry":
         tick = [o["ticker"] for o in state["orders"] if is_dry(o)] + \
                [p["ticker"] for p in state["positions"] if is_dry(p)]
         if tick:
-            reconcile_dry(state, DryBroker(tick), today, events)
+            gaps = reconcile_dry(state, DryBroker(tick), today, events)
     elif MODE in ("manual", "auto") and (refresh_age_days(state.get("token")) or 99) < 7:
         try:
             reconcile_live(state, Schwab(APP_KEY, APP_SECRET, state["token"], ACCOUNT),
@@ -450,11 +465,14 @@ def cmd_plan():
                      f"items {[i['ticker'] for i in plan['items']] if fresh else '—'}")
     sig_day = str(signals["date"].astype(str).max()) if signals is not None and len(signals) \
         else None
-    record_run(state, "plan", "ok",
-               "" if fresh else f"автоскан не записал сигналов за {today} "
-                                f"(последние сигналы: {sig_day or 'нет'})",
+    why = [] if fresh else [f"автоскан не записал сигналов за {today} "
+                            f"(последние сигналы: {sig_day or 'нет'})"]
+    if gaps:
+        why.append(f"нет котировок за {last_session(today)} для проверки позиций: "
+                   f"{', '.join(gaps)}")
+    record_run(state, "plan", "ok", "; ".join(why),
                data_date=sig_day, events=len(events),
-               plan_items=len(plan["items"]) if fresh else 0)
+               plan_items=len(plan["items"]) if fresh else 0, quote_gaps=gaps)
     vault.save_file(STATE_FILE, state, PASSWORD)
 
     # ---- 3. push
