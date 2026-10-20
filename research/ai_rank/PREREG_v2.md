@@ -79,7 +79,9 @@ Secondary (reported, never a decision basis): all four long setups.
   - The test is evaluated exactly once, at the pre-agreed date.
 
 ## 6. Roles
-- **Claude:** builds the dataset and features, and **stops before training** for the audit.
-- **Muse:** audits the features and splits before training, then gives an independent evaluation
-  against RS-first and the random baseline.
-- **Owner:** decisions.
+- **Claude:** builds the dataset, features and runs; **stops before training** for the audit.
+- **Muse:** audits the data, features and splits before training; independent statistical
+  evaluation afterwards (against RS-first and random orders, test once).
+- **ChatGPT:** reviews code and PRs against this pre-registration (protocol deviations,
+  look-ahead in code, reproducibility) before anything is merged or frozen.
+- **Owner:** decisions (gate passed or not, shadow start, anything touching the live bot).
