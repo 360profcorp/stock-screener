@@ -1,0 +1,15 @@
+{
+  "run_id": "2026-10-21T0116Z",
+  "git": "c7c73dcd794b3b70a1376d826584eef73701fd8b",
+  "files": {
+    "2026-10-21T0116Z/results.json": "cbf313bd7b4d8af0bb9692eaf8079fe1eb4b90892293d9b9bb8f4d7df8d55671",
+    "2026-10-21T0116Z/experiment_B_trades.csv": "7296461f5718ae4a6e74aa1302490d0339653574ba9f7438b78cf26744a2b9ab",
+    "2026-10-21T0116Z/experiment_A_trades.csv": "764120a099d24e0bd82dbe96a0a22aea7c182d4b0c0607a04503dc9178ee1db4",
+    "2026-10-21T0116Z/flag_detections.csv": "a12e4817ca76bc408c1ed0ff8f1fc543b4d1d074967192fbf1817f03bce0d0ed",
+    "2026-10-21T0116Z/REPORT.md": "36ab10c1ceeae19ef96e13866cb5f0879c7a6fd2c6cb24134b31d9a1eb311620"
+  },
+  "dataset": {
+    "signals.csv.gz": "98b6f81623ea3f20e5e5adc313891762c1a4e3ff0970f907fe7f17081a241cf3",
+    "bars.pkl.gz": "3df57ff951cf7f580ffbc088be003dfcdb872fabd66000e74b508cd73f69283e"
+  }
+}
