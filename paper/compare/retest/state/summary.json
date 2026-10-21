@@ -1,44 +1,44 @@
 {
- "updated": "2026-10-21T02:00:44+00:00",
+ "updated": "2026-10-21T22:30:34+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 1,
- "processed_through": "2026-10-20",
- "cash": 10000.0,
- "open_positions": 0,
- "pending_orders": 20,
+ "revision": 2,
+ "processed_through": "2026-10-21",
+ "cash": 5884.248253692627,
+ "open_positions": 3,
+ "pending_orders": 8,
  "forward": {
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-10-20",
+   "genuine_through": "2026-10-21",
    "reason": null,
    "metrics": {
-    "days": 1,
-    "final_equity": 10000.0,
-    "return_pct": 0.0,
+    "days": 2,
+    "final_equity": 9994.788292755127,
+    "return_pct": -0.05211707244873187,
     "cagr_pct": NaN,
-    "max_drawdown_pct": 0.0,
-    "current_drawdown_pct": 0.0,
-    "exposure_pct": 0.0,
-    "spy_price_return_pct": 0.0,
-    "excess_vs_spy_price_pct": 0.0
+    "max_drawdown_pct": -0.05211707244873187,
+    "current_drawdown_pct": -0.05211707244873187,
+    "exposure_pct": 50.0,
+    "spy_price_return_pct": 0.5253285386680906,
+    "excess_vs_spy_price_pct": -0.5774456111168225
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 1,
-    "final_equity": 10000.0,
-    "return_pct": 0.0,
+    "days": 2,
+    "final_equity": 9994.788292755127,
+    "return_pct": -0.05211707244873187,
     "cagr_pct": NaN,
-    "max_drawdown_pct": 0.0,
-    "current_drawdown_pct": 0.0,
-    "exposure_pct": 0.0,
-    "spy_price_return_pct": 0.0,
-    "excess_vs_spy_price_pct": 0.0
+    "max_drawdown_pct": -0.05211707244873187,
+    "current_drawdown_pct": -0.05211707244873187,
+    "exposure_pct": 50.0,
+    "spy_price_return_pct": 0.5253285386680906,
+    "excess_vs_spy_price_pct": -0.5774456111168225
    }
   },
   "timely": {
@@ -50,7 +50,7 @@
     "expectancy_usd": null,
     "total_pnl_usd": 0.0
    },
-   "open_positions": 0,
+   "open_positions": 3,
    "note": "trade-level statistics, not a counterfactual portfolio return"
   },
   "reconstructed": {
