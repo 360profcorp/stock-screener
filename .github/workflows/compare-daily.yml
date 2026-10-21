@@ -2,11 +2,10 @@ name: Paper comparison (Breakout RS-first vs Retest RS-first)
 
 # Paper trading only: no broker, no orders. Two NEW books in paper/compare/. The original
 # Retest paper book (paper/state, paper/data, paper-daily.yml) is never written by this job.
-# Schedule: NOT active until the owner's activation after CI, the real-data equivalence check
-# and Muse's review (the cron line below is commented out until then).
+# Activated 2026-10-21 after CI, the real-data equivalence check and Muse's review (PR #14).
 on:
-  # schedule:
-  #   - cron: "5 22 * * 1-5"    # ~6:05 PM New York (summer) / 5:05 PM (winter), after the close
+  schedule:
+    - cron: "5 22 * * 1-5"      # 22:05 UTC: 6:05 PM New York in summer, 5:05 PM in winter
   workflow_dispatch:
 
 permissions:
