@@ -190,23 +190,25 @@ def load_state():
 
 
 def schwab_or_none(state):
-    """Live broker, or None when the weekly login has expired or Schwab revoked it early.
-    None blocks new entries only: nothing is cancelled, so stops already at Schwab stay.
-    The owner is notified once per login (shared with the expiry monitor)."""
+    """Live broker, or None when the weekly login has expired or Schwab refused it (login
+    refused early, or app credentials refused). None blocks new entries only: nothing is
+    cancelled, so stops already at Schwab stay. The owner is notified once per login, and the
+    notice is recorded only after ntfy confirmed it (shared with the login monitor)."""
     tok = state.get("token")
     s = schwab_auth.status(tok)
+    if s["state"] == "none":
+        print("Schwab is not connected")
+        return None
     auth = state.get("schwab_auth") or {}
-    login = str(int(float(tok["refresh_created"]))) if s["state"] != "none" else None
-    revoked = bool(auth.get("revoked")) and auth.get("login") == login
-    if s["state"] in ("none", "expired") or revoked:
-        name = "revoked" if revoked and s["state"] != "expired" else "expired"
+    blocked = auth.get("blocked") if auth.get("login") == schwab_auth.login_key(tok) else None
+    if s["state"] == "expired" or blocked:
+        name = "expired" if s["state"] == "expired" else schwab_auth.REFRESH_NOTICE[blocked]
         sent = state.setdefault("schwab_notices", {})
-        if login and name not in sent.setdefault(login, []):
-            sent[login].append(name)
+        if name not in sent.get(schwab_auth.login_key(tok), []):
             title, text = schwab_auth.TEXT[name]
-            push(title, text, tags="warning")
-        elif not login:
-            print("Schwab is not connected")
+            print(f"[push] {title}")
+            if schwab_auth.send_ntfy(TOPIC, title, text, requests):
+                schwab_auth.mark_sent(tok, sent, name)
         return None
     return Schwab(APP_KEY, APP_SECRET, tok, ACCOUNT)
 

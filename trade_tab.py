@@ -53,9 +53,14 @@ TX = {
         "expires": "Вход действует до {t} (Нью-Йорк), осталось {h:.0f} ч.",
         "expired": "⛔ Вход в Schwab истёк — новые входы бота заблокированы, стопы у Schwab "
                    "остаются. Продли подключение.",
+        "client": "⛔ Schwab не принял ключи приложения (invalid_client) — проверь SCHWAB_APP_KEY / "
+                  "SCHWAB_APP_SECRET в GitHub Secrets и статус приложения в Schwab; если верно — "
+                  "войди заново. Новые входы заблокированы, стопы у Schwab остаются.",
         "revoked": "⛔ Schwab отклонил вход досрочно — новые входы заблокированы, стопы у Schwab "
                    "остаются. Войди заново.",
         "manual_way": "Запасной способ (вставить адрес вручную)",
+        "manual_warn": "Работает, только если https://127.0.0.1 по-прежнему зарегистрирован как "
+                       "callback в Schwab Developer Portal.",
         "plan": "План на утро (покупка на открытии)", "plan_none": "Плана нет.",
         "plan_note": "VCP и ретест покупаются на открытии следующего дня. Пробои бот покупает "
                      "сам в тот же день около 15:30, если пробой держится.",
@@ -125,9 +130,14 @@ TX = {
         "expires": "Login valid until {t} (New York), {h:.0f} h left.",
         "expired": "⛔ The Schwab login has expired — the bot's new entries are blocked, stops at "
                    "Schwab stay. Renew the connection.",
+        "client": "⛔ Schwab refused the app credentials (invalid_client) — check SCHWAB_APP_KEY / "
+                  "SCHWAB_APP_SECRET in GitHub Secrets and the app status at Schwab; if they are "
+                  "right, log in again. New entries are blocked, stops at Schwab stay.",
         "revoked": "⛔ Schwab refused the login early — new entries are blocked, stops at Schwab "
                    "stay. Log in again.",
         "manual_way": "Fallback (paste the address manually)",
+        "manual_warn": "Works only while https://127.0.0.1 is still registered as a callback in "
+                       "the Schwab Developer Portal.",
         "plan": "Morning plan (buy at the open)", "plan_none": "No plan.",
         "plan_note": "VCP and retest are bought at the next open. Breakouts are bought by the "
                      "bot the same day around 3:30 PM if the breakout holds.",
@@ -296,7 +306,7 @@ def handle_schwab_return(X, password, http=None):
         import requests
         store = vault.GitHubStore(password, _secret("GH_TOKEN") or None)
         res = schwab_auth.handle_callback(
-            params, _pending_states(),
+            params, _browser_cookie(), _pending_states(),
             lambda code: schwab_auth.exchange(key, secret, code, cb, http or requests),
             lambda token: save_token(store, token))
     if res["ok"]:
@@ -305,7 +315,25 @@ def handle_schwab_return(X, password, http=None):
     elif res["ok"] is False:
         st.error(X["renew_fail"].format(r=res["reason"]))
     st.session_state["sch_last_result"] = {k: res[k] for k in ("ok", "step", "reason")}
+    _set_browser_cookie("", 0)                     # the browser secret is single use too
     return res
+
+
+def _browser_cookie():
+    try:
+        return st.context.cookies.get(schwab_auth.BROWSER_COOKIE) or ""
+    except Exception:
+        return ""
+
+
+def _set_browser_cookie(value, max_age):
+    """Short-lived, HTTPS-only cookie on the app's own site. SameSite=Lax: it is sent when
+    Schwab redirects the browser back (a top-level GET), never on cross-site subrequests."""
+    import streamlit.components.v1 as components
+    c = (f"{schwab_auth.BROWSER_COOKIE}={value}; Max-Age={int(max_age)}; Path=/; Secure; "
+         "SameSite=Lax")
+    components.html("<script>try{window.parent.document.cookie=%r}catch(e){}"
+                    "try{document.cookie=%r}catch(e){}</script>" % (c, c), height=0)
 
 
 def _secret(name):
@@ -370,8 +398,10 @@ def render(T, lang, get_prices):
             st.write(X["sch_none"])
         elif S["state"] == "expired":
             st.error(X["expired"])
-        elif auth.get("revoked") and auth.get("login") == login:
+        elif auth.get("login") == login and auth.get("blocked") == "token_refused":
             st.error(X["revoked"])
+        elif auth.get("login") == login and auth.get("blocked") == "client_or_token":
+            st.error(X["client"])
         elif 7 - age < 1.5:
             st.warning(X["sch_soon"].format(d=max(0, 7 - age)))
         else:
@@ -386,13 +416,19 @@ def render(T, lang, get_prices):
             st.caption(X["renew_no_cb"])
         else:
             if st.button(X["renew"], type="primary", use_container_width=True):
+                b = schwab_auth.new_browser_secret()          # binds the login to this browser
+                st.session_state["sch_browser"] = b
                 st.session_state["sch_login_url"] = schwab_auth.login_url(
-                    key, cb, _pending_states().issue())
+                    key, cb, _pending_states().issue(b))
+            if st.session_state.get("sch_browser"):
+                _set_browser_cookie(st.session_state["sch_browser"], schwab_auth.STATE_TTL)
             if st.session_state.get("sch_login_url"):
                 st.link_button(X["renew_go"], st.session_state["sch_login_url"],
                                use_container_width=True)
                 st.caption(X["renew_help"])
         if key and secret and st.toggle(X["manual_way"], key="sch_manual", value=not cb):
+            if cb:
+                st.caption(X["manual_warn"])
             st.markdown(X["sch_steps"])
             st.link_button(X["sch_link"], auth_url(key), use_container_width=True)
             url = st.text_input(X["sch_paste"], key="sch_url")
