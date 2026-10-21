@@ -40,7 +40,21 @@ jobs:
       - name: Historical run
         run: python -m research.bull_flag.run --dataset "${{ runner.temp }}/pr5"
       - name: Live state untouched
-        run: git status --porcelain -- paper state trader.py core.py | tee /dev/stderr | (! grep .)
+        run: |
+          # tracked files unchanged, and no new files apart from Python bytecode caches
+          git diff --exit-code HEAD -- paper state trader.py core.py
+          left=$(git status --porcelain --untracked-files=all -- paper state trader.py core.py | grep -v '__pycache__/' || true)
+          echo "$left"; test -z "$left"
+      - name: Reproducible (identical to every earlier run, apart from run id and git rev)
+        run: |
+          python - <<'PY'
+          import json, glob
+          rs = sorted(glob.glob("research/results/bull_flag/runs/*/results.json"))
+          base = json.load(open(rs[0]))
+          for r in rs[1:]:
+              assert json.load(open(r)) == base, r
+          print(len(rs), "runs identical")
+          PY
       - name: Commit results
         if: always()
         run: |
