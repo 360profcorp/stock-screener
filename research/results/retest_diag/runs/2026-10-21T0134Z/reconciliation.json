@@ -1,0 +1,12 @@
+{
+ "final_equity": 16835.31041569988,
+ "initial": 10000.0,
+ "total_pnl": 6835.310415699882,
+ "closed_net_pnl": 6511.802544667164,
+ "closed_trades": 261,
+ "open_positions": 4,
+ "open_mark_pnl_in_equity": 323.50787103271534,
+ "open_exit_fee_not_charged": 6.211610000610351,
+ "difference": 2.6147972675971687e-12,
+ "reconciled_to_the_cent": true
+}
