@@ -1,0 +1,27 @@
+name: Research bull flag v1 (research branch only)
+
+# Step 1 of PREREG_BULLFLAG_v1: rules, detector and synthetic tests only. No market data is
+# downloaded, no signal counts or returns are computed until the pre-registration is reviewed.
+on:
+  push:
+    branches: [research/bull-flag-v1]
+    paths: ["research/bull_flag/**", ".github/workflows/research-bull-flag.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    if: github.ref == 'refs/heads/research/bull-flag-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests
+      - name: Synthetic tests
+        run: python -m unittest research.bull_flag.test_bull_flag -v
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
