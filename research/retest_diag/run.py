@@ -313,4 +313,9 @@ def report(r, cuts, skip_tbl):
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except Exception:                 # surface the traceback as an annotation (logs not reachable)
+        import traceback
+        print("::error::" + traceback.format_exc().replace("%", "%25").replace("\n", "%0A"))
+        raise
