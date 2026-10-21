@@ -6,11 +6,11 @@ on:
   push:
     branches: [main, fix/trade-tab-duplicate-columns, fix/paper-cycle-audit]
     paths: ["app.py", "trade_tab.py", "paper_tab.py", "bot_status.py", "trader.py", "vault.py",
-            "paper_run.py", "scripts/**", "test_*.py", ".github/workflows/ui-tests.yml"]
+            "paper_run.py", "compare_run.py", "paper/**.py", "scripts/**", "test_*.py", ".github/workflows/ui-tests.yml"]
   pull_request:
     branches: [main]
     paths: ["app.py", "trade_tab.py", "paper_tab.py", "bot_status.py", "trader.py", "vault.py",
-            "paper_run.py", "scripts/**", "test_*.py", ".github/workflows/**"]
+            "paper_run.py", "compare_run.py", "paper/**.py", "scripts/**", "test_*.py", ".github/workflows/**"]
 
 permissions:
   contents: read
@@ -45,7 +45,7 @@ jobs:
       - name: Execution rules unchanged vs the pre-audit bot (randomized differential test)
         run: python -m unittest test_trader_equivalence -v
       - name: Existing test suites
-        run: python -m unittest test_paper test_task6_engine test_portfolio_bt
+        run: python -m unittest test_paper test_task6_engine test_portfolio_bt test_compare
       - name: Strategy fingerprint unchanged (forward experiment can continue)
         run: |
           python - <<'PY'

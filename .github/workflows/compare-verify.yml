@@ -1,0 +1,54 @@
+name: Paper comparison verification
+
+# Unit tests + real-data equivalence of both comparison books with the replay engine.
+# Places no orders and writes no paper state (only research/results/compare).
+on:
+  push:
+    branches: [feature/paper-compare-breakout]
+    paths: ["paper/**.py", "compare_run.py", "paper_run.py", "backtest.py", "portfolio_bt.py",
+            "test_compare.py", "test_paper.py", ".github/workflows/compare-*.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: compare-verify
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Task 10 fingerprint unchanged (original paper book can continue)
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - name: Unit tests
+        run: |
+          set +e
+          python -m unittest test_compare test_paper test_task6_engine test_portfolio_bt -v > t.log 2>&1; rc=$?
+          tail -40 t.log
+          [ $rc -eq 0 ] || python -c "t=open('t.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=tests::'+t)"
+          exit $rc
+      - name: Real-data equivalence (both books vs replay engine)
+        run: |
+          set +e
+          python compare_run.py verify > v.log 2>&1; rc=$?
+          cat v.log
+          [ $rc -eq 0 ] || python -c "t=open('v.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=verify::'+t)"
+          exit $rc
+      - name: No paper state written
+        run: git diff --exit-code HEAD -- paper/state paper/data && test ! -e paper/compare
+      - name: Commit verification report
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/compare || true
+          git diff --cached --quiet || git commit -m "Paper comparison: real-data verification $(date -u +%F_%H%M)"
+          git pull --rebase && git push
