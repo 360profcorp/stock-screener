@@ -242,6 +242,11 @@ class Pilot:
                 p["protected"] = True
                 continue
             p["protected"] = False
+            held = float((self.snap["positions"].get(p["ticker"]) or {}).get("qty", 0))
+            if held < p["qty"]:          # shares gone outside the pilot: never place a stop that
+                self._block(f"{p['ticker']}: broker holds {held:g} < pilot {p['qty']} and no "
+                            "live stop — owner must check (no stop placed)")   # could go short
+                continue
             if st is not None and st["status"] in LIVE_STATUSES:   # wrong quantity: replace
                 try:
                     self.b.cancel(st["id"])
@@ -290,6 +295,12 @@ class Pilot:
 
     def progress_exits(self, out):
         for p in [p for p in self.s["positions"] if p["status"] == "closing"]:
+            if not p.get("exit_order_id"):          # a sell matched after an unknown result
+                sold = [i for i in self.s["intents"] if i["side"] == "SELL"
+                        and i.get("position") == p["id"] and i.get("order_id")
+                        and i["status"] == "working"]
+                if sold:
+                    p["exit_order_id"] = sold[-1]["order_id"]
             if p.get("exit_order_id"):
                 o = self._order(p["exit_order_id"])
                 if o["status"] == "FILLED":
@@ -300,7 +311,7 @@ class Pilot:
                     self._alert("Pilot: exit failed", f"{p['ticker']}: {o['status']} — stop re-placed")
                     self.ensure_protection(out)
                 continue
-            if any(i["side"] == "SELL" and i["position"] == p["id"] and i["status"] in
+            if any(i["side"] == "SELL" and i.get("position") == p["id"] and i["status"] in
                    ("submitting", "unknown", "ambiguous", "not_found") for i in self.s["intents"]):
                 continue                                       # sell result unknown: never resend
             st = self._order(p["stop_order_id"]) if p["stop_order_id"] else None

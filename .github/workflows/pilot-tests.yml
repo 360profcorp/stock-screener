@@ -1,0 +1,30 @@
+name: Schwab pilot tests (no network, no orders)
+
+on:
+  push:
+    branches: [feature/schwab-pilot]
+    paths: ["pilot/**.py", "test_pilot.py", "schwab_api.py", ".github/workflows/pilot-tests.yml"]
+  pull_request:
+    paths: ["pilot/**.py", "test_pilot.py", "schwab_api.py"]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests cryptography
+      - name: Pilot engine on scripted broker answers
+        run: python -m unittest test_pilot -v
+      - name: Existing bot suites unchanged
+        run: python -m unittest test_audit_cycle test_trader_equivalence
+      - name: Nothing enables live trading
+        run: |
+          ! grep -RnE 'TRADING: *"(manual|auto)"' .github/workflows/
+          ! grep -Rn "PILOT_LIVE" .github/workflows/ --include=*.yml | grep -v pilot-tests.yml
