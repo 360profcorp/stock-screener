@@ -1,0 +1,338 @@
+{
+ "plan": "research/retest_diag/PLAN.md",
+ "dataset_sha256": {
+  "signals.csv.gz": "98b6f81623ea3f20e5e5adc313891762c1a4e3ff0970f907fe7f17081a241cf3",
+  "bars.pkl.gz": "3df57ff951cf7f580ffbc088be003dfcdb872fabd66000e74b508cd73f69283e"
+ },
+ "data_end": "2026-10-14",
+ "window": [
+  "2022-10-27",
+  "2026-10-14"
+ ],
+ "git": "298169eea520809679dbdc59029043c9ba3b5a3a",
+ "reproduction": {
+  "ok": true,
+  "checks": {
+   "return_pct": {
+    "saved": 68.35310415699882,
+    "now": 68.35310415699882,
+    "equal": true
+   },
+   "max_dd_pct": {
+    "saved": -19.20456303303514,
+    "now": -19.20456303303514,
+    "equal": true
+   },
+   "executed": {
+    "saved": 265,
+    "now": 265,
+    "equal": true
+   },
+   "closed": {
+    "saved": 261,
+    "now": 261,
+    "equal": true
+   },
+   "expectancy_r": {
+    "saved": 0.22771964261522995,
+    "now": 0.22771964261522995,
+    "equal": true
+   }
+  }
+ },
+ "portfolio": {
+  "return_pct": 68.35310415699882,
+  "cagr_pct": 14.041528575651107,
+  "max_dd_pct": -19.20456303303514,
+  "executed": 265,
+  "closed": 261,
+  "open_end": 4,
+  "expectancy_r": 0.22771964261522995,
+  "median_r": -0.17988382648186751,
+  "profit_factor": 1.456699576675837,
+  "win_rate": 47.509578544061306,
+  "final_equity": 16835.31041569988,
+  "yearly_return_pct": {
+   "2022": -10.11,
+   "2023": 2.6,
+   "2024": 15.43,
+   "2025": 20.71,
+   "2026": 31.0
+  }
+ },
+ "layers": {
+  "signals_eligible": 7060,
+  "signals_nonoverlap_closed": 2183,
+  "signal_level": {
+   "trades": 2183,
+   "win_rate": 41.8231791113147,
+   "mean_r": 0.08104509807960399,
+   "median_r": -0.3781757619931913,
+   "mean_r_ex_top5": 0.05110097135143462,
+   "profit_factor": 1.1527444201763857,
+   "stopped_pct": 45.0755840586349,
+   "avg_bars": 14.587265231333028,
+   "se_mean_r": 0.033593190702895875
+  },
+  "portfolio_candidates": 7024,
+  "executed": 265,
+  "skipped_orders": 6759,
+  "skipped_by_reason": [
+   {
+    "outcome": "capital_or_risk",
+    "orders": 6,
+    "closed": 5,
+    "mean_r_if_taken": 0.33859101615179515,
+    "median_r_if_taken": -0.1285558021032464
+   },
+   {
+    "outcome": "daily_entries",
+    "orders": 62,
+    "closed": 62,
+    "mean_r_if_taken": 0.46213512115585254,
+    "median_r_if_taken": 0.09629992245440935
+   },
+   {
+    "outcome": "positions",
+    "orders": 6078,
+    "closed": 5977,
+    "mean_r_if_taken": 0.007107252824400854,
+    "median_r_if_taken": -0.46771542138064987
+   },
+   {
+    "outcome": "ticker_open",
+    "orders": 613,
+    "closed": 604,
+    "mean_r_if_taken": 0.3068855540031707,
+    "median_r_if_taken": -0.018801201650156953
+   }
+  ],
+  "outside_window": 0
+ },
+ "reconciliation": {
+  "final_equity": 16835.31041569988,
+  "initial": 10000.0,
+  "total_pnl": 6835.310415699882,
+  "closed_net_pnl": 6511.802544667164,
+  "closed_trades": 261,
+  "open_positions": 4,
+  "open_mark_pnl_in_equity": 323.50787103271534,
+  "open_exit_fee_not_charged": 6.211610000610351,
+  "difference": 2.6147972675971687e-12,
+  "reconciled_to_the_cent": true
+ },
+ "concentration": {
+  "total_pnl": 6835.310415699882,
+  "closed_pnl": 6511.802544667164,
+  "top5_trades_usd": 3377.683233589173,
+  "top10_trades_usd": 5860.941893867495,
+  "top5_tickers": {
+   "STX": 1504.1,
+   "ALB": 808.09,
+   "PLTR": 744.1,
+   "TPR": 700.44,
+   "GLW": 654.91
+  },
+  "top5_tickers_usd": 4411.640663896106,
+  "worst5_tickers": {
+   "HII": -239.64,
+   "VST": -249.17,
+   "MPC": -352.48,
+   "NFLX": -367.77,
+   "PANW": -452.8
+  },
+  "pnl_by_exit_year": {
+   "2022": -1051.3,
+   "2023": -212.11,
+   "2024": 2089.55,
+   "2025": 2219.55,
+   "2026": 3466.12
+  },
+  "best_exit_year": 2026,
+  "best_exit_year_usd": 3466.115725658501,
+  "mean_r_all": 0.2277196426152301,
+  "mean_r_ex_top5": 0.10420053820478481,
+  "mean_r_ex_top10": 0.01998350805186635,
+  "top5_trades": [
+   {
+    "ticker": "PLTR",
+    "signal_date": "2024-10-17",
+    "net_pnl": 780.3580044937137,
+    "net_r": 8.060546182436212
+   },
+   {
+    "ticker": "TER",
+    "signal_date": "2025-12-26",
+    "net_pnl": 693.1963871459961,
+    "net_r": 7.652189510476968
+   },
+   {
+    "ticker": "STX",
+    "signal_date": "2025-09-02",
+    "net_pnl": 682.496401855469,
+    "net_r": 7.0182144779629985
+   },
+   {
+    "ticker": "ALB",
+    "signal_date": "2025-12-26",
+    "net_pnl": 628.495209716797,
+    "net_r": 4.8118356366059345
+   },
+   {
+    "ticker": "ILMN",
+    "signal_date": "2026-09-02",
+    "net_pnl": 593.1372303771973,
+    "net_r": 4.166810559353282
+   }
+  ],
+  "worst5_trades": [
+   {
+    "ticker": "MRNA",
+    "signal_date": "2026-07-09",
+    "net_pnl": -165.8683183819578,
+    "net_r": -1.0255648663955306
+   },
+   {
+    "ticker": "KKR",
+    "signal_date": "2024-07-18",
+    "net_pnl": -178.06234362030023,
+    "net_r": -1.9872472304720377
+   },
+   {
+    "ticker": "HII",
+    "signal_date": "2026-01-16",
+    "net_pnl": -209.18454656982408,
+    "net_r": -1.9402186346673889
+   },
+   {
+    "ticker": "DVA",
+    "signal_date": "2026-07-10",
+    "net_pnl": -285.38606109619104,
+    "net_r": -1.7964961820426089
+   },
+   {
+    "ticker": "PANW",
+    "signal_date": "2024-01-26",
+    "net_pnl": -337.0358401489257,
+    "net_r": -4.344061797282776
+   }
+  ],
+  "winners_usd": 19151.00445732118,
+  "losers_usd": -12639.201912654022,
+  "top5_trades_residual_usd": 3457.6271821107084,
+  "top10_trades_residual_usd": 974.3685218323863,
+  "top5_tickers_residual_usd": 2423.6697518037754,
+  "best_exit_year_residual_usd": 3369.1946900413805
+ },
+ "execution": {
+  "sessions": 994,
+  "share_sessions_with_position": 90.84507042253522,
+  "mean_slots_used": 3.995975855130785,
+  "share_sessions_all_5_used": 60.66398390342053,
+  "stops": 109,
+  "time_exits": 152,
+  "gap_through_stop_trades": 16,
+  "gap_pnl_usd": -2372.2735585174532,
+  "gap_extra_loss_vs_stop_usd": -813.035123634338,
+  "gap_mean_r": -1.5798115226537157,
+  "gap_worst_r": -4.344061797282776,
+  "signals_gap_through_stop": 144,
+  "signals_gap_mean_r": -1.3499456303670794,
+  "mean_bars_held": 15.080459770114942,
+  "candidates": 7024,
+  "entered": 265,
+  "outside_window": 0,
+  "skipped": {
+   "daily_entries": 62,
+   "positions": 6078,
+   "ticker_open": 613,
+   "capital_or_risk": 6
+  },
+  "cash_limited_entries": 0
+ },
+ "costs": {
+  "signal_level": {
+   "10bps": {
+    "trades": 2183,
+    "win_rate": 41.8231791113147,
+    "mean_r": 0.08104509807960399,
+    "median_r": -0.3781757619931913,
+    "mean_r_ex_top5": 0.05110097135143462,
+    "profit_factor": 1.1527444201763857,
+    "stopped_pct": 45.0755840586349,
+    "avg_bars": 14.587265231333028,
+    "se_mean_r": 0.033593190702895875
+   },
+   "25bps": {
+    "trades": 2183,
+    "win_rate": 41.13605130554283,
+    "mean_r": 0.02902550898726096,
+    "median_r": -0.4176950946737268,
+    "mean_r_ex_top5": -0.0008561150253293462,
+    "profit_factor": 1.0517541021154484,
+    "stopped_pct": 45.0755840586349,
+    "avg_bars": 14.587265231333028,
+    "se_mean_r": 0.03354672880896354
+   },
+   "50bps": {
+    "trades": 2183,
+    "win_rate": 39.80760421438387,
+    "mean_r": -0.057673806166644116,
+    "median_r": -0.4795633609951193,
+    "mean_r_ex_top5": -0.08745125898660241,
+    "profit_factor": 0.9057537487075821,
+    "stopped_pct": 45.0755840586349,
+    "avg_bars": 14.587265231333028,
+    "se_mean_r": 0.033480955370469495
+   }
+  },
+  "portfolio_recomputed": {
+   "10bps": {
+    "return_pct": 68.35310415699882,
+    "cagr_pct": 14.041528575651107,
+    "max_dd_pct": -19.20456303303514,
+    "executed": 265,
+    "expectancy_r": 0.22771964261522995,
+    "profit_factor": 1.456699576675837,
+    "yearly_return_pct": {
+     "2022": -10.11,
+     "2023": 2.6,
+     "2024": 15.43,
+     "2025": 20.71,
+     "2026": 31.0
+    }
+   },
+   "25bps": {
+    "return_pct": 48.043315046056165,
+    "cagr_pct": 10.40268454151876,
+    "max_dd_pct": -21.63956242972863,
+    "executed": 266,
+    "expectancy_r": 0.17762175739636385,
+    "profit_factor": 1.336334157540279,
+    "yearly_return_pct": {
+     "2022": -10.76,
+     "2023": -0.22,
+     "2024": 10.33,
+     "2025": 16.85,
+     "2026": 28.96
+    }
+   },
+   "50bps": {
+    "return_pct": 23.650654561403563,
+    "cagr_pct": 5.500869147835208,
+    "max_dd_pct": -24.826118814702625,
+    "executed": 266,
+    "expectancy_r": 0.10155395807327808,
+    "profit_factor": 1.1781304906396084,
+    "yearly_return_pct": {
+     "2022": -11.86,
+     "2023": -3.5,
+     "2024": 4.32,
+     "2025": 12.74,
+     "2026": 23.62
+    }
+   }
+  }
+ },
+ "live_paper_trading": "not used (historical backtest only)"
+}

@@ -1,0 +1,25 @@
+{
+ "git": "298169eea520809679dbdc59029043c9ba3b5a3a",
+ "dataset": {
+  "signals.csv.gz": "98b6f81623ea3f20e5e5adc313891762c1a4e3ff0970f907fe7f17081a241cf3",
+  "bars.pkl.gz": "3df57ff951cf7f580ffbc088be003dfcdb872fabd66000e74b508cd73f69283e"
+ },
+ "files": {
+  "2026-10-21T0134Z/results.json": "9801f4f5ba3c0039412895c3e821cfea4bb42523c4ef2053b7e546b49b82c9e0",
+  "2026-10-21T0134Z/executed_trades.csv": "c18c0a183942d394a68160f82a63552cd507d911d4f0c385fa13afd794b5417a",
+  "2026-10-21T0134Z/open_positions.csv": "39b82502e482a64b5acf689761978d4df9954009e33ca1ca335de6501ed4dd35",
+  "2026-10-21T0134Z/skipped_orders.csv": "bf30f88c977261d5941b3cdef0f9c677c7d6fc45bd81e376517740c476c86a96",
+  "2026-10-21T0134Z/reconciliation.json": "c6429aab1a96bdb286547f3eb94bb2fa468e6a47a0cb0edd8b5263cd588058ca",
+  "2026-10-21T0134Z/cut_year_signals.csv": "a15f8bd7a929c7d65f134c15d9f79fc3f39b9155f94e71696ba681d9484d7308",
+  "2026-10-21T0134Z/cut_year_executed.csv": "73d095fab94a0fddc51f94cd9f7d86a44584c631a2bf24b3de8489e6bbf11117",
+  "2026-10-21T0134Z/cut_quarter_signals.csv": "17110db970e9ac91ac2807f2d1d24f61249cc7d7564c3c65a902925a0c0cea22",
+  "2026-10-21T0134Z/cut_quarter_executed.csv": "9be588d1fd56cbe00e9e5942216a517e5324025e51dc6a36974c5c4bcaea7dc5",
+  "2026-10-21T0134Z/cut_sector_signals.csv": "9cd3a0130df9f9b888aa0edde57ef89aad3e56ab0f2fabfc0d2d54b3bda6f951",
+  "2026-10-21T0134Z/cut_sector_executed.csv": "f54d2a19761d8d127fec615bce60f0bf3c5204914b8a3990adbdc36bec56d57e",
+  "2026-10-21T0134Z/cut_market_signals.csv": "face16d2cf278773eac220d9fdf892ff4eb0ed86f7caec348e21db033ab786ce",
+  "2026-10-21T0134Z/cut_market_executed.csv": "34775f06c18529bc5008767a6c1b7d0f199414f2a2611ce5d9e1d93588e8976b",
+  "2026-10-21T0134Z/cut_stop_dist_signals.csv": "1a38cf96b2cde0e866bc124aa30d9e2e61aeb5a22d884b9b156f00b8c1608b5e",
+  "2026-10-21T0134Z/cut_stop_dist_executed.csv": "7116fb2d88e5ff620fe36deeaf722d3e6430f8a80a088e86974c2752c6f25c5d",
+  "2026-10-21T0134Z/REPORT.md": "d34ea90ba9c1c65dd83904fb3e26aee7dd3cc53fd25fc65c87c098acd654c1f1"
+ }
+}

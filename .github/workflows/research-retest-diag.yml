@@ -1,0 +1,52 @@
+name: Research retest RS-first diagnostic (research branch only)
+
+# research/retest_diag/PLAN.md. Historical backtest on the frozen PR #5 dataset (artifact of
+# run 38773034101). No Yahoo download, no schedule, never touches paper/ or state/.
+on:
+  push:
+    branches: [research/retest-diag-v1]
+    paths: ["research/retest_diag/run.py", ".github/workflows/research-retest-diag.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-retest-diag
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/retest-diag-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - name: Frozen PR 5 dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: sp1500-dataset-38773034101
+          run-id: 38773034101
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/pr5
+      - name: Diagnostic run (stops unless the saved RS-first result is reproduced)
+        run: python -m research.retest_diag.run --dataset "${{ runner.temp }}/pr5"
+      - name: Live state untouched
+        run: |
+          git diff --exit-code HEAD -- paper state trader.py core.py
+          left=$(git status --porcelain --untracked-files=all -- paper state trader.py core.py | grep -v '__pycache__/' || true)
+          echo "$left"; test -z "$left"
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/retest_diag || true
+          git diff --cached --quiet || git commit -m "Research retest diagnostic: run $(date -u +%F_%H%M)"
+          git pull --rebase && git push
