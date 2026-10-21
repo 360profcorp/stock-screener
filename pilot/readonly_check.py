@@ -34,7 +34,8 @@ def run(state: dict, app_key, secret, account_suffix="", http=None) -> dict:
     rep = dict(checked_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                token_present=bool(tok.get("refresh_token")),
                refresh_age_days=round(refresh_age_days(tok), 2) if tok else None,
-               steps={}, accounts=[])
+               app_key_set=bool(app_key), app_secret_set=bool(secret),
+               app_key_len=len(app_key or ""), steps={}, accounts=[])
     if not rep["token_present"]:
         rep["steps"]["auth"] = "no saved Schwab login"
         return rep
@@ -85,6 +86,8 @@ def run(state: dict, app_key, secret, account_suffix="", http=None) -> dict:
 
 def public_summary(rep: dict) -> dict:
     return dict(token_present=rep["token_present"], refresh_age_days=rep["refresh_age_days"],
+                app_key_set=rep["app_key_set"], app_secret_set=rep["app_secret_set"],
+                app_key_len=rep["app_key_len"],
                 steps=rep["steps"], refresh_token_rotated=rep.get("refresh_token_rotated"),
                 accounts=[dict(account=a["account"], type=a.get("type"),
                                snapshot=a.get("snapshot"),
