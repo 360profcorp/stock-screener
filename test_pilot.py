@@ -35,6 +35,8 @@ class FakeBroker:
         self.script, self.fill_qty, self.cancel_mode = [], None, "now"
         self.sent, self.cancels, self.down = [], [], False
         self.on_sleep = None
+        self.window_days = 7          # the order list only shows recently entered orders
+        self.cancel_fills = None      # qty that fills while a cancel is requested
 
     def _new(self, order, status):
         oid = str(next(self.ids))
@@ -65,7 +67,9 @@ class FakeBroker:
         return dict(account_number="99991234", type="CASH",
                     positions={t: dict(qty=q, asset="EQUITY", avg=None)
                                for t, q in self.positions.items()},
-                    orders=[copy.deepcopy(o) for o in self.orders.values()],
+                    orders=[copy.deepcopy(o) for o in self.orders.values()
+                            if datetime.fromisoformat(o["entered"]) >=
+                            self.clock() - timedelta(days=self.window_days)],
                     balances=dict(cash=self.cash, cash_available=self.cash), flags={})
 
     def get_order(self, oid):
@@ -97,6 +101,11 @@ class FakeBroker:
         o = self.orders[str(oid)]
         if o["status"] in ("FILLED", "CANCELED"):
             raise OrderRejected("400: not cancelable")
+        if self.cancel_fills:                         # the stop triggers before the cancel lands
+            q, self.cancel_fills = self.cancel_fills, None
+            self.fill(o["id"], q, 44.9)
+            if o["status"] == "FILLED":
+                raise OrderRejected("400: order already filled")
         o["status"] = "CANCELED" if self.cancel_mode == "now" else "PENDING_CANCEL"
 
     def settle_cancels(self):
@@ -271,6 +280,48 @@ class ReplaceStop(Base):
         self.p.cycle()
         self.assertEqual(len(self.b.stops("XYZ", ("WORKING",))), 1)
         self.assertTrue(self.p.s["positions"][0]["protected"])
+
+
+class ReviewTwo(Base):
+    def test_gtc_stop_older_than_the_order_window_is_not_duplicated(self):
+        self.after_trade()
+        self.clock.adv(9 * 86400)                                 # stop now outside the list
+        self.assertEqual(self.b.snapshot()["orders"], [])
+        for _ in range(3):
+            self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)
+        self.assertEqual(len(self.b.stops("XYZ", ("WORKING",))), 1)
+        self.assertTrue(self.p.s["positions"][0]["protected"])
+
+    def test_old_stop_filled_during_cancel_no_new_stop(self):
+        self.after_trade()
+        st = self.b.stops("XYZ")[0]
+        st["stop_price"] = 44.0                                   # needs replacing ...
+        self.b.cancel_fills = 1                                   # ... but it fires first
+        self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)       # no stop on sold shares
+        self.assertEqual(self.b.sent_types("MARKET", "SELL"), [])
+        self.assertEqual(self.p.s["positions"], [])
+        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "stop")
+
+    def test_old_stop_partly_filled_during_cancel_new_stop_for_the_rest(self):
+        self.p.s["closed"].append(dict(ticker="OLD"))
+        self.p.cycle(approval(qty=3))
+        st = self.b.stops("XYZ")[0]
+        st["stop_price"] = 44.0
+        self.b.cancel_fills = 1                                   # 1 of 3 sold, rest cancelled
+        self.p.cycle()
+        self.assertEqual(self.p.s["positions"][0]["qty"], 2)
+        self.assertEqual([o["qty"] for o in self.b.stops("XYZ", ("WORKING",))], [2.0])
+        self.assertEqual(self.b.positions["XYZ"], 2)
+
+    def test_old_stop_filled_during_exit_cancel_no_sell(self):
+        self.after_trade()
+        self.p.request_exit("XYZ")
+        self.b.cancel_fills = 1
+        self.p.cycle()
+        self.assertEqual(self.b.sent_types("MARKET", "SELL"), [])
+        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "stop")
 
 
 # ================================================================= 4) immediate protection

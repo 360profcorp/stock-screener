@@ -87,6 +87,7 @@ class Pilot:
         self.sleep = sleep or _time.sleep
         self.alert_fn = alert or (lambda title, text: None)
         self.snap = None
+        self._cache = {}
 
     # ============================================================ basics
     def _log(self, text):
@@ -107,6 +108,14 @@ class Pilot:
 
     def refresh(self):
         self.snap = self.b.snapshot()
+        self._cache = {}
+
+    def _own(self, oid):
+        """The pilot's own orders are always read directly by id: a GTC stop older than the
+        snapshot's order window is still live, and absence from a list never means cancelled."""
+        if oid not in self._cache:
+            self._cache[oid] = self.b.get_order(oid)
+        return self._cache[oid]
 
     def held(self, ticker):
         return float((self.snap["positions"].get(ticker) or {}).get("qty", 0))
@@ -280,8 +289,8 @@ class Pilot:
     def _sync_outside(self, p, out):
         """Stop fills and shares sold outside the pilot reduce the pilot's shares."""
         for oid in p.get("order_ids", []):
-            o = next((x for x in self.snap["orders"] if x["id"] == oid), None)
-            if o is None or o["instruction"] != "SELL":
+            o = self._own(oid)
+            if o["instruction"] != "SELL":
                 continue
             done = p["fills"].get(oid, 0)
             if o["filled"] > done:
@@ -301,9 +310,12 @@ class Pilot:
                         "pilot's stop is cut to the shares still held")
 
     def _own_stops(self, p, statuses=LIVE_STATUSES):
-        ids = set(p.get("order_ids", []))
-        return [o for o in self.snap["orders"] if o["id"] in ids and o["type"] == "STOP"
-                and o["status"] in statuses]
+        out = []
+        for oid in dict.fromkeys(p.get("order_ids", [])):
+            o = self._own(oid)
+            if o["type"] == "STOP" and o["status"] in statuses:
+                out.append(o)
+        return out
 
     def _good(self, o, p):
         return (o["status"] in PROTECTING and o["instruction"] == "SELL" and o["type"] == "STOP"
@@ -322,34 +334,40 @@ class Pilot:
                 except (OrderRejected, SendUnknown) as e:
                     self._log(f"cancel {o['id']}: {e}")
             f = self._order(o["id"])
+            self._cache[o["id"]] = f
             if f["status"] not in ("CANCELED", "FILLED", "EXPIRED", "REJECTED", "REPLACED"):
                 ok = False
         return ok
 
     def protect(self, p, out) -> bool:
-        self._sync_outside(p, out)
-        live = self._own_stops(p)
-        if p["qty"] <= 0:                                 # nothing left to protect
-            if live and not self._cancel_confirmed(live, out):
+        for _ in range(3):
+            self._sync_outside(p, out)
+            live = self._own_stops(p)
+            if p["qty"] <= 0:                             # nothing left to protect
+                if live and not self._cancel_confirmed(live, out):
+                    p["protected"] = False
+                    return False                          # retry the cancel next pass
+                self._close(p, out)
+                return True
+            if self.pending("STOP", p["id"]):             # unknown stop: never send another
                 p["protected"] = False
-                return False                              # retry the cancel next pass
-            self._close(p, out)
-            return True
-        if self.pending("STOP", p["id"]):                 # unknown stop: never send another
+                return False
+            good = [o for o in live if self._good(o, p)]
+            if len(good) == 1 and len(live) == 1:
+                p["protected"] = True
+                return True
             p["protected"] = False
+            keep = good[:1]
+            extra = [o for o in live if o not in keep]
+            if not extra:
+                break                                     # no live stop: place one below
+            if not self._cancel_confirmed(extra, out):
+                return False                              # old stop not confirmed cancelled yet
+            # a cancelled stop may have (partly) filled first: re-read positions and orders
+            # and recount the pilot's shares before deciding what still needs protection
+            self.refresh()
+        else:
             return False
-        good = [o for o in live if self._good(o, p)]
-        if len(good) == 1 and len(live) == 1:
-            p["protected"] = True
-            return True
-        p["protected"] = False
-        keep = good[:1]
-        extra = [o for o in live if o not in keep]
-        if extra and not self._cancel_confirmed(extra, out):
-            return False                                  # old stop not confirmed cancelled yet
-        if keep:
-            p["protected"] = True
-            return True
         if p["stop_rejects"] >= STOP_ATTEMPTS:
             self._block(f"PROTECTION FAILED: {p['ticker']} {p['qty']} sh without a broker stop "
                         f"after {STOP_ATTEMPTS} rejections — set a stop manually at Schwab")

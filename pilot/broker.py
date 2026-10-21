@@ -134,7 +134,7 @@ class SchwabPilotBroker:
     def account_numbers(self):
         return self._get("/trader/v1/accounts/accountNumbers")
 
-    def snapshot(self, days=7) -> dict:
+    def snapshot(self, days=60) -> dict:
         h = self._account_hash()
         acct = self._get(f"/trader/v1/accounts/{h}", params={"fields": "positions"})
         a = acct.get("securitiesAccount", acct)

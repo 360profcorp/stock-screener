@@ -30,6 +30,12 @@ GitHub environment this job does not use. The owner adds them directly in GitHub
 | 4 | Protect right after the fill; continuous monitoring; explicit emergency | `enter()` monitors the buy (every 2 s, up to 120 s) and places the stop on the first filled share in the same call; later fills resize it; the unfilled rest is cancelled at the end. A fill without a confirmed stop at the end, or a lost broker → **EMERGENCY**: entries blocked, alert with the owner's steps (§6) | `ImmediateProtection` (4) |
 | 5 | Partial sells and manual close | Before selling: fresh broker read, stop fills and shares held are reconciled; sells `min(pilot shares, shares held)`. A partial sell or partial stop fill reduces the pilot's shares and the rest is protected again. Shares sold outside → the pilot's stop is cut to the shares still held, or cancelled (confirmed) when none are left; owner alerted and entries blocked | `Exits` (9) |
 
+Second review (a3c9770):
+| # | Review point | Fix | Tests |
+|---|---|---|---|
+| 6 | A GTC stop older than the 7-day order list could be duplicated | The pilot's own orders are always read **directly by id**, never looked up in a list (a missing list entry never means "cancelled"). The order list (for manual orders and matching unknown submissions) now spans 60 days, the API maximum | `ReviewTwo` (1) |
+| 7 | A stop that filled during its cancellation could be replaced for shares already sold | After any confirmed cancel, positions and orders are re-read and fills recounted before deciding what still needs a stop; this applies both when replacing a stop and before an exit sale | `ReviewTwo` (3): full fill, partial fill, fill during the exit cancel |
+
 Unchanged rules: owner approval of exact ticker, quantity, max price, stop, expiry and account
 (used once); first trade ≤ $100; pilot total ≤ $1,000 including open positions and working buys;
 one position; long whole shares; cash available checked; manual positions and orders never
@@ -42,7 +48,7 @@ The existing live path in `trader.py` is not used for the pilot. Its known issue
 - the OTO child stop sized to the ordered quantity;
 - no handling of unknown send results.
 
-## 3. Tests (`test_pilot.py`, 35 tests, scripted broker, no network)
+## 3. Tests (`test_pilot.py`, 39 tests, scripted broker, no network)
 Run `python -m unittest test_pilot -v`.
 
 ## 4. Blockers before the first real order
