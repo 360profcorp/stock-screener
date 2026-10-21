@@ -157,7 +157,7 @@ class TestApp(unittest.TestCase):
             at.run()
             self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
             errs = " ".join(e.value for e in at.error)
-            self.assertIn(tt.TX[lang]["renew_fail"].split("{")[0].strip(), errs)
+            self.assertIn(tt.TX[lang]["renew_fail"].split("{")[0].strip(" ❌:"), errs)
             self.assertIn("unknown", errs)
             self.assertNotIn("SECRET-CODE", errs)
             self.assertNotIn("code", dict(at.query_params))
