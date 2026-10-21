@@ -1,0 +1,76 @@
+{
+ "updated": "2026-10-21T02:00:44+00:00",
+ "book": "breakout",
+ "comparison": "cmp-2026-10-20",
+ "strategy_id": "breakout-rs-first/1.0+cfg.644e0eb26cdb",
+ "code_fingerprint": "d74e0327e1d0",
+ "revision": 1,
+ "processed_through": "2026-10-20",
+ "cash": 10000.0,
+ "open_positions": 0,
+ "pending_orders": 15,
+ "forward": {
+  "genuine_forward": {
+   "available": true,
+   "contaminated_since": null,
+   "genuine_through": "2026-10-20",
+   "reason": null,
+   "metrics": {
+    "days": 1,
+    "final_equity": 10000.0,
+    "return_pct": 0.0,
+    "cagr_pct": NaN,
+    "max_drawdown_pct": 0.0,
+    "current_drawdown_pct": 0.0,
+    "exposure_pct": 0.0,
+    "spy_price_return_pct": 0.0,
+    "excess_vs_spy_price_pct": 0.0
+   }
+  },
+  "observed_portfolio": {
+   "contains_reconstructed": false,
+   "metrics": {
+    "days": 1,
+    "final_equity": 10000.0,
+    "return_pct": 0.0,
+    "cagr_pct": NaN,
+    "max_drawdown_pct": 0.0,
+    "current_drawdown_pct": 0.0,
+    "exposure_pct": 0.0,
+    "spy_price_return_pct": 0.0,
+    "excess_vs_spy_price_pct": 0.0
+   }
+  },
+  "timely": {
+   "trades": {
+    "closed": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "expectancy_r": null,
+    "expectancy_usd": null,
+    "total_pnl_usd": 0.0
+   },
+   "open_positions": 0,
+   "note": "trade-level statistics, not a counterfactual portfolio return"
+  },
+  "reconstructed": {
+   "trades": {
+    "closed": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "expectancy_r": null,
+    "expectancy_usd": null,
+    "total_pnl_usd": 0.0
+   },
+   "open_positions": 0,
+   "events": []
+  },
+  "late_not_traded": {
+   "count": 0,
+   "signals": []
+  },
+  "late_processed_sessions": [],
+  "benchmark_note": "SPY comparison is price-only (dividends excluded)"
+ },
+ "snapshot_integrity_failures": []
+}
