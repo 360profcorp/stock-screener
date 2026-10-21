@@ -64,7 +64,8 @@ def load_inputs(pr5_dir, v2_dir):
     v2_sha = hashlib.sha256(next(Path(v2_dir).rglob("dataset_v2.csv.gz")).read_bytes()).hexdigest()
     for c in ("signal_date", "label_end", "exit_date", "entry_date"):
         v2[c] = pd.to_datetime(v2[c], errors="coerce")
-    base = P.long_pool(lab, "pit500", tuple(P.LONGS))[KEY + ["close", "level", "stop_base"]]
+    base = P.long_pool(lab, "pit500", tuple(P.LONGS))[KEY + ["close", "level", "stop_base",
+                                                            "bars_held"]]
     pool = v2.merge(base, on=KEY, how="left", validate="one_to_one")
     assert pool["stop_base"].notna().all(), "v2 rows not found in the PR #5 pool"
     tick = sorted(set(lab.loc[lab["group"] == "sp500", "ticker"]) | set(pool["ticker"]))
