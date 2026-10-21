@@ -156,3 +156,50 @@ class TestBreakoutImplication(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestProtocolV11(unittest.TestCase):
+    def test_experiment_a_uses_the_breakout_stop(self):
+        from research.bull_flag import protocol as Pr
+        df, i, _ = make()
+        x = bt.indicators(df)
+        a = Pr.flag_filter_at(x, i)
+        self.assertEqual(a, bt.breakout_at(x, i, 3))              # breakout level and stop
+        self.assertNotEqual(a[1], F.flag_at(x, i)[1])             # differs from the structural stop
+        self.assertIsNone(Pr.flag_filter_at(x, i - 1))
+        df2, i2, _ = make(pole_gain=0.05)                         # no flag -> no A signal
+        x2 = bt.indicators(df2)
+        self.assertIsNone(Pr.flag_filter_at(x2, i2))
+
+    def test_s4_matched_days_equal_weights_paired_bootstrap(self):
+        from research.bull_flag import protocol as Pr
+        rows = [("2024-01-02", "flag", 1.0), ("2024-01-02", "nonflag", 0.0),
+                ("2024-01-02", "nonflag", 0.0), ("2024-01-02", "nonflag", 0.0),
+                ("2024-02-05", "flag", 0.0), ("2024-02-05", "flag", 2.0),
+                ("2024-02-05", "nonflag", 0.5),
+                ("2024-03-04", "flag", 9.0),                        # unmatched: no non-flag
+                ("2024-03-05", "nonflag", -9.0)]                    # unmatched: no flag
+        t = pd.DataFrame(rows, columns=["signal_date", "group", "net_r"])
+        r = Pr.s4_statistic(t, n_boot=2000)
+        self.assertEqual(r["matched_days"], 2)
+        self.assertAlmostEqual(r["S4"], ((1 - 0) + (1 - 0.5)) / 2)  # equal day weights
+        self.assertEqual((r["n_flag"], r["n_nonflag"]), (3, 4))
+        lo, hi = r["ci90"]
+        self.assertTrue(lo <= r["S4"] <= hi)
+        self.assertEqual(Pr.s4_statistic(t, n_boot=2000), r)        # deterministic seed
+        neg = t.assign(net_r=-t["net_r"])
+        self.assertAlmostEqual(Pr.s4_statistic(neg, n_boot=500)["S4"], -r["S4"])
+
+    def test_combined_book_one_order_per_ticker_day_retest_first(self):
+        from research.bull_flag import protocol as Pr
+        d = pd.Timestamp("2024-01-03"); s = pd.Timestamp("2024-01-02")
+        ret = pd.DataFrame([dict(ticker="AAA", date=d, signal_date=s, rs=90., entry=10., stop=9.5),
+                            dict(ticker="BBB", date=d, signal_date=s, rs=95., entry=20., stop=19.)])
+        flg = pd.DataFrame([dict(ticker="AAA", date=d, signal_date=s, rs=90., entry=10., stop=8.0),
+                            dict(ticker="CCC", date=d, signal_date=s, rs=90., entry=30., stop=28.),
+                            dict(ticker="DDD", date=d, signal_date=s, rs=99., entry=5., stop=4.5)])
+        m = Pr.merge_candidates(ret, flg)
+        self.assertEqual(list(m["ticker"]), ["DDD", "BBB", "AAA", "CCC"])  # RS desc, retest wins tie
+        aaa = m[m["ticker"] == "AAA"].iloc[0]
+        self.assertEqual((aaa["kind"], aaa["stop"]), ("retest", 9.5))     # retest's stop kept
+        self.assertEqual(len(m), 4)                                       # one order for AAA

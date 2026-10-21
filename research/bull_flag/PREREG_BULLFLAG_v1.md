@@ -1,6 +1,8 @@
-# Bull flag v1: pre-registration (written BEFORE any real-data detection or return calculation)
+# Bull flag v1.1: pre-registration (written BEFORE any real-data detection or return calculation)
 
-Status: **draft for review** (ChatGPT: rules vs code; Muse: protocol and statistics). No
+Status: **v1.1. ChatGPT's review applied** (two separated experiments, an exact S4 calculation,
+an unambiguous combined portfolio, breakouts kept for forward checks). Waiting for Muse's
+review. (ChatGPT: rules vs code; Muse: protocol and statistics). No
 real-data signal, count or return has been computed. The rules below are the single main
 version; they are not tuned on history.
 
@@ -54,44 +56,80 @@ breakouts**. A test asserts this implication.
 - **Portfolio:** `portfolio_bt.replay` with the frozen paper config: $10,000, 1 % risk per trade,
   5 positions, 3 new entries per day, 20 % cap per position, RS-first order within a day.
 
-## 4. Comparisons (identical rules, costs and limits everywhere)
-1. **Overlap**, for each eligible flag signal (ticker, day). Shares are reported as counts and %:
-   - **same day:** breakout / retest / VCP / double bottom eligible on the same ticker and day
-     (breakout must be 100 % by construction);
-   - **near:** any of them eligible on the same ticker in sessions `i−5 … i`;
-   - **new relative to retest + VCP:** no retest or VCP eligible on that ticker in `i−5 … i`.
-2. **Flag vs other breakouts:** the flag subset against breakouts that are *not* flags, on the
-   same days and with the same filters.
-3. **Portfolio, still 5 slots:**
-   - (a) retest only (the control);
-   - (b) retest + flag;
-   - (c) retest + all breakouts (reference);
-   
-   all RS-first.
+## 4. Two separate experiments (identical filters, costs and limits)
+**Experiment A — filter value (decides S4).**
+- Population: every eligible production **breakout** (lookback 3; RS ≥ 85; SPY > MA50; PIT
+  S&P 500). Each one is labelled **flag** (`flag_at` fires on that ticker and day) or
+  **non-flag**.
+- **Both groups use the breakout's own stop and exit:** `stop = breakout level × 0.97`, where
+  the level is the high of the previous 3 bars. Entry at the next open, stop or 20 sessions,
+  10 bps per side. So the only difference between the groups is the pattern filter.
+
+**Experiment B — full strategy.**
+- The flag with its **structural stop** (`flag low × 0.97`, R9) and the same entry, exit and
+  costs. S1, S2, S3 and S5 are evaluated here; the portfolio test S6 uses this version.
+
+## 4.1 Overlap with other setups (reported, no criterion)
+For each eligible flag signal, report counts and %:
+- **same day:** breakout / retest / VCP / double bottom eligible on the same ticker and day (breakout
+  must be 100 %);
+- **near:** any of them in sessions `i−5 … i`;
+- **new relative to retest + VCP:** none of those eligible on that ticker in `i−5 … i`.
+
+## 4.2 S4 calculation (Experiment A, fixed now)
+1. **Overlapping trades.** Within each ticker, all eligible breakouts form one sequence: a
+   breakout is skipped while that ticker's previous kept breakout trade is still open,
+   whatever its group (production `one_per_ticker` rule, `engine.non_overlapping`). The kept
+   trades are then split into flag and non-flag.
+2. **Matched days.** Only signal days with at least one kept flag trade **and** at least one
+   kept non-flag trade count. Trades still open at the data end are excluded.
+3. **Day weighting.** Per matched day `t`: `d_t = mean net R(flag trades of t) − mean net
+   R(non-flag trades of t)`. Each matched day weighs the same. The statistic is `S4 = mean_t(d_t)`.
+4. **Bootstrap.** Resample the **calendar months** that contain matched days, with
+   replacement, 5,000 draws, seed 20261020. Each draw takes **the same months for both groups**
+   (the paired `d_t` of those days) and recomputes `mean(d_t)`. The 90 % interval is that of
+   the **difference**.
+5. **S4 holds** if `S4 > 0` and the lower bound of the 90 % interval > 0 (base 10 bps). The
+   25 bps value is also reported.
+6. **Sensitivity (reported, no criterion):** S4 without the overlap rule, i.e. all eligible
+   breakouts.
+
+## 4.3 Portfolio books (still 5 slots, `portfolio_bt.replay`, frozen paper config)
+- **(a) control:** retest only.
+- **(b) retest + flag** (Experiment B stop).
+- **(c) retest + all breakouts** (reference).
+
+Candidate rules for (b) and (c), fixed now:
+1. **One order per ticker and day.** If a ticker has a retest and a flag (or breakout) on the
+   same day, there is a single candidate: the **retest**, with the retest's stop and entry.
+   The control book's decision for that ticker is therefore never changed.
+2. **Same-day order:** RS descending. On equal RS, retest before flag/breakout. Then ticker
+   alphabetically.
+3. **Filling the 5 slots:** in that order, with the existing replay rules. A held ticker is
+   skipped (`ticker_open`); at most 3 new entries per day; sizing at 1 % risk from the pre-open
+   equity; 20 % cap per position; no trade if the open is at or below the stop.
 
 ## 5. Statistics
-- **Signal-level metric:** net R per non-overlapping model trade. Mean, median, win rate,
-  profit factor, and the count of non-overlapping trades.
-- **Uncertainty:** 90 % bootstrap interval, resampling **calendar months** as blocks, 5,000
-  draws, seed 20261020.
-- **Years:** 2023, 2024, 2025 and 2026 to Oct 14 reported separately. Q4 2022 is shown but not
-  used in criterion S5.
+- **Experiment B, signal level:** net R per non-overlapping model trade (same overlap rule,
+  within the flag group). Report mean, median, win rate, profit factor and the count.
+- **Uncertainty:** 90 % bootstrap interval resampling calendar months, 5,000 draws, seed
+  20261020.
+- **Years:** 2023, 2024, 2025 and 2026 to Oct 14 reported separately. Q4 2022 is shown, not used in
+  S5.
 
 ## 6. Success criteria for the exploratory history (fixed now)
-To justify a forward test, **all** of S1–S5 must hold:
-- **S1:** at least 100 non-overlapping eligible flag trades.
-- **S2:** mean net R (10 bps) > 0, with the lower bound of the 90 % interval > 0.
-- **S3:** mean net R at 25 bps per side > 0.
-- **S4:** flag mean net R − non-flag breakout mean net R > 0, with the lower bound of the 90 %
-  interval > 0 (the flag must be a better breakout).
-- **S5:** mean net R > 0 in at least 2 of the 3 full years 2023–2025.
+**All** of S1–S5 must hold to justify a forward test:
+- **S1 (B):** at least 100 non-overlapping eligible flag trades.
+- **S2 (B):** mean net R (10 bps) > 0, with the lower bound of the 90 % interval > 0.
+- **S3 (B):** mean net R at 25 bps per side > 0.
+- **S4 (A):** as defined in 4.2.
+- **S5 (B):** mean net R > 0 in at least 2 of the 3 full years 2023–2025.
 
-**S6 (portfolio, decides whether a forward test adds the flag to the retest book):**
-book (b) return ≥ book (a), and (b)'s max drawdown no deeper than (a)'s by more than 3
-percentage points.
+**S6 (portfolio):** book (b) return ≥ book (a), and (b)'s max drawdown no deeper than (a)'s by
+more than 3 percentage points. It decides whether a forward test adds the flag to the retest
+book.
 
-If S1–S5 fail, the flag v1 is reported as failed. There is no re-parametrisation in v1; any
-change is a new version with a new pre-registration.
+If S1–S5 fail, flag v1 is reported as failed. No re-parametrisation in v1.
 
 ## 7. Independent confirmation (future data only)
 - **If S1–S5 pass**, the owner may approve a **shadow paper book**: flag-only, plus retest +
@@ -101,6 +139,9 @@ change is a new version with a new pre-registration.
   closed flag trades; otherwise freeze + 12 months.
 - **At T,** the same S2–S4 criteria apply to the forward trades. Until T only counts are
   published.
+- **The shadow run records every eligible breakout** (flag and non-flag) with its label, the
+  breakout-stop trade and the structural-stop trade. Experiment A / S4 can then be re-checked
+  independently on future data, not only the flag book.
 
 ## 8. First deliverable (this step)
 This document, the detector `research/bull_flag/rules.py`, and synthetic tests (including
@@ -112,3 +153,11 @@ returns** until ChatGPT and Muse have reviewed this pre-registration.
   is the highest high of bars T−15 … i−1". A synthetic test showed that a 13-session flag could
   otherwise pass as a 12-session flag starting at its first bar. This was found from synthetic
   data only.
+- v1.1 (2026-10-20, ChatGPT's review, before any real data):
+  - Experiments A (filter value, breakout stop for both groups) and B (full strategy,
+    structural stop) are separated.
+  - The S4 calculation is fixed: combined overlap rule, matched days, equal day weights,
+    paired month bootstrap of the difference.
+  - The combined-portfolio candidate rules are fixed: one order per ticker and day, retest
+    first; RS order with retest winning ties; 5-slot filling.
+  - Forward runs record all breakouts.
