@@ -24,7 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Use main's current bot state (read-only copy)
-        run: git fetch -q origin main && git show origin/main:state/trader.enc > state/trader.enc && sha256sum state/trader.enc
+        run: |
+          git fetch -q origin main
+          git show origin/main:state/trader.enc > state/trader.enc
+          echo "::notice title=State source::main $(git rev-parse --short origin/main); last state commit $(git log -1 --format='%h %cI %s' origin/main -- state/trader.enc); sha256 $(sha256sum state/trader.enc | cut -c1-12)"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
