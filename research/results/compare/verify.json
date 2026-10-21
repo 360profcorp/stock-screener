@@ -1,0 +1,559 @@
+{
+ "generated": "2026-10-21T01:48:39+00:00",
+ "tickers": 503,
+ "code_fingerprint": "d74e0327e1d0",
+ "task10_fingerprint": "17454c61f631",
+ "books": {
+  "breakout": {
+   "raw_signals": 41539,
+   "window": [
+    "2024-11-05",
+    "2026-10-20"
+   ],
+   "screener": {
+    "days": 25,
+    "ok": 25,
+    "detail": [
+     [
+      "2024-11-04",
+      true,
+      "raw 31/31 eligible 5/5"
+     ],
+     [
+      "2024-12-03",
+      true,
+      "raw 34/34 eligible 8/8"
+     ],
+     [
+      "2025-01-02",
+      true,
+      "raw 39/39 eligible 0/0"
+     ],
+     [
+      "2025-02-04",
+      true,
+      "raw 37/37 eligible 13/13"
+     ],
+     [
+      "2025-03-05",
+      true,
+      "raw 21/21 eligible 0/0"
+     ],
+     [
+      "2025-04-02",
+      true,
+      "raw 153/153 eligible 0/0"
+     ],
+     [
+      "2025-05-05",
+      true,
+      "raw 60/60 eligible 22/22"
+     ],
+     [
+      "2025-06-03",
+      true,
+      "raw 135/135 eligible 29/29"
+     ],
+     [
+      "2025-07-03",
+      true,
+      "raw 146/146 eligible 30/30"
+     ],
+     [
+      "2025-08-01",
+      true,
+      "raw 23/23 eligible 1/1"
+     ],
+     [
+      "2025-08-29",
+      true,
+      "raw 84/84 eligible 5/5"
+     ],
+     [
+      "2025-09-30",
+      true,
+      "raw 157/157 eligible 23/23"
+     ],
+     [
+      "2025-10-28",
+      true,
+      "raw 42/42 eligible 11/11"
+     ],
+     [
+      "2025-11-25",
+      true,
+      "raw 196/196 eligible 29/29"
+     ],
+     [
+      "2025-12-26",
+      true,
+      "raw 69/69 eligible 6/6"
+     ],
+     [
+      "2026-01-27",
+      true,
+      "raw 68/68 eligible 19/19"
+     ],
+     [
+      "2026-02-26",
+      true,
+      "raw 131/131 eligible 5/5"
+     ],
+     [
+      "2026-03-26",
+      true,
+      "raw 34/34 eligible 0/0"
+     ],
+     [
+      "2026-04-24",
+      true,
+      "raw 39/39 eligible 18/18"
+     ],
+     [
+      "2026-05-26",
+      true,
+      "raw 146/146 eligible 39/39"
+     ],
+     [
+      "2026-06-24",
+      true,
+      "raw 157/157 eligible 6/6"
+     ],
+     [
+      "2026-07-23",
+      true,
+      "raw 72/72 eligible 0/0"
+     ],
+     [
+      "2026-08-21",
+      true,
+      "raw 56/56 eligible 7/7"
+     ],
+     [
+      "2026-09-21",
+      true,
+      "raw 86/86 eligible 27/27"
+     ],
+     [
+      "2026-10-20",
+      true,
+      "raw 116/116 eligible 15/15"
+     ]
+    ]
+   },
+   "portfolio_full_period": {
+    "ok": true,
+    "decisions_ref": 6734,
+    "decisions_new": 6734,
+    "decisions_ok": true,
+    "first_decision_diff": null,
+    "decision_outcomes": {
+     "positions": 5964,
+     "ticker_open": 397,
+     "entered": 205,
+     "daily_entries": 168
+    },
+    "outcome_categories": {
+     "replay": 6734,
+     "simulate_excluded": 82
+    },
+    "outcome_violations": [],
+    "cash_ok": true,
+    "holdings_ok": true,
+    "fills_ref": 201,
+    "fills_new": 201,
+    "fills_ok": true,
+    "open_ref": [
+     [
+      "MPC",
+      5
+     ],
+     [
+      "NUE",
+      12
+     ],
+     [
+      "PSX",
+      9
+     ],
+     [
+      "VLO",
+      6
+     ]
+    ],
+    "open_new": [
+     [
+      "MPC",
+      5
+     ],
+     [
+      "NUE",
+      12
+     ],
+     [
+      "PSX",
+      9
+     ],
+     [
+      "VLO",
+      6
+     ]
+    ],
+    "open_ok": true,
+    "equity_days": 490,
+    "equity_ok": true,
+    "final_ref": 15481.163669801574,
+    "final_new": 15481.163669801577
+   },
+   "portfolio_live_path": {
+    "ok": true,
+    "decisions_ref": 429,
+    "decisions_new": 429,
+    "decisions_ok": true,
+    "first_decision_diff": null,
+    "decision_outcomes": {
+     "positions": 367,
+     "ticker_open": 27,
+     "daily_entries": 20,
+     "entered": 14,
+     "capital_or_risk": 1
+    },
+    "outcome_categories": {
+     "replay": 429,
+     "simulate_excluded": 9
+    },
+    "outcome_violations": [],
+    "cash_ok": true,
+    "holdings_ok": true,
+    "fills_ref": 10,
+    "fills_new": 10,
+    "fills_ok": true,
+    "open_ref": [
+     [
+      "MPC",
+      4
+     ],
+     [
+      "MRNA",
+      8
+     ],
+     [
+      "PSX",
+      6
+     ],
+     [
+      "VLO",
+      4
+     ]
+    ],
+    "open_new": [
+     [
+      "MPC",
+      4
+     ],
+     [
+      "MRNA",
+      8
+     ],
+     [
+      "PSX",
+      6
+     ],
+     [
+      "VLO",
+      4
+     ]
+    ],
+    "open_ok": true,
+    "equity_days": 30,
+    "equity_ok": true,
+    "final_ref": 11027.868762446291,
+    "final_new": 11027.868762446291
+   },
+   "all_ok": true
+  },
+  "retest": {
+   "raw_signals": 21536,
+   "window": [
+    "2024-11-05",
+    "2026-10-20"
+   ],
+   "screener": {
+    "days": 25,
+    "ok": 25,
+    "detail": [
+     [
+      "2024-11-04",
+      true,
+      "raw 31/31 eligible 9/9"
+     ],
+     [
+      "2024-12-03",
+      true,
+      "raw 58/58 eligible 18/18"
+     ],
+     [
+      "2025-01-03",
+      true,
+      "raw 19/19 eligible 0/0"
+     ],
+     [
+      "2025-02-05",
+      true,
+      "raw 74/74 eligible 13/13"
+     ],
+     [
+      "2025-03-06",
+      true,
+      "raw 51/51 eligible 0/0"
+     ],
+     [
+      "2025-04-03",
+      true,
+      "raw 10/10 eligible 0/0"
+     ],
+     [
+      "2025-05-06",
+      true,
+      "raw 32/32 eligible 8/8"
+     ],
+     [
+      "2025-06-04",
+      true,
+      "raw 9/9 eligible 2/2"
+     ],
+     [
+      "2025-07-03",
+      true,
+      "raw 62/62 eligible 16/16"
+     ],
+     [
+      "2025-08-04",
+      true,
+      "raw 88/88 eligible 28/28"
+     ],
+     [
+      "2025-09-02",
+      true,
+      "raw 31/31 eligible 9/9"
+     ],
+     [
+      "2025-09-30",
+      true,
+      "raw 30/30 eligible 9/9"
+     ],
+     [
+      "2025-10-29",
+      true,
+      "raw 38/38 eligible 14/14"
+     ],
+     [
+      "2025-11-26",
+      true,
+      "raw 25/25 eligible 2/2"
+     ],
+     [
+      "2025-12-26",
+      true,
+      "raw 38/38 eligible 6/6"
+     ],
+     [
+      "2026-01-28",
+      true,
+      "raw 42/42 eligible 10/10"
+     ],
+     [
+      "2026-02-26",
+      true,
+      "raw 50/50 eligible 9/9"
+     ],
+     [
+      "2026-03-26",
+      true,
+      "raw 10/10 eligible 0/0"
+     ],
+     [
+      "2026-04-27",
+      true,
+      "raw 81/81 eligible 14/14"
+     ],
+     [
+      "2026-05-26",
+      true,
+      "raw 19/19 eligible 5/5"
+     ],
+     [
+      "2026-06-24",
+      true,
+      "raw 91/91 eligible 14/14"
+     ],
+     [
+      "2026-07-24",
+      true,
+      "raw 69/69 eligible 0/0"
+     ],
+     [
+      "2026-08-21",
+      true,
+      "raw 53/53 eligible 10/10"
+     ],
+     [
+      "2026-09-21",
+      true,
+      "raw 25/25 eligible 11/11"
+     ],
+     [
+      "2026-10-20",
+      true,
+      "raw 112/112 eligible 20/20"
+     ]
+    ]
+   },
+   "portfolio_full_period": {
+    "ok": true,
+    "decisions_ref": 3736,
+    "decisions_new": 3736,
+    "decisions_ok": true,
+    "first_decision_diff": null,
+    "decision_outcomes": {
+     "positions": 3227,
+     "ticker_open": 335,
+     "entered": 139,
+     "daily_entries": 33,
+     "capital_or_risk": 2
+    },
+    "outcome_categories": {
+     "replay": 3736,
+     "simulate_excluded": 24
+    },
+    "outcome_violations": [],
+    "cash_ok": true,
+    "holdings_ok": true,
+    "fills_ref": 134,
+    "fills_new": 134,
+    "fills_ok": true,
+    "open_ref": [
+     [
+      "HUM",
+      5
+     ],
+     [
+      "NTAP",
+      7
+     ],
+     [
+      "RVTY",
+      8
+     ],
+     [
+      "VEEV",
+      4
+     ],
+     [
+      "VLO",
+      7
+     ]
+    ],
+    "open_new": [
+     [
+      "HUM",
+      5
+     ],
+     [
+      "NTAP",
+      7
+     ],
+     [
+      "RVTY",
+      8
+     ],
+     [
+      "VEEV",
+      4
+     ],
+     [
+      "VLO",
+      7
+     ]
+    ],
+    "open_ok": true,
+    "equity_days": 490,
+    "equity_ok": true,
+    "final_ref": 17378.031615236207,
+    "final_new": 17378.031615236207
+   },
+   "portfolio_live_path": {
+    "ok": true,
+    "decisions_ref": 238,
+    "decisions_new": 238,
+    "decisions_ok": true,
+    "first_decision_diff": null,
+    "decision_outcomes": {
+     "positions": 202,
+     "entered": 18,
+     "ticker_open": 10,
+     "daily_entries": 5,
+     "capital_or_risk": 3
+    },
+    "outcome_categories": {
+     "replay": 238,
+     "simulate_excluded": 5
+    },
+    "outcome_violations": [],
+    "cash_ok": true,
+    "holdings_ok": true,
+    "fills_ref": 14,
+    "fills_new": 14,
+    "fills_ok": true,
+    "open_ref": [
+     [
+      "BIIB",
+      5
+     ],
+     [
+      "HUM",
+      2
+     ],
+     [
+      "NUE",
+      4
+     ],
+     [
+      "VEEV",
+      2
+     ]
+    ],
+    "open_new": [
+     [
+      "BIIB",
+      5
+     ],
+     [
+      "HUM",
+      2
+     ],
+     [
+      "NUE",
+      4
+     ],
+     [
+      "VEEV",
+      2
+     ]
+    ],
+    "open_ok": true,
+    "equity_days": 30,
+    "equity_ok": true,
+    "final_ref": 9205.421598495945,
+    "final_new": 9205.421598495945
+   },
+   "identical_to_task10_scan_day": {
+    "days": 25,
+    "ok": 25
+   },
+   "all_ok": true
+  }
+ },
+ "all_ok": true,
+ "runtime_sec": 260
+}
