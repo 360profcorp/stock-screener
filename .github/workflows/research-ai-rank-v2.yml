@@ -8,7 +8,9 @@ on:
   push:
     branches: [research/ai-rank-v2]
     paths:
-      - "research/ai_rank/**"
+      - "research/ai_rank/v2_build.py"
+      - "research/ai_rank/v2_compare.py"
+      - "research/ai_rank/test_v2_build.py"
       - "research/sp1500/**"
       - ".github/workflows/research-ai-rank-v2.yml"
   workflow_dispatch:
