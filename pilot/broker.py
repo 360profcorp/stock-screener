@@ -77,7 +77,8 @@ def norm_order(o: dict, parent=None) -> list:
                 duration=o.get("duration"), qty=float(o.get("quantity", leg.get("quantity", 0))),
                 filled=float(o.get("filledQuantity", q) or 0),
                 remaining=float(o.get("remainingQuantity", 0) or 0),
-                stop_price=o.get("stopPrice"), entered=o.get("enteredTime"),
+                stop_price=o.get("stopPrice"), price=o.get("price"),
+                entered=o.get("enteredTime"),
                 closed=o.get("closeTime"), avg_price=avg,
                 legs=len(o.get("orderLegCollection") or []),
                 strategy=o.get("orderStrategyType"))]
@@ -92,6 +93,13 @@ def market_buy(ticker, qty):
             "orderLegCollection": [{"instruction": "BUY", "quantity": int(qty),
                                     "instrument": {"symbol": to_schwab(ticker),
                                                    "assetType": "EQUITY"}}]}
+
+
+def limit_buy(ticker, qty, limit):
+    """DAY limit buy: never fills above `limit` (the owner-approved max price)."""
+    o = market_buy(ticker, qty)
+    o.update(orderType="LIMIT", price=round(float(limit), 2))
+    return o
 
 
 def market_sell(ticker, qty):

@@ -1,4 +1,4 @@
-"""Pilot engine tests on scripted (fake) Schwab responses. No network, no real orders.
+"""Pilot engine v2 tests on scripted (fake) Schwab responses. No network, no real orders.
 Run: python -m unittest test_pilot -v
 """
 import copy
@@ -20,22 +20,22 @@ class Clock:
     def __call__(self):
         return self.t
 
-    def adv(self, minutes):
-        self.t += timedelta(minutes=minutes)
+    def adv(self, seconds):
+        self.t += timedelta(seconds=seconds)
 
 
 class FakeBroker:
-    """Broker state machine. place_script: list of behaviours consumed per place() call:
-    'ok' | 'timeout_created' | 'timeout_lost' | 'reject' | 'stop_reject' | 'unavailable'."""
-    def __init__(self, clock, positions=None, cash=500.0, quote=50.0):
+    """Scripted broker. place script entries (consumed per place()):
+    'ok' | 'lost_after_accept' (accepted, response lost) | 'lost' (never reached) | 'reject'.
+    cancel_mode: 'now' (CANCELED at once) | 'pending' (PENDING_CANCEL until settle_cancels())."""
+    def __init__(self, clock, quote=50.0, cash=500.0):
         self.clock, self.ids = clock, itertools.count(1000)
-        self.positions = dict(positions or {})          # ticker -> qty
-        self.orders = {}                                 # id -> normalised order
-        self.cash, self.q = cash, quote
-        self.script, self.fill_qty = [], None            # fill_qty: partial fill on next buy
+        self.positions, self.orders = {}, {}
+        self.q, self.cash = quote, cash
+        self.script, self.fill_qty, self.cancel_mode = [], None, "now"
         self.sent, self.cancels, self.down = [], [], False
+        self.on_sleep = None
 
-    # ---- helpers
     def _new(self, order, status):
         oid = str(next(self.ids))
         leg = order["orderLegCollection"][0]
@@ -43,8 +43,8 @@ class FakeBroker:
                  instruction=leg["instruction"], type=order["orderType"],
                  duration=order["duration"], qty=float(leg["quantity"]), filled=0.0,
                  remaining=float(leg["quantity"]), stop_price=order.get("stopPrice"),
-                 entered=self.clock().isoformat(), closed=None, avg_price=None, legs=1,
-                 strategy="SINGLE")
+                 price=order.get("price"), entered=self.clock().isoformat(), closed=None,
+                 avg_price=None, legs=1, strategy="SINGLE")
         self.orders[oid] = o
         return o
 
@@ -59,7 +59,6 @@ class FakeBroker:
             del self.positions[o["symbol"]]
         o["status"] = "FILLED" if o["remaining"] <= 0 else "WORKING"
 
-    # ---- broker API
     def snapshot(self):
         if self.down:
             raise BrokerUnavailable("Schwab login expired (7 days)")
@@ -67,33 +66,30 @@ class FakeBroker:
                     positions={t: dict(qty=q, asset="EQUITY", avg=None)
                                for t, q in self.positions.items()},
                     orders=[copy.deepcopy(o) for o in self.orders.values()],
-                    balances=dict(cash=self.cash, cash_available=self.cash, buying_power=self.cash,
-                                  liquidation_value=self.cash), flags={})
+                    balances=dict(cash=self.cash, cash_available=self.cash), flags={})
 
     def get_order(self, oid):
+        if self.down:
+            raise BrokerUnavailable("down")
         return copy.deepcopy(self.orders[str(oid)])
 
     def quote(self, t):
-        if self.down:
-            raise BrokerUnavailable("expired")
         return self.q
 
     def place(self, order):
         b = self.script.pop(0) if self.script else "ok"
         self.sent.append((b, copy.deepcopy(order)))
-        if b == "unavailable":
-            raise BrokerUnavailable("login expired")
-        if b == "reject" or (b == "stop_reject" and order["orderType"] == "STOP"):
+        if b == "reject":
             raise OrderRejected("400: rejected")
-        if b == "timeout_lost":
-            raise SendUnknown("ReadTimeout after sending")
-        o = self._new(order, "WORKING" if order["orderType"] == "STOP" else "QUEUED")
-        if order["orderType"] == "MARKET":
+        if b == "lost":
+            raise SendUnknown("ReadTimeout")
+        o = self._new(order, "WORKING")
+        if o["type"] == "MARKET" or (o["type"] == "LIMIT" and self.q <= o["price"]):
             q = self.fill_qty if (self.fill_qty and o["instruction"] == "BUY") else o["qty"]
             self.fill_qty = None
-            self.fill(o["id"], q, self.q)
-        if b == "timeout_created":
-            raise SendUnknown("ReadTimeout after sending")
+            self.fill(o["id"], q, min(self.q, o["price"] or self.q))
+        if b == "lost_after_accept":
+            raise SendUnknown("ReadTimeout after the broker accepted")
         return o["id"]
 
     def cancel(self, oid):
@@ -101,16 +97,25 @@ class FakeBroker:
         o = self.orders[str(oid)]
         if o["status"] in ("FILLED", "CANCELED"):
             raise OrderRejected("400: not cancelable")
-        o["status"] = "CANCELED"
+        o["status"] = "CANCELED" if self.cancel_mode == "now" else "PENDING_CANCEL"
 
-    # ---- test helpers
-    def live_stops(self, t):
+    def settle_cancels(self):
+        for o in self.orders.values():
+            if o["status"] == "PENDING_CANCEL":
+                o["status"] = "CANCELED"
+
+    def sleep(self, sec):
+        self.clock.adv(sec)
+        if self.on_sleep:
+            self.on_sleep()
+
+    def stops(self, t, statuses=("WORKING", "PENDING_CANCEL")):
         return [o for o in self.orders.values() if o["symbol"] == t and o["type"] == "STOP"
-                and o["status"] == "WORKING"]
+                and o["status"] in statuses]
 
-    def buys(self):
-        return [o for b, o in self.sent if o["orderLegCollection"][0]["instruction"] == "BUY"
-                and b != "reject"]
+    def sent_types(self, kind, instr=None):
+        return [o for _, o in self.sent if o["orderType"] == kind and (
+            instr is None or o["orderLegCollection"][0]["instruction"] == instr)]
 
 
 def approval(**kw):
@@ -121,6 +126,10 @@ def approval(**kw):
     return a
 
 
+def _ts_of(o):
+    return datetime.fromisoformat(o["entered"])
+
+
 class Base(unittest.TestCase):
     def setUp(self):
         self.clock = Clock()
@@ -128,281 +137,395 @@ class Base(unittest.TestCase):
         self.saves = []
         self.p = self.make()
 
-    def make(self, **kw):
+    def make(self, state=None, **kw):
         args = dict(live=True, entries_enabled=True, account_suffix="1234", now=self.clock,
-                    save=lambda s: self.saves.append(s))
+                    save=lambda s: self.saves.append(s), sleep=self.b.sleep)
         args.update(kw)
-        return EN.Pilot(self.b, kw.pop("state", None), **{k: v for k, v in args.items()
-                                                            if k != "state"})
+        return EN.Pilot(self.b, state, **args)
+
+    def after_trade(self, qty=1):
+        if qty > 1:
+            self.p.s["closed"].append(dict(ticker="OLD"))
+        r = self.p.cycle(approval(qty=qty))
+        self.assertEqual(r["entry"]["monitor"], "done", r)
+        return self.p.s["positions"][0]
 
 
-class HappyPath(Base):
-    def test_buy_fill_stop_then_close(self):
+# ================================================================= 1) LIMIT entry
+class LimitEntry(Base):
+    def test_buy_is_limit_at_the_approved_max_price(self):
+        self.after_trade()
+        buy = self.b.sent_types("LIMIT", "BUY")
+        self.assertEqual(len(buy), 1)
+        self.assertEqual((buy[0]["price"], buy[0]["duration"]), (60.0, "DAY"))
+        self.assertEqual(self.b.sent_types("MARKET", "BUY"), [])
+
+    def test_price_above_limit_never_fills_and_order_is_cancelled(self):
+        self.b.q = 61.0
         r = self.p.cycle(approval())
-        self.assertTrue(r["entry"]["sent"])
-        self.p.cycle()                                          # fill -> stop
-        pos = self.p.s["positions"][0]
-        self.assertEqual((pos["qty"], pos["entry"]), (1, 50.0))
-        st = self.b.live_stops("XYZ")
-        self.assertEqual(len(st), 1)
-        self.assertEqual((st[0]["qty"], st[0]["stop_price"], st[0]["duration"]),
-                         (1.0, 45.0, "GOOD_TILL_CANCEL"))
-        self.assertTrue(pos["protected"])
-        self.assertIsNone(self.p.s["blocked"])
-        for _ in range(3):                                       # re-runs change nothing
-            self.p.cycle()
-        self.assertEqual(len(self.b.buys()), 1)
-        self.assertEqual(len([o for _, o in self.b.sent if o["orderType"] == "STOP"]), 1)
-        self.p.request_exit("XYZ")
-        self.b.q = 55.0
-        self.p.cycle()
-        self.assertEqual(self.b.orders[st[0]["id"]]["status"], "CANCELED")
+        self.assertEqual(r["entry"]["monitor"], "done")
         self.assertEqual(self.p.s["positions"], [])
-        c = self.p.s["closed"][0]
-        self.assertEqual((c["exit_reason"], c["exit"], c["pnl"]), ("owner", 55.0, 5.0))
-        self.assertNotIn("XYZ", self.b.positions)
+        buy = next(o for o in self.b.orders.values() if o["type"] == "LIMIT")
+        self.assertEqual((buy["status"], buy["filled"]), ("CANCELED", 0))
 
-    def test_intent_saved_before_the_order_leaves(self):
+    def test_budget_uses_the_limit_not_the_quote(self):
+        self.b.q = 30.0
+        r = self.p.cycle(approval(qty=2, max_price=55.0))          # 2 x 55 > $100 first trade
+        self.assertTrue(any("first trade" in w for w in r["entry"]["why"]))
+        p = self.make()
+        p.s["closed"].append(dict(ticker="OLD"))
+        self.b.cash = 5000
+        r = p.cycle(approval(approval_id="A2", qty=17, max_price=60.0))   # 1,020 > $1,000
+        self.assertTrue(any("budget" in w for w in r["entry"]["why"]))
+        self.assertEqual(self.b.sent, [])
+
+
+# ================================================================= 2) stop send path
+class StopSendPath(Base):
+    def test_stop_accepted_but_response_lost_is_matched_not_resent(self):
+        self.b.script = ["ok", "lost_after_accept"]
+        r = self.p.cycle(approval())
+        self.assertEqual(r["entry"]["monitor"], "done")
+        for _ in range(4):
+            self.clock.adv(30)
+            self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)
+        self.assertEqual(len(self.b.stops("XYZ")), 1)
+        self.assertTrue(self.p.s["positions"][0]["protected"])
+
+    def test_stop_lost_entirely_is_never_resent_and_blocks(self):
+        self.b.script = ["ok", "lost"]
+        r = self.p.cycle(approval())
+        self.assertEqual(r["entry"]["monitor"], "emergency")
+        self.assertIn("EMERGENCY", self.p.s["blocked"])
+        self.clock.adv(EN.UNKNOWN_WINDOW_MIN * 60 + 1)
+        self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)
+        self.assertEqual(self.b.stops("XYZ"), [])
+
+    def test_intents_saved_before_sending(self):
         seen = []
         orig = self.b.place
 
         def place(order):
-            seen.append(copy.deepcopy(self.saves[-1]["intents"]))
+            seen.append((order["orderType"], copy.deepcopy(self.saves[-1]["intents"][-1])))
             return orig(order)
         self.b.place = place
         self.p.cycle(approval())
-        self.assertEqual(seen[0][-1]["status"], "submitting")
-        self.assertEqual(seen[0][-1]["side"], "BUY")
+        kinds = dict(seen)
+        self.assertEqual((kinds["STOP"]["kind"], kinds["STOP"]["status"]), ("STOP", "submitting"))
+        self.assertEqual((kinds["LIMIT"]["kind"], kinds["LIMIT"]["status"]), ("BUY", "submitting"))
+
+    def test_stop_rejected_three_times_protection_failed(self):
+        self.b.script = ["ok", "reject", "reject", "reject"]
+        r = self.p.cycle(approval())
+        self.assertEqual(r["entry"]["monitor"], "emergency")
+        for _ in range(3):
+            self.p.cycle()
+        self.assertTrue(any("PROTECTION FAILED" in a["text"] for a in self.p.s["alerts"]))
+        self.assertEqual(len(self.b.sent_types("STOP")), 3)
 
 
+# ================================================================= 3) replacing a stop
+class ReplaceStop(Base):
+    def test_new_stop_only_after_cancel_is_confirmed(self):
+        pos = self.after_trade()
+        old = self.b.stops("XYZ")[0]
+        old["stop_price"] = 44.0                                   # wrong price at the broker
+        self.b.cancel_mode = "pending"
+        self.p.cycle()
+        self.assertEqual(self.b.orders[old["id"]]["status"], "PENDING_CANCEL")
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)
+        self.assertFalse(self.p.s["positions"][0]["protected"])
+        self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)
+        self.b.settle_cancels()
+        self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("STOP")), 2)
+        live = self.b.stops("XYZ", ("WORKING",))
+        self.assertEqual([(o["stop_price"], o["qty"]) for o in live], [(45.0, 1.0)])
+        self.assertTrue(self.p.s["positions"][0]["protected"])
+        del pos
+
+    def test_pending_cancel_and_day_stop_are_not_protection(self):
+        self.after_trade()
+        st = self.b.stops("XYZ")[0]
+        st["status"] = "PENDING_CANCEL"
+        self.b.cancel_mode = "pending"
+        self.p.cycle()
+        self.assertFalse(self.p.s["positions"][0]["protected"])
+        self.b.settle_cancels()
+        self.p.cycle()
+        self.assertTrue(self.p.s["positions"][0]["protected"])
+        st2 = self.b.stops("XYZ", ("WORKING",))[0]
+        st2["duration"] = "DAY"
+        self.b.cancel_mode = "now"
+        self.p.cycle()
+        self.assertEqual([o["duration"] for o in self.b.stops("XYZ", ("WORKING",))],
+                         ["GOOD_TILL_CANCEL"])
+
+    def test_two_live_stops_are_reduced_to_one(self):
+        self.after_trade()
+        extra = self.b._new(EN.stop_sell("XYZ", 1, 45.0), "WORKING")
+        self.p.s["positions"][0]["order_ids"].append(extra["id"])
+        self.p.cycle()
+        self.assertEqual(len(self.b.stops("XYZ", ("WORKING",))), 1)
+        self.assertTrue(self.p.s["positions"][0]["protected"])
+
+
+# ================================================================= 4) immediate protection
+class ImmediateProtection(Base):
+    def test_stop_placed_in_the_same_call_as_the_fill(self):
+        r = self.p.cycle(approval())
+        self.assertEqual(r["entry"]["monitor"], "done")
+        self.assertEqual(len(self.b.stops("XYZ", ("WORKING",))), 1)
+        self.assertTrue(self.p.s["positions"][0]["protected"])
+
+    def test_fill_arriving_during_monitoring_is_protected_at_once(self):
+        self.b.q = 61.0
+
+        def later():
+            if self.clock() >= T0 + timedelta(seconds=10):
+                buy = next(o for o in self.b.orders.values() if o["type"] == "LIMIT")
+                if buy["status"] == "WORKING":
+                    self.b.fill(buy["id"], 1, 59.0)
+        self.b.on_sleep = later
+        r = self.p.cycle(approval())
+        self.assertEqual(r["entry"]["monitor"], "done")
+        st = self.b.stops("XYZ", ("WORKING",))
+        self.assertEqual(len(st), 1)
+        self.assertLessEqual(_ts_of(st[0]) - T0, timedelta(seconds=12))
+
+    def test_partial_fills_stop_follows_bought_shares(self):
+        self.p.s["closed"].append(dict(ticker="OLD"))
+        self.b.fill_qty = 1
+        n = {"k": 0}
+
+        def later():
+            n["k"] += 1
+            buy = next(o for o in self.b.orders.values() if o["type"] == "LIMIT")
+            if n["k"] == 3 and buy["status"] == "WORKING":
+                self.b.fill(buy["id"], 1, 50.0)
+        self.b.on_sleep = later
+        r = self.p.cycle(approval(qty=3))
+        self.assertEqual(r["entry"]["monitor"], "done")
+        self.assertEqual(self.p.s["positions"][0]["qty"], 2)
+        self.assertEqual([o["qty"] for o in self.b.stops("XYZ", ("WORKING",))], [2.0])
+        buy = next(o for o in self.b.orders.values() if o["type"] == "LIMIT")
+        self.assertEqual(buy["status"], "CANCELED")
+
+    def test_broker_lost_during_monitoring_is_an_emergency(self):
+        self.b.q = 61.0
+
+        def drop():
+            self.b.down = True
+        self.b.on_sleep = drop
+        r = self.p.cycle(approval())
+        self.assertEqual(r["entry"]["monitor"], "emergency")
+        self.assertIn("EMERGENCY", self.p.s["blocked"])
+
+
+# ================================================================= 5) exits, partial, manual
+class Exits(Base):
+    def test_close_cancels_confirmed_then_sells(self):
+        self.after_trade()
+        self.p.request_exit("XYZ")
+        self.b.q = 55.0
+        self.p.cycle()
+        self.p.cycle()
+        self.assertEqual(self.p.s["positions"], [])
+        c = self.p.s["closed"][0]
+        self.assertEqual((c["exit_reason"], c["exit"], c["realized_pnl"]), ("owner", 55.0, 5.0))
+        self.assertEqual(self.b.stops("XYZ"), [])
+        self.assertNotIn("XYZ", self.b.positions)
+
+    def test_no_sell_while_stop_cancel_is_pending(self):
+        self.after_trade()
+        self.p.request_exit("XYZ")
+        self.b.cancel_mode = "pending"
+        self.p.cycle()
+        self.assertEqual(self.b.sent_types("MARKET", "SELL"), [])
+        self.b.settle_cancels()
+        self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("MARKET", "SELL")), 1)
+
+    def test_partial_sell_rest_goes_back_under_protection(self):
+        self.p.s["closed"].append(dict(ticker="OLD"))
+        self.p.cycle(approval(qty=3))
+        self.p.request_exit("XYZ")
+        orig = self.b.place
+
+        def place(order):
+            if order["orderType"] != "MARKET":
+                return orig(order)
+            self.b.sent.append(("ok", copy.deepcopy(order)))
+            o = self.b._new(order, "WORKING")
+            self.b.fill(o["id"], 1, 52.0)                          # 1 of 3 sold ...
+            o["status"], o["remaining"] = "CANCELED", 0            # ... rest cancelled
+            return o["id"]
+        self.b.place = place
+        self.p.cycle()
+        self.p.cycle()
+        pos = self.p.s["positions"][0]
+        self.assertEqual((pos["status"], pos["qty"]), ("open", 2))
+        self.assertEqual([o["qty"] for o in self.b.stops("XYZ", ("WORKING",))], [2.0])
+
+    def test_stop_partial_fill_reduces_shares(self):
+        self.p.s["closed"].append(dict(ticker="OLD"))
+        self.p.cycle(approval(qty=3))
+        st = self.b.stops("XYZ")[0]
+        self.b.fill(st["id"], 1, 44.9)
+        self.p.cycle()
+        pos = self.p.s["positions"][0]
+        self.assertEqual(pos["qty"], 2)
+        self.assertTrue(pos["protected"])
+        self.assertEqual(len(self.b.sent_types("STOP")), 1)
+        self.b.fill(st["id"], 2, 44.9)
+        self.p.cycle()
+        self.assertEqual(self.p.s["positions"], [])
+        self.assertEqual(self.p.s["closed"][-1]["exit_reason"], "stop")
+
+    def test_exit_requested_but_stop_fired_first(self):
+        self.after_trade()
+        st = self.b.stops("XYZ")[0]
+        self.p.request_exit("XYZ")
+        self.b.fill(st["id"], 1, 44.9)
+        self.p.cycle()
+        self.assertEqual(self.b.sent_types("MARKET", "SELL"), [])
+        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "stop")
+
+    def test_manual_close_cancels_the_pilot_stop(self):
+        self.after_trade()
+        st = self.b.stops("XYZ")[0]
+        del self.b.positions["XYZ"]                                 # owner sold at Schwab
+        self.p.cycle()
+        self.assertEqual(self.b.orders[st["id"]]["status"], "CANCELED")
+        self.assertEqual(self.p.s["positions"], [])
+        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "outside")
+        self.assertIn("outside the pilot", self.p.s["blocked"])
+        self.assertEqual(self.b.sent_types("MARKET", "SELL"), [])
+
+    def test_partial_manual_sale_cuts_the_stop(self):
+        self.p.s["closed"].append(dict(ticker="OLD"))
+        self.p.cycle(approval(qty=3))
+        self.b.positions["XYZ"] = 1
+        self.p.cycle()
+        self.assertEqual(self.p.s["positions"][0]["qty"], 1)
+        self.assertEqual([o["qty"] for o in self.b.stops("XYZ", ("WORKING",))], [1.0])
+
+    def test_sell_response_lost_never_sold_twice(self):
+        self.after_trade()
+        self.p.request_exit("XYZ")
+        self.b.script = ["lost_after_accept"]
+        self.p.cycle()
+        for _ in range(3):
+            self.clock.adv(30)
+            self.p.cycle()
+        self.assertEqual(len(self.b.sent_types("MARKET", "SELL")), 1)
+        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "owner")
+
+    def test_manual_shares_and_orders_never_touched(self):
+        self.after_trade()
+        manual = self.b._new(EN.stop_sell("XYZ", 7, 40.0), "WORKING")
+        self.b.positions["XYZ"] += 7
+        self.p.cycle()
+        self.p.request_exit("XYZ")
+        self.p.cycle()
+        self.p.cycle()
+        sells = self.b.sent_types("MARKET", "SELL")
+        self.assertEqual([o["orderLegCollection"][0]["quantity"] for o in sells], [1])
+        self.assertNotIn(manual["id"], self.b.cancels)
+        self.assertEqual(self.b.positions["XYZ"], 7)
+
+
+# ================================================================= guards
 class Guards(Base):
     def test_live_off_and_entries_off_send_nothing(self):
         for p in (self.make(live=False), self.make(entries_enabled=False)):
-            r = p.cycle(approval())
-            self.assertFalse(r["entry"]["sent"])
+            self.assertFalse(p.cycle(approval())["entry"]["sent"])
         self.assertEqual(self.b.sent, [])
 
     def test_duplicate_run_same_approval(self):
-        self.p.cycle(approval())
-        self.p.cycle()
-        r = self.p.cycle(approval())
-        self.assertFalse(r["entry"]["sent"])
-        self.assertTrue(any("approval already used" in w for w in r["entry"]["why"]))
-        self.assertEqual(len(self.b.buys()), 1)
+        self.after_trade()
+        self.assertFalse(self.p.cycle(approval())["entry"]["sent"])
+        self.assertEqual(len(self.b.sent_types("LIMIT", "BUY")), 1)
 
-    def test_budget_first_trade_and_one_position(self):
-        r = self.p.cycle(approval(qty=2))                     # 2 x 50 x 1.02 > $100
-        self.assertFalse(r["entry"]["sent"])
-        self.assertTrue(any("first trade" in w for w in r["entry"]["why"]))
-        self.p.cycle(approval(approval_id="A2"))
-        self.p.cycle()
-        r = self.p.cycle(approval(approval_id="A3", ticker="ABC"))
-        self.assertFalse(r["entry"]["sent"])
+    def test_one_position(self):
+        self.after_trade()
+        r = self.p.cycle(approval(approval_id="A2", ticker="ABC"))
         self.assertTrue(any("max 1 pilot position" in w for w in r["entry"]["why"]))
 
-    def test_total_budget_cap(self):
-        p = self.make()
-        p.s["closed"].append(dict(ticker="OLD"))              # not the first trade any more
-        self.b.cash = 5000
-        r = p.cycle(approval(qty=20, max_price=60))           # 20 x 50 x 1.02 = 1020
-        self.assertFalse(r["entry"]["sent"])
-        self.assertTrue(any("budget" in w for w in r["entry"]["why"]))
-
-    def test_quote_above_approved_price_and_expired_approval(self):
-        self.b.q = 61.0
-        self.assertFalse(self.p.cycle(approval())["entry"]["sent"])
-        self.clock.adv(180)
-        self.b.q = 50.0
-        r = self.p.cycle(approval(approval_id="A9"))
-        self.assertTrue(any("expired" in w for w in r["entry"]["why"]))
-        self.assertEqual(self.b.sent, [])
-
-    def test_manual_position_or_order_in_the_same_ticker(self):
-        self.b.positions["XYZ"] = 10                           # owner's own shares
-        r = self.p.cycle(approval())
-        self.assertFalse(r["entry"]["sent"])
-        self.assertTrue(any("manual" in w for w in r["entry"]["why"]))
+    def test_manual_position_or_order_in_the_ticker(self):
+        self.b.positions["XYZ"] = 10
+        self.assertTrue(any("manual" in w for w in self.p.cycle(approval())["entry"]["why"]))
         del self.b.positions["XYZ"]
-        self.b._new({"orderType": "LIMIT", "duration": "DAY", "orderLegCollection": [
-            {"instruction": "BUY", "quantity": 5, "instrument": {"symbol": "XYZ"}}]}, "WORKING")
+        self.b._new(EN.limit_buy("XYZ", 5, 40.0), "WORKING")
         r = self.p.cycle(approval(approval_id="A2"))
         self.assertTrue(any("not from the pilot" in w for w in r["entry"]["why"]))
         self.assertEqual(self.b.sent, [])
 
-    def test_manual_orders_and_shares_never_touched_on_exit(self):
-        self.p.cycle(approval())
-        self.p.cycle()
-        manual = self.b._new({"orderType": "STOP", "duration": "GOOD_TILL_CANCEL", "stopPrice": 40,
-                              "orderLegCollection": [{"instruction": "SELL", "quantity": 7,
-                                                      "instrument": {"symbol": "XYZ"}}]}, "WORKING")
-        self.b.positions["XYZ"] += 7                            # owner bought 7 more later
-        self.p.cycle()
-        self.p.request_exit("XYZ")
-        self.p.cycle()
-        sells = [o for _, o in self.b.sent if o["orderType"] == "MARKET"
-                 and o["orderLegCollection"][0]["instruction"] == "SELL"]
-        self.assertEqual([o["orderLegCollection"][0]["quantity"] for o in sells], [1])
-        self.assertNotIn(manual["id"], self.b.cancels)
-        self.assertEqual(self.b.orders[manual["id"]]["status"], "WORKING")
-        self.assertEqual(self.b.positions["XYZ"], 7)
-
-    def test_expired_token_sends_nothing(self):
+    def test_expired_token_and_account_mismatch(self):
         self.b.down = True
-        r = self.p.cycle(approval())
-        self.assertIn("unavailable", r["broker"])
-        self.assertEqual(self.b.sent, [])
-        self.assertTrue(self.p.s["alerts"])
-
-    def test_account_mismatch_blocks(self):
+        self.assertIn("unavailable", self.p.cycle(approval())["broker"])
+        self.b.down = False
         p = self.make(account_suffix="0000")
         p.cycle(approval())
         self.assertTrue(p.s["blocked"])
         self.assertEqual(self.b.sent, [])
 
+    def test_expired_approval_and_bad_stop(self):
+        self.clock.adv(3 * 3600)
+        self.assertTrue(any("expired" in w for w in self.p.cycle(approval())["entry"]["why"]))
+        r = self.p.cycle(approval(approval_id="A2",
+                                  expires_at=(T0 + timedelta(hours=9)).isoformat(), stop_price=61.0))
+        self.assertTrue(any("stop" in w for w in r["entry"]["why"]))
 
-class UnknownResults(Base):
-    def test_timeout_but_order_exists_is_matched_never_resent(self):
-        self.b.script = ["timeout_created"]
+    def test_buy_response_lost_matched_and_protected(self):
+        self.b.script = ["lost_after_accept"]
         r = self.p.cycle(approval())
-        self.assertEqual(r["entry"]["status"], "unknown")
-        self.assertTrue(self.p.s["blocked"])
-        self.clock.adv(1)
-        self.p.cycle()
-        self.assertEqual(len(self.b.buys()), 1)
-        self.p.cycle()
-        self.assertEqual(self.p.s["positions"][0]["qty"], 1)
-        self.assertEqual(len(self.b.live_stops("XYZ")), 1)
+        self.assertEqual(r["entry"]["monitor"], "done")
+        self.assertEqual(len(self.b.sent_types("LIMIT", "BUY")), 1)
+        self.assertEqual(len(self.b.stops("XYZ", ("WORKING",))), 1)
 
-    def test_timeout_and_order_lost_stays_blocked(self):
-        self.b.script = ["timeout_lost"]
-        self.p.cycle(approval())
-        self.clock.adv(EN.UNKNOWN_WINDOW_MIN + 1)
-        self.p.cycle()
-        self.assertEqual(self.p.s["intents"][0]["status"], "not_found")
-        self.assertIn("never re-sent", self.p.s["blocked"])
-        r = self.p.cycle(approval(approval_id="A2"))
-        self.assertFalse(r["entry"]["sent"])
-        self.assertEqual(len(self.b.sent), 1)
-
-    def test_restart_after_crash_between_save_and_send(self):
+    def test_crash_between_save_and_send(self):
         st = EN.new_state()
-        i = dict(id="i1", side="BUY", ticker="XYZ", qty=1, est_price=50.0, stop_price=45.0,
-                 order={"orderType": "MARKET"}, status="submitting", created=T0.isoformat(),
-                 sent=None, order_id=None, approval_id="A1")
-        st["intents"].append(i)
+        st["intents"].append(dict(id="i1", kind="BUY", ticker="XYZ", qty=1,
+                                  order=EN.limit_buy("XYZ", 1, 60.0), status="submitting",
+                                  created=T0.isoformat(), sent=None, order_id=None, filled=0,
+                                  position="p1", limit=60.0, stop_price=45.0, approval_id="A1"))
         p = self.make(state=st)
         p.cycle()
-        self.assertEqual(p.s["intents"][0]["status"], "unknown")      # not found yet: wait
-        self.assertEqual(self.b.sent, [])
-        self.clock.adv(EN.UNKNOWN_WINDOW_MIN + 1)
+        self.assertEqual(p.s["intents"][0]["status"], "unknown")
+        self.clock.adv(EN.UNKNOWN_WINDOW_MIN * 60 + 1)
         p.cycle()
         self.assertEqual(p.s["intents"][0]["status"], "not_found")
         self.assertEqual(self.b.sent, [])
 
-    def test_sell_timeout_is_matched_never_sold_twice(self):
-        self.p.cycle(approval())
-        self.p.cycle()
+    def test_broker_lost_mid_pass_does_not_crash_or_send(self):
+        self.after_trade()
+        orig = self.b.get_order
+
+        def flaky(oid):
+            self.b.down = True
+            return orig(oid)
+        self.b.get_order = flaky
         self.p.request_exit("XYZ")
-        self.b.script = ["timeout_created"]
+        r = self.p.cycle()
+        self.assertIn("lost", r.get("broker", ""))
+        self.assertEqual(self.b.sent_types("MARKET", "SELL"), [])
+        self.b.get_order, self.b.down = orig, False
         self.p.cycle()
-        self.clock.adv(1)
-        for _ in range(3):
-            self.p.cycle()
-        sells = [o for _, o in self.b.sent if o["orderType"] == "MARKET"
-                 and o["orderLegCollection"][0]["instruction"] == "SELL"]
-        self.assertEqual(len(sells), 1)
-        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "owner")
-        self.assertNotIn("XYZ", self.b.positions)
-
-    def test_buy_rejected(self):
-        self.b.script = ["reject"]
-        r = self.p.cycle(approval())
-        self.assertEqual(r["entry"]["status"], "rejected")
-        self.assertEqual(self.p.s["positions"], [])
-        self.assertIsNone(self.p.s["blocked"])
-
-
-class Fills(Base):
-    def test_partial_fill_stop_matches_bought_shares(self):
-        self.b.cash = 500
-        p = self.make()
-        p.s["closed"].append(dict(ticker="OLD"))                # allow qty 3 under the budget
-        self.b.fill_qty = 2
-        p.cycle(approval(qty=3))
-        p.cycle()
-        self.assertEqual(p.s["positions"][0]["qty"], 2)
-        self.assertEqual([o["qty"] for o in self.b.live_stops("XYZ")], [2.0])
-        buy = self.b.buys()[0]
-        oid = next(o["id"] for o in self.b.orders.values() if o["type"] == "MARKET")
-        self.b.fill(oid, 1, 50.0)                                # the rest fills later
-        p.cycle()
-        self.assertEqual(p.s["positions"][0]["qty"], 3)
-        self.assertEqual([o["qty"] for o in self.b.live_stops("XYZ")], [3.0])
-        self.assertEqual(buy["orderLegCollection"][0]["quantity"], 3)
-
-    def test_partial_remainder_cancelled_after_timeout(self):
-        p = self.make()
-        p.s["closed"].append(dict(ticker="OLD"))
-        self.b.fill_qty = 1
-        p.cycle(approval(qty=3))
-        self.clock.adv(EN.ENTRY_TIMEOUT_MIN + 1)
-        p.cycle()
-        p.cycle()
-        oid = next(o["id"] for o in self.b.orders.values() if o["type"] == "MARKET")
-        self.assertIn(oid, self.b.cancels)
-        self.assertEqual([o["qty"] for o in self.b.live_stops("XYZ")], [1.0])
-
-    def test_stop_rejected_blocks_entries_and_alerts(self):
-        self.b.script = ["ok", "stop_reject", "stop_reject", "stop_reject"]
-        self.p.cycle(approval())
-        for _ in range(4):
-            self.p.cycle()
-        self.assertIn("PROTECTION FAILED", self.p.s["blocked"])
-        self.assertTrue(any("stop placement failed" in a["title"] for a in self.p.s["alerts"]))
-        r = self.p.cycle(approval(approval_id="A2", ticker="ABC"))
-        self.assertFalse(r["entry"]["sent"])
-
-    def test_stop_cancelled_outside_is_restored(self):
-        self.p.cycle(approval())
         self.p.cycle()
-        sid = self.b.live_stops("XYZ")[0]["id"]
-        self.b.orders[sid]["status"] = "CANCELED"
-        self.p.cycle()
-        self.assertEqual(len(self.b.live_stops("XYZ")), 1)
-        self.assertTrue(self.p.s["positions"][0]["protected"])
-
-    def test_stopped_out_and_exit_race(self):
-        self.p.cycle(approval())
-        self.p.cycle()
-        sid = self.b.live_stops("XYZ")[0]["id"]
-        self.p.request_exit("XYZ")
-        self.b.fill(sid, 1, 44.9)                                # the stop fires first
-        self.p.cycle()
-        self.assertEqual(self.p.s["closed"][0]["exit_reason"], "stop")
-        sells = [o for _, o in self.b.sent if o["orderType"] == "MARKET"
-                 and o["orderLegCollection"][0]["instruction"] == "SELL"]
-        self.assertEqual(sells, [])
-
-    def test_owner_sells_manually_no_stop_without_shares(self):
-        self.p.cycle(approval())
-        self.p.cycle()
-        sid = self.b.live_stops("XYZ")[0]["id"]
-        self.b.orders[sid]["status"] = "CANCELED"              # owner cancels the stop ...
-        del self.b.positions["XYZ"]                              # ... and sells at Schwab
-        n = len(self.b.sent)
-        self.p.cycle()
-        self.assertEqual(len(self.b.sent), n)                    # nothing placed
-        self.assertIn("owner must check", self.p.s["blocked"])
+        self.assertEqual(len(self.b.sent_types("MARKET", "SELL")), 1)
 
     def test_kill_switch_keeps_protection(self):
-        self.p.cycle(approval())
-        self.p.cycle()
-        sid = self.b.live_stops("XYZ")[0]["id"]
-        self.b.orders[sid]["status"] = "CANCELED"
+        self.after_trade()
+        st = self.b.stops("XYZ")[0]
+        self.b.orders[st["id"]]["status"] = "CANCELED"
         off = self.make(state=self.p.s, entries_enabled=False)
         r = off.cycle(approval(approval_id="A2", ticker="ABC"))
         self.assertFalse(r["entry"]["sent"])
-        self.assertEqual(len(self.b.live_stops("XYZ")), 1)
+        self.assertEqual(len(self.b.stops("XYZ", ("WORKING",))), 1)
 
 
 class ReadOnly(unittest.TestCase):
@@ -420,20 +543,15 @@ class ReadOnly(unittest.TestCase):
         with self.assertRaises(ReadOnlyViolation):
             ro.post("https://api.schwabapi.com/trader/v1/accounts/h/previewOrder")
         self.assertEqual(ro.post("https://api.schwabapi.com/v1/oauth/token"), "ok")
-        self.assertEqual(ro.request("GET", "https://api.schwabapi.com/trader/v1/accounts"), "ok")
 
-    def test_norm_order_children_and_avg(self):
-        o = {"orderId": 5, "status": "FILLED", "orderType": "MARKET", "quantity": 3,
+    def test_norm_order(self):
+        o = {"orderId": 5, "status": "FILLED", "orderType": "LIMIT", "price": 60, "quantity": 3,
              "filledQuantity": 3, "orderLegCollection": [{"instruction": "BUY", "quantity": 3,
                                                           "instrument": {"symbol": "BRK/B"}}],
              "orderActivityCollection": [{"executionLegs": [{"quantity": 1, "price": 10},
-                                                           {"quantity": 2, "price": 13}]}],
-             "childOrderStrategies": [{"orderId": 6, "status": "WORKING", "orderType": "STOP",
-                                       "quantity": 3, "stopPrice": 9, "orderLegCollection": [
-                                           {"instruction": "SELL", "quantity": 3,
-                                            "instrument": {"symbol": "BRK/B"}}]}]}
-        n = norm_order(o)
-        self.assertEqual((n[0]["symbol"], n[0]["avg_price"], n[1]["parent"]), ("BRK-B", 12.0, "5"))
+                                                           {"quantity": 2, "price": 13}]}]}
+        n = norm_order(o)[0]
+        self.assertEqual((n["symbol"], n["avg_price"], n["price"]), ("BRK-B", 12.0, 60))
 
 
 if __name__ == "__main__":

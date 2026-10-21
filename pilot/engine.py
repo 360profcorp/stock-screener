@@ -1,42 +1,50 @@
-"""Real-money pilot engine (Schwab). LIVE IS OFF BY DEFAULT and nothing in this repository
-switches it on. One long position at most, $1,000 pilot budget, first trade <= $100, every
-buy only after the owner approved its exact parameters.
+"""Real-money pilot engine (Schwab), v2. LIVE IS OFF BY DEFAULT and nothing in this repository
+switches it on. One long position at most, $1,000 pilot budget, first trade <= $100, every buy
+only after the owner approved its exact parameters.
 
-Order path (one cycle = `cycle()`, safe to re-run at any time):
+Every order the pilot sends (BUY, protective STOP, exit SELL) goes through the same path:
+  intent saved BEFORE sending -> 4xx = rejected (safe) | timeout / 5xx / no id = UNKNOWN ->
+  matched against the broker's own order list (ticker, side, type, quantity, price) ->
+  one match adopted | several = blocked | none after UNKNOWN_WINDOW_MIN = blocked.
+  An unknown order is NEVER re-sent; while one is unresolved nothing of that kind is sent.
 
-  0. broker snapshot FIRST (positions, orders, balances). Unreachable broker / expired login:
-     nothing is sent, new entries are blocked; the broker-side stop keeps protecting.
-  1. unknown submissions (timeout / 5xx / no id) are resolved against the broker's order list
-     (same ticker, side, quantity, entered after the intent). Never re-sent.
-  2. entry order: poll -> filled quantity; partial fills: the stop covers the shares actually
-     bought; a remainder still working past ENTRY_TIMEOUT is cancelled (pilot's own order).
-  3. protection: every open pilot position must have a live GTC STOP SELL at the broker for
-     exactly the pilot's shares. Missing / wrong quantity -> re-placed (the old one cancelled
-     first); after STOP_ATTEMPTS failures -> PROTECTION FAILED: entries blocked, owner alerted.
-  4. exit (owner request or time exit): cancel the pilot's stop, confirm it is cancelled, then
-     market-sell the pilot's shares only; a stop that filled meanwhile means already closed.
-  5. new entry (only with an approval, live on, entries on, nothing unresolved).
+Entry:   LIMIT BUY DAY at the owner-approved max price (the limit, not a quote check, enforces
+         price and budget). After sending, the same call monitors the order (POLL_SEC) and
+         puts a stop on every filled share at once; an unfilled remainder is cancelled at the
+         end of MONITOR_SEC. A fill without a confirmed stop by then -> EMERGENCY alert, entries
+         blocked (see PILOT.md for the owner's procedure).
+Stop:    exactly one pilot STOP SELL GTC, for exactly the pilot's shares at the approved stop
+         price, in a confirmed working status (PENDING_CANCEL / PENDING_REPLACE do not count).
+         A wrong stop is cancelled and its cancellation CONFIRMED before a new one is sent.
+Exit:    reconcile shares held and stop fills first, cancel the pilot's stop and confirm, then
+         sell min(pilot shares, shares held). Partial sells and partial stop fills reduce the
+         pilot's shares; the rest stays protected.
+Outside: shares sold outside the pilot -> the pilot's stop is cut to the shares still held,
+         or cancelled when none are left (never a stop on shares that are gone); owner alerted.
 
-The pilot only ever touches order ids recorded in its own state. Manual positions and orders
-are never sold, cancelled or modified; a ticker with any manual position or order is refused.
-Every intent is saved BEFORE it is sent (save callback), so a crash between "send" and
-"record" is caught by step 1 on the next run.
+The pilot only touches order ids it recorded. Manual positions and orders are never sold,
+cancelled or modified; a ticker with any manual position or order is refused for entry.
 """
 import copy
+import time as _time
 import uuid
 from datetime import datetime, timedelta, timezone
 
 from pilot.broker import (LIVE_STATUSES, BrokerUnavailable, OrderRejected, SendUnknown,
-                          market_buy, market_sell, stop_sell)
+                          limit_buy, market_sell, stop_sell)  # noqa: F401 (re-exported for tests)
 
 BUDGET_USD = 1000.0
 FIRST_TRADE_MAX_USD = 100.0
 MAX_POSITIONS = 1
-PRICE_BUFFER = 0.02            # budget check uses quote * (1 + 2 %) for a market buy
-ENTRY_TIMEOUT_MIN = 15          # a partially filled entry still working after this: cancel rest
-UNKNOWN_WINDOW_MIN = 10         # how long an unknown submission may stay unmatched
-STOP_ATTEMPTS = 3
-MATCH_SLACK_SEC = 120           # broker clock vs ours when matching an unknown submission
+UNKNOWN_WINDOW_MIN = 10          # an unknown order still unmatched after this: blocked
+STOP_ATTEMPTS = 3                # definite rejections of a stop before PROTECTION FAILED
+MATCH_SLACK_SEC = 120            # broker clock vs ours when matching an unknown order
+POLL_SEC = 2                     # entry monitor
+MONITOR_SEC = 120
+# a stop counts as protection only in these statuses (not PENDING_CANCEL / _REPLACE / review)
+PROTECTING = {"WORKING", "PENDING_ACTIVATION", "AWAITING_STOP_CONDITION", "QUEUED",
+              "ACCEPTED", "NEW", "AWAITING_PARENT_ORDER", "AWAITING_CONDITION"}
+UNRESOLVED = ("submitting", "unknown", "ambiguous", "not_found")
 
 
 class PilotBlocked(RuntimeError):
@@ -44,7 +52,7 @@ class PilotBlocked(RuntimeError):
 
 
 def new_state():
-    return dict(version=1, intents=[], positions=[], closed=[], used_approvals=[],
+    return dict(version=2, intents=[], positions=[], closed=[], used_approvals=[],
                 blocked=None, alerts=[], log=[])
 
 
@@ -62,9 +70,13 @@ def _ts(s):
     return datetime.fromisoformat(str(s).replace("Z", "+00:00").replace("+0000", "+00:00"))
 
 
+def _px(x):
+    return None if x is None else round(float(x), 2)
+
+
 class Pilot:
     def __init__(self, broker, state=None, save=None, live=False, entries_enabled=True,
-                 account_suffix="", now=_now, alert=None):
+                 account_suffix="", now=_now, alert=None, sleep=None):
         self.b = broker
         self.s = state if state is not None else new_state()
         self.save = save or (lambda s: None)
@@ -72,13 +84,13 @@ class Pilot:
         self.entries_enabled = bool(entries_enabled)
         self.account_suffix = account_suffix
         self.now = now
+        self.sleep = sleep or _time.sleep
         self.alert_fn = alert or (lambda title, text: None)
         self.snap = None
 
-    # ------------------------------------------------------------ helpers
+    # ============================================================ basics
     def _log(self, text):
-        self.s["log"].append(f"{_iso(self.now())} {text}")
-        self.s["log"] = self.s["log"][-500:]
+        self.s["log"] = (self.s["log"] + [f"{_iso(self.now())} {text}"])[-500:]
 
     def _alert(self, title, text):
         self.s["alerts"].append(dict(at=_iso(self.now()), title=title, text=text))
@@ -93,47 +105,110 @@ class Pilot:
     def _persist(self):
         self.save(copy.deepcopy(self.s))
 
+    def refresh(self):
+        self.snap = self.b.snapshot()
+
+    def held(self, ticker):
+        return float((self.snap["positions"].get(ticker) or {}).get("qty", 0))
+
     def own_ids(self):
-        ids = set()
-        for i in self.s["intents"]:
-            if i.get("order_id"):
-                ids.add(str(i["order_id"]))
+        ids = {str(i["order_id"]) for i in self.s["intents"] if i.get("order_id")}
         for p in self.s["positions"] + self.s["closed"]:
-            for k in ("entry_order_id", "stop_order_id", "exit_order_id"):
-                if p.get(k):
-                    ids.add(str(p[k]))
-            ids.update(map(str, p.get("old_stop_ids", [])))
+            ids.update(p.get("order_ids", []))
         return ids
 
     def _order(self, oid):
-        for o in self.snap["orders"]:
-            if o["id"] == str(oid):
-                return o
+        """Fresh read of one order (the snapshot may be seconds old)."""
         return self.b.get_order(oid)
 
-    def pilot_qty(self, ticker):
-        return sum(p["qty"] for p in self.s["positions"] if p["ticker"] == ticker)
-
-    def manual_activity(self, ticker):
-        """Broker shares / live orders in `ticker` that are not the pilot's."""
-        held = float((self.snap["positions"].get(ticker) or {}).get("qty", 0))
-        manual_qty = held - self.pilot_qty(ticker)
-        own = self.own_ids()
-        manual_orders = [o for o in self.snap["orders"] if o["symbol"] == ticker
-                         and o["status"] in LIVE_STATUSES and o["id"] not in own]
-        return manual_qty, manual_orders
+    def pending(self, kind, pos_id=None):
+        return [i for i in self.s["intents"] if i["kind"] == kind and i["status"] in UNRESOLVED
+                and (pos_id is None or i.get("position") == pos_id)]
 
     def committed_usd(self):
-        c = sum(p["qty"] * p["entry"] for p in self.s["positions"])
-        c += sum(i["qty"] * i["est_price"] * (1 + PRICE_BUFFER) for i in self.s["intents"]
-                 if i["side"] == "BUY" and i["status"] in ("submitting", "unknown", "working"))
+        c = sum(p["qty"] * p["entry"] for p in self.s["positions"] if p["qty"] > 0)
+        c += sum((i["qty"] - i.get("filled", 0)) * i["limit"] for i in self.s["intents"]
+                 if i["kind"] == "BUY" and i["status"] in UNRESOLVED + ("working",))
         return c
 
-    # ------------------------------------------------------------ the cycle
+    # ============================================================ send path (all orders)
+    def _intent(self, kind, ticker, qty, order, **extra):
+        i = dict(id=uuid.uuid4().hex[:12], kind=kind, ticker=ticker, qty=int(qty), order=order,
+                 status="submitting", created=_iso(self.now()), sent=None, order_id=None,
+                 filled=0, **extra)
+        self.s["intents"].append(i)
+        self._persist()                                   # saved BEFORE the order leaves
+        return i
+
+    def _send(self, i):
+        i["sent"] = _iso(self.now())
+        try:
+            oid = self.b.place(i["order"])
+        except OrderRejected as e:
+            i["status"], i["error"] = "rejected", str(e)
+            self._log(f"{i['kind']} {i['ticker']} rejected: {e}")
+            self._persist()
+            return None
+        except SendUnknown as e:
+            i["status"], i["error"] = "unknown", str(e)
+            self._log(f"{i['kind']} {i['ticker']} result unknown: {e}")
+            self._persist()
+            return None
+        except BrokerUnavailable as e:
+            i["status"], i["error"] = "not_sent", str(e)
+            self._persist()
+            return None
+        i["order_id"], i["status"] = str(oid), "working"
+        self._attach(i)
+        self._persist()
+        return str(oid)
+
+    def _attach(self, i):
+        if i.get("position"):
+            p = self._pos(i["position"])
+            if p is not None:
+                p.setdefault("order_ids", []).append(i["order_id"])
+
+    def _matches(self, i, o):
+        leg = i["order"]["orderLegCollection"][0]
+        if not (o["symbol"] == i["ticker"] and o["instruction"] == leg["instruction"]
+                and o["type"] == i["order"]["orderType"] and int(o["qty"]) == int(i["qty"])
+                and o["parent"] is None):
+            return False
+        if i["order"].get("stopPrice") is not None and _px(o["stop_price"]) != _px(
+                i["order"]["stopPrice"]):
+            return False
+        if i["order"].get("price") is not None and _px(o.get("price")) != _px(i["order"]["price"]):
+            return False
+        t0 = _ts(i["created"]) - timedelta(seconds=MATCH_SLACK_SEC)
+        return (_ts(o["entered"]) or t0) >= t0
+
+    def resolve_unknown(self, out):
+        own = self.own_ids()
+        for i in [i for i in self.s["intents"] if i["status"] in ("submitting", "unknown")]:
+            cands = [o for o in self.snap["orders"] if o["id"] not in own and self._matches(i, o)]
+            if len(cands) == 1:
+                i["order_id"], i["status"] = cands[0]["id"], "working"
+                own.add(i["order_id"])
+                self._attach(i)
+                self._log(f"unknown {i['kind']} {i['ticker']} matched broker order {i['order_id']}")
+                out["actions"].append(f"matched unknown {i['kind']} {i['ticker']} -> {i['order_id']}")
+            elif len(cands) > 1:
+                i["status"] = "ambiguous"
+                self._block(f"{len(cands)} broker orders could be the unknown {i['kind']} "
+                            f"{i['ticker']}: owner must check (never re-sent)")
+            elif self.now() - _ts(i["created"]) > timedelta(minutes=UNKNOWN_WINDOW_MIN):
+                i["status"] = "not_found"
+                self._block(f"{i['kind']} {i['ticker']} result unknown and not found at the "
+                            f"broker after {UNKNOWN_WINDOW_MIN} min: never re-sent, owner must check")
+            else:
+                i["status"] = "unknown"
+
+    # ============================================================ the cycle
     def cycle(self, approval=None) -> dict:
         out = dict(at=_iso(self.now()), actions=[], entry=None)
         try:
-            self.snap = self.b.snapshot()
+            self.refresh()
         except BrokerUnavailable as e:
             out["broker"] = f"unavailable: {e}"
             self._alert("Pilot: broker unavailable", f"{e}. Nothing sent; stops at Schwab stay.")
@@ -144,147 +219,158 @@ class Pilot:
             self._block("connected account does not match the pilot account")
             self._persist()
             return out
-        self.resolve_unknown(out)
-        self.poll_entries(out)
-        self.check_positions(out)
-        self.ensure_protection(out)
-        self.progress_exits(out)
+        try:
+            self.step(out)
+        except BrokerUnavailable as e:                    # lost mid-pass: stop, keep state
+            out["broker"] = f"lost during the pass: {e}"
+            self._alert("Pilot: broker lost during a pass", f"{e}. Re-run reconciles.")
+            self._persist()
+            return out
         if approval is not None:
-            out["entry"] = self.enter(approval)
+            out["entry"] = self.enter(approval, out)
         self._persist()
         return out
 
-    # ------------------------------------------------------------ 1) unknown submissions
-    def resolve_unknown(self, out):
-        own = self.own_ids()
-        for i in [i for i in self.s["intents"] if i["status"] in ("submitting", "unknown")]:
-            t0 = _ts(i["created"]) - timedelta(seconds=MATCH_SLACK_SEC)
-            cands = [o for o in self.snap["orders"] if o["symbol"] == i["ticker"]
-                     and o["instruction"] == i["side"] and int(o["qty"]) == int(i["qty"])
-                     and o["id"] not in own and o["parent"] is None
-                     and (_ts(o["entered"]) or t0) >= t0
-                     and o["type"] == i["order"]["orderType"]]
-            if len(cands) == 1:
-                i["order_id"], i["status"] = cands[0]["id"], "working"
-                self._log(f"unknown {i['side']} {i['ticker']} matched broker order {i['order_id']}")
-                out["actions"].append(f"matched unknown {i['side']} {i['ticker']} -> {i['order_id']}")
-                own.add(i["order_id"])
-            elif len(cands) > 1:
-                i["status"] = "ambiguous"
-                self._block(f"{len(cands)} broker orders could be the unknown {i['side']} "
-                            f"{i['ticker']}: owner must check")
-            elif self.now() - _ts(i["created"]) > timedelta(minutes=UNKNOWN_WINDOW_MIN):
-                i["status"] = "not_found"
-                self._block(f"{i['side']} {i['ticker']} result unknown and not found at the broker "
-                            f"after {UNKNOWN_WINDOW_MIN} min: never re-sent, owner must check")
-            else:
-                i["status"] = "unknown"
-                self._block(f"{i['side']} {i['ticker']} result still unknown")
-
-    # ------------------------------------------------------------ 2) entry orders
-    def poll_entries(self, out):
-        for i in [i for i in self.s["intents"] if i["side"] == "BUY" and i["status"] == "working"]:
-            o = self._order(i["order_id"])
-            filled = int(o["filled"])
-            if o["status"] == "REJECTED" or (o["status"] in ("CANCELED", "EXPIRED") and not filled):
-                i["status"] = o["status"].lower()
-                self._log(f"entry {i['ticker']} {o['status']}")
-                out["actions"].append(f"entry {i['ticker']} {o['status']}")
-                if self.s["blocked"] and "still unknown" in self.s["blocked"]:
-                    self.s["blocked"] = None
-                continue
-            if filled <= 0:
-                continue
-            pos = next((p for p in self.s["positions"] if p["entry_order_id"] == i["order_id"]),
-                       None)
-            if pos is None:
-                pos = dict(id=i["id"], ticker=i["ticker"], qty=0, entry=None,
-                           entry_order_id=i["order_id"], stop_price=i["stop_price"],
-                           stop_order_id=None, old_stop_ids=[], stop_attempts=0,
-                           opened=_iso(self.now()), status="open", approval_id=i["approval_id"])
-                self.s["positions"].append(pos)
-            if filled != pos["qty"]:
-                pos["qty"], pos["entry"] = filled, o["avg_price"] or i["est_price"]
-                out["actions"].append(f"{i['ticker']}: {filled} filled @ {pos['entry']}")
-            if o["status"] in ("FILLED", "CANCELED", "EXPIRED"):
-                i["status"] = "filled" if o["status"] == "FILLED" else "partial_final"
-            elif self.now() - _ts(i["sent"]) > timedelta(minutes=ENTRY_TIMEOUT_MIN):
-                try:
-                    self.b.cancel(i["order_id"])          # the pilot's own entry, remainder only
-                    out["actions"].append(f"{i['ticker']}: cancel unfilled remainder")
-                except (OrderRejected, SendUnknown) as e:
-                    self._alert("Pilot: cannot cancel entry remainder", f"{i['ticker']}: {e}")
-
-    # ------------------------------------------------------------ 3) positions vs broker
-    def check_positions(self, out):
+    def step(self, out):
+        """One reconciliation pass on fresh broker state (no new entry)."""
+        self.resolve_unknown(out)
+        self.poll_entries(out)
         for p in list(self.s["positions"]):
-            if p["status"] != "open" or not p["stop_order_id"]:
-                continue
-            st = self._order(p["stop_order_id"])
-            if st["status"] == "FILLED":
-                self._close(p, st["avg_price"] or p["stop_price"], "stop", st["id"])
-                out["actions"].append(f"{p['ticker']}: stopped out")
-                continue
-            held = float((self.snap["positions"].get(p["ticker"]) or {}).get("qty", 0))
-            if held < p["qty"]:
-                self._block(f"{p['ticker']}: broker holds {held:g} < pilot {p['qty']} "
-                            "(sold outside the pilot?) — owner must check")
-
-    # ------------------------------------------------------------ 4) protection
-    def ensure_protection(self, out):
-        for p in self.s["positions"]:
-            if p["status"] != "open" or p["qty"] <= 0:
-                continue
-            st = self._order(p["stop_order_id"]) if p["stop_order_id"] else None
-            ok = (st is not None and st["status"] in LIVE_STATUSES and st["instruction"] == "SELL"
-                  and int(st["qty"]) == int(p["qty"]) and st["type"] == "STOP")
-            if ok:
-                p["protected"] = True
-                continue
-            p["protected"] = False
-            held = float((self.snap["positions"].get(p["ticker"]) or {}).get("qty", 0))
-            if held < p["qty"]:          # shares gone outside the pilot: never place a stop that
-                self._block(f"{p['ticker']}: broker holds {held:g} < pilot {p['qty']} and no "
-                            "live stop — owner must check (no stop placed)")   # could go short
-                continue
-            if st is not None and st["status"] in LIVE_STATUSES:   # wrong quantity: replace
-                try:
-                    self.b.cancel(st["id"])
-                    p["old_stop_ids"].append(st["id"])
-                except (OrderRejected, SendUnknown) as e:
-                    self._alert("Pilot: cannot replace stop", f"{p['ticker']}: {e}")
-                    continue
-            if p["stop_attempts"] >= STOP_ATTEMPTS:
-                self._block(f"PROTECTION FAILED: {p['ticker']} {p['qty']} sh without a broker "
-                            f"stop after {STOP_ATTEMPTS} attempts — set a stop manually")
-                continue
-            p["stop_attempts"] += 1
-            try:
-                oid = self.b.place(stop_sell(p["ticker"], p["qty"], p["stop_price"]))
-                if p["stop_order_id"]:
-                    p["old_stop_ids"].append(p["stop_order_id"])
-                p["stop_order_id"] = oid
-                self._persist()
-                st = self.b.get_order(oid)
-                if st["status"] in LIVE_STATUSES and int(st["qty"]) == int(p["qty"]):
-                    p["protected"], p["stop_attempts"] = True, 0
-                    out["actions"].append(f"{p['ticker']}: stop {p['stop_price']} x {p['qty']} "
-                                          f"at broker ({oid})")
-                else:
-                    self._alert("Pilot: stop not active", f"{p['ticker']}: {st['status']}")
-            except (OrderRejected, SendUnknown, BrokerUnavailable) as e:
-                self._alert("Pilot: stop placement failed",
-                            f"{p['ticker']} attempt {p['stop_attempts']}: {e}")
-                if p["stop_attempts"] >= STOP_ATTEMPTS:
-                    self._block(f"PROTECTION FAILED: {p['ticker']} {p['qty']} sh without a broker "
-                                "stop — set a stop manually")
-        if any(not p.get("protected") for p in self.s["positions"] if p["status"] == "open"
-               and p["qty"] > 0):
-            self._block(self.s["blocked"] or "an open pilot position is not protected yet")
-        elif self.s["blocked"] == "an open pilot position is not protected yet":
+            if p["status"] == "closing":
+                self.progress_exit(p, out)
+            else:
+                self.protect(p, out)
+        unprotected = [p for p in self.s["positions"] if p["status"] == "open" and p["qty"] > 0
+                       and not p.get("protected")]
+        if unprotected and not self.s["blocked"]:
+            self._block("an open pilot position is not protected yet")
+        if not unprotected and self.s["blocked"] == "an open pilot position is not protected yet":
             self.s["blocked"] = None
 
-    # ------------------------------------------------------------ 5) exits
+    # ============================================================ entry fills
+    def _pos(self, pid):
+        return next((p for p in self.s["positions"] if p["id"] == pid), None)
+
+    def poll_entries(self, out):
+        for i in [i for i in self.s["intents"] if i["kind"] == "BUY" and i["status"] == "working"]:
+            o = self._order(i["order_id"])
+            filled = int(o["filled"])
+            p = self._pos(i["position"])
+            if filled > i["filled"]:
+                if p is None:
+                    p = dict(id=i["position"], ticker=i["ticker"], qty=0, entry=None,
+                             stop_price=i["stop_price"], order_ids=[i["order_id"]],
+                             fills={}, opened=_iso(self.now()), status="open",
+                             approval_id=i["approval_id"], stop_rejects=0, exits=[])
+                    self.s["positions"].append(p)
+                new = filled - i["filled"]
+                p["qty"] += new
+                p["entry"] = o["avg_price"] or i["limit"]
+                i["filled"] = filled
+                p["protected"] = False
+                out["actions"].append(f"{i['ticker']}: {filled}/{i['qty']} filled @ {p['entry']}")
+                self._persist()
+            if o["status"] in ("FILLED", "CANCELED", "EXPIRED", "REJECTED"):
+                i["status"] = "filled" if o["status"] == "FILLED" else (
+                    "partial_final" if filled else o["status"].lower())
+                if not filled:
+                    out["actions"].append(f"entry {i['ticker']} {o['status']}")
+
+    # ============================================================ protection
+    def _sync_outside(self, p, out):
+        """Stop fills and shares sold outside the pilot reduce the pilot's shares."""
+        for oid in p.get("order_ids", []):
+            o = next((x for x in self.snap["orders"] if x["id"] == oid), None)
+            if o is None or o["instruction"] != "SELL":
+                continue
+            done = p["fills"].get(oid, 0)
+            if o["filled"] > done:
+                q = int(o["filled"] - done)
+                p["fills"][oid] = o["filled"]
+                p["qty"] -= q
+                reason = "stop" if o["type"] == "STOP" else p.get("exit_reason", "owner")
+                p["exits"].append(dict(qty=q, px=o["avg_price"], reason=reason, order=oid))
+                out["actions"].append(f"{p['ticker']}: {q} sold ({reason}) @ {o['avg_price']}")
+        held = int(self.held(p["ticker"]))
+        if held < p["qty"]:                               # sold outside the pilot
+            gone = p["qty"] - held
+            p["exits"].append(dict(qty=gone, px=None, reason="outside", order=None))
+            p["qty"] = held
+            self._alert("Pilot: shares sold outside the pilot",
+                        f"{p['ticker']}: broker holds {held}, pilot had {held + gone}; the "
+                        "pilot's stop is cut to the shares still held")
+
+    def _own_stops(self, p, statuses=LIVE_STATUSES):
+        ids = set(p.get("order_ids", []))
+        return [o for o in self.snap["orders"] if o["id"] in ids and o["type"] == "STOP"
+                and o["status"] in statuses]
+
+    def _good(self, o, p):
+        return (o["status"] in PROTECTING and o["instruction"] == "SELL" and o["type"] == "STOP"
+                and o["duration"] == "GOOD_TILL_CANCEL" and _px(o["stop_price"]) == _px(
+                    p["stop_price"]) and int(o["qty"] - o["filled"]) == int(p["qty"]))
+
+    def _cancel_confirmed(self, orders, out) -> bool:
+        """Request cancellation of the pilot's own orders; True only when every one is
+        confirmed CANCELED (or FILLED) by a fresh read. Never assumes."""
+        ok = True
+        for o in orders:
+            if o["status"] not in ("PENDING_CANCEL",):
+                try:
+                    self.b.cancel(o["id"])
+                    out["actions"].append(f"cancel {o['type']} {o['id']}")
+                except (OrderRejected, SendUnknown) as e:
+                    self._log(f"cancel {o['id']}: {e}")
+            f = self._order(o["id"])
+            if f["status"] not in ("CANCELED", "FILLED", "EXPIRED", "REJECTED", "REPLACED"):
+                ok = False
+        return ok
+
+    def protect(self, p, out) -> bool:
+        self._sync_outside(p, out)
+        live = self._own_stops(p)
+        if p["qty"] <= 0:                                 # nothing left to protect
+            if live and not self._cancel_confirmed(live, out):
+                p["protected"] = False
+                return False                              # retry the cancel next pass
+            self._close(p, out)
+            return True
+        if self.pending("STOP", p["id"]):                 # unknown stop: never send another
+            p["protected"] = False
+            return False
+        good = [o for o in live if self._good(o, p)]
+        if len(good) == 1 and len(live) == 1:
+            p["protected"] = True
+            return True
+        p["protected"] = False
+        keep = good[:1]
+        extra = [o for o in live if o not in keep]
+        if extra and not self._cancel_confirmed(extra, out):
+            return False                                  # old stop not confirmed cancelled yet
+        if keep:
+            p["protected"] = True
+            return True
+        if p["stop_rejects"] >= STOP_ATTEMPTS:
+            self._block(f"PROTECTION FAILED: {p['ticker']} {p['qty']} sh without a broker stop "
+                        f"after {STOP_ATTEMPTS} rejections — set a stop manually at Schwab")
+            return False
+        i = self._intent("STOP", p["ticker"], p["qty"],
+                         stop_sell(p["ticker"], p["qty"], p["stop_price"]), position=p["id"])
+        oid = self._send(i)
+        if oid is None:
+            if i["status"] == "rejected":
+                p["stop_rejects"] += 1
+                self._alert("Pilot: stop rejected", f"{p['ticker']} ({p['stop_rejects']}/"
+                            f"{STOP_ATTEMPTS}): {i.get('error')}")
+            return False
+        st = self._order(oid)
+        if self._good(st, p):
+            p["protected"], p["stop_rejects"] = True, 0
+            out["actions"].append(f"{p['ticker']}: stop {p['stop_price']} x {p['qty']} GTC ({oid})")
+            return True
+        return False
+
+    # ============================================================ exits
     def request_exit(self, ticker, reason="owner"):
         for p in self.s["positions"]:
             if p["ticker"] == ticker and p["status"] == "open":
@@ -293,67 +379,56 @@ class Pilot:
                 return True
         return False
 
-    def progress_exits(self, out):
-        for p in [p for p in self.s["positions"] if p["status"] == "closing"]:
-            if not p.get("exit_order_id"):          # a sell matched after an unknown result
-                sold = [i for i in self.s["intents"] if i["side"] == "SELL"
-                        and i.get("position") == p["id"] and i.get("order_id")
-                        and i["status"] == "working"]
-                if sold:
-                    p["exit_order_id"] = sold[-1]["order_id"]
-            if p.get("exit_order_id"):
-                o = self._order(p["exit_order_id"])
-                if o["status"] == "FILLED":
-                    self._close(p, o["avg_price"], p.get("exit_reason", "owner"), o["id"])
-                    out["actions"].append(f"{p['ticker']}: sold")
-                elif o["status"] in ("REJECTED", "CANCELED", "EXPIRED"):
-                    p["exit_order_id"], p["status"], p["stop_order_id"] = None, "open", None
-                    self._alert("Pilot: exit failed", f"{p['ticker']}: {o['status']} — stop re-placed")
-                    self.ensure_protection(out)
-                continue
-            if any(i["side"] == "SELL" and i.get("position") == p["id"] and i["status"] in
-                   ("submitting", "unknown", "ambiguous", "not_found") for i in self.s["intents"]):
-                continue                                       # sell result unknown: never resend
-            st = self._order(p["stop_order_id"]) if p["stop_order_id"] else None
-            if st is not None and st["status"] == "FILLED":
-                self._close(p, st["avg_price"] or p["stop_price"], "stop", st["id"])
-                continue
-            if st is not None and st["status"] in LIVE_STATUSES:
-                if st["status"] != "PENDING_CANCEL":
-                    try:
-                        self.b.cancel(st["id"])
-                        out["actions"].append(f"{p['ticker']}: cancel stop {st['id']} before selling")
-                    except (OrderRejected, SendUnknown) as e:
-                        self._alert("Pilot: cannot cancel stop", f"{p['ticker']}: {e}")
-                st = self.b.get_order(st["id"])
-                if st["status"] == "FILLED":
-                    self._close(p, st["avg_price"] or p["stop_price"], "stop", st["id"])
-                    continue
-                if st["status"] != "CANCELED":
-                    continue                                   # confirm next run, never sell twice
-            i = self._intent("SELL", p["ticker"], p["qty"], None, p["stop_price"],
-                             market_sell(p["ticker"], p["qty"]), position=p["id"])
-            oid = self._send(i)
-            if oid:
-                p["exit_order_id"] = oid
-                o = self.b.get_order(oid)
-                if o["status"] == "FILLED":
-                    self._close(p, o["avg_price"], p.get("exit_reason", "owner"), oid)
-                    out["actions"].append(f"{p['ticker']}: sold")
-            elif i["status"] == "rejected":
-                p["status"], p["stop_order_id"] = "open", None      # put protection back
-                self._alert("Pilot: exit rejected", f"{p['ticker']}: stop re-placed")
-                self.ensure_protection(out)
+    def progress_exit(self, p, out):
+        self._sync_outside(p, out)
+        if p["qty"] <= 0:
+            self.protect(p, out)                          # cancels leftover stops, closes
+            return
+        if self.pending("SELL", p["id"]):
+            return                                        # sell result unknown: never resend
+        sells = [i for i in self.s["intents"] if i["kind"] == "SELL" and i.get("position") == p["id"]
+                 and i["status"] == "working"]
+        if sells:
+            o = self._order(sells[-1]["order_id"])
+            if o["status"] in ("FILLED", "CANCELED", "EXPIRED", "REJECTED"):
+                sells[-1]["status"] = o["status"].lower()
+                if p["qty"] > 0 and o["status"] != "FILLED":
+                    p["status"] = "open"                  # rest goes back under protection
+                    self._alert("Pilot: exit incomplete", f"{p['ticker']}: {o['status']}, "
+                                f"{p['qty']} sh left — protected again")
+                    self.protect(p, out)
+            return
+        live = self._own_stops(p)
+        if live and not self._cancel_confirmed(live, out):
+            return                                        # confirm the cancel before selling
+        self.refresh()                                    # a stop may have filled meanwhile
+        self._sync_outside(p, out)
+        if p["qty"] <= 0:
+            self._close(p, out)
+            return
+        qty = min(int(p["qty"]), int(self.held(p["ticker"])))
+        i = self._intent("SELL", p["ticker"], qty, market_sell(p["ticker"], qty), position=p["id"])
+        if self._send(i) is None and i["status"] == "rejected":
+            p["status"] = "open"
+            self._alert("Pilot: exit rejected", f"{p['ticker']}: {i.get('error')} — protected again")
+            self.protect(p, out)
 
-    def _close(self, p, px, reason, order_id):
-        p.update(status="closed", exit=px, exit_reason=reason, closed=_iso(self.now()),
-                 exit_fill_order_id=order_id,
-                 pnl=(px - p["entry"]) * p["qty"] if px is not None and p["entry"] else None)
+    def _close(self, p, out):
+        sold = [e for e in p["exits"] if e["px"] is not None]
+        q = sum(e["qty"] for e in sold)
+        pnl = sum(e["qty"] * (e["px"] - p["entry"]) for e in sold) if p["entry"] else None
+        p.update(status="closed", qty=0, closed=_iso(self.now()), realized_pnl=pnl,
+                 exit_reason=p["exits"][-1]["reason"] if p["exits"] else p.get("exit_reason"),
+                 exit=(sum(e["qty"] * e["px"] for e in sold) / q) if q else None,
+                 protected=None)
         self.s["positions"].remove(p)
         self.s["closed"].append(p)
-        self._log(f"closed {p['ticker']} {reason} @ {px}")
+        out["actions"].append(f"{p['ticker']}: closed ({p['exit_reason']})")
+        if any(e["reason"] == "outside" for e in p["exits"]):
+            self._block(f"{p['ticker']} was closed outside the pilot: owner must confirm")
+        self._log(f"closed {p['ticker']} {p['exit_reason']}")
 
-    # ------------------------------------------------------------ 6) new entry
+    # ============================================================ new entry
     def entry_blockers(self, a) -> list:
         why = []
         if not self.live:
@@ -362,8 +437,7 @@ class Pilot:
             why.append("new entries are switched off")
         if self.s["blocked"]:
             why.append(f"blocked: {self.s['blocked']}")
-        if any(i["status"] in ("submitting", "unknown", "ambiguous", "not_found", "working")
-               for i in self.s["intents"]):
+        if any(i["status"] in UNRESOLVED + ("working",) for i in self.s["intents"]):
             why.append("an earlier order is unresolved")
         if a.get("approval_id") in self.s["used_approvals"]:
             why.append("approval already used")
@@ -372,80 +446,88 @@ class Pilot:
         exp = _ts(a.get("expires_at"))
         if exp is None or self.now() > exp:
             why.append("approval expired")
-        if self.account_suffix and a.get("account_last4") and not str(
-                self.snap["account_number"]).endswith(a["account_last4"]):
+        if a.get("account_last4") and not str(self.snap["account_number"]).endswith(
+                a["account_last4"]):
             why.append("approval is for another account")
-        qty = int(a.get("qty", 0))
-        if qty < 1 or qty != a.get("qty"):
+        qty, limit, stop = a.get("qty", 0), float(a.get("max_price", 0)), float(a.get("stop_price", 0))
+        if not isinstance(qty, int) or qty < 1:
             why.append("whole shares >= 1 only")
-        if len([p for p in self.s["positions"] if p["status"] != "closed"]) >= MAX_POSITIONS:
+        if not (0 < stop < limit):
+            why.append("need 0 < stop < max price")
+        if self.s["positions"]:
             why.append(f"max {MAX_POSITIONS} pilot position")
-        mq, mo = self.manual_activity(a["ticker"])
-        if mq > 0 or a["ticker"] in self.snap["positions"]:
+        held = self.held(a["ticker"])
+        own = self.own_ids()
+        manual = [o for o in self.snap["orders"] if o["symbol"] == a["ticker"]
+                  and o["status"] in LIVE_STATUSES and o["id"] not in own]
+        if held:
             why.append(f"{a['ticker']}: a position already exists at the broker (manual)")
-        if mo:
-            why.append(f"{a['ticker']}: {len(mo)} open order(s) not from the pilot")
-        if not (float(a.get("stop_price", 0)) > 0):
-            why.append("no stop price")
-        return why
-
-    def enter(self, a: dict) -> dict:
-        why = self.entry_blockers(a)
-        if why:
-            return dict(sent=False, why=why)
-        try:
-            px = self.b.quote(a["ticker"])
-        except BrokerUnavailable as e:
-            return dict(sent=False, why=[f"no quote: {e}"])
-        why = []
-        if px is None or px > float(a["max_price"]):
-            why.append(f"quote {px} above the approved max {a['max_price']}")
-        if px is not None and not float(a["stop_price"]) < px:
-            why.append("stop is not below the price")
-        cost = (px or 0) * a["qty"] * (1 + PRICE_BUFFER)
-        first = not self.s["closed"] and not self.s["positions"]
+        if manual:
+            why.append(f"{a['ticker']}: {len(manual)} open order(s) not from the pilot")
+        cost = qty * limit if isinstance(qty, int) else 0       # the LIMIT is the hard cap
+        first = not self.s["closed"]
         if first and cost > FIRST_TRADE_MAX_USD:
-            why.append(f"first trade ${cost:.2f} > ${FIRST_TRADE_MAX_USD:.0f}")
+            why.append(f"first trade max ${cost:.2f} > ${FIRST_TRADE_MAX_USD:.0f}")
         if self.committed_usd() + cost > BUDGET_USD:
             why.append(f"budget: ${self.committed_usd() + cost:.2f} > ${BUDGET_USD:.0f}")
         cash = self.snap["balances"].get("cash_available")
         if cash is not None and cost > float(cash):
             why.append(f"cash available ${cash} < ${cost:.2f}")
+        return why
+
+    def enter(self, a: dict, out=None) -> dict:
+        out = out if out is not None else dict(actions=[])
+        why = self.entry_blockers(a)
         if why:
             return dict(sent=False, why=why)
         self.s["used_approvals"].append(a["approval_id"])
-        i = self._intent("BUY", a["ticker"], a["qty"], px, a["stop_price"],
-                         market_buy(a["ticker"], a["qty"]), approval_id=a["approval_id"])
+        pid = uuid.uuid4().hex[:12]
+        i = self._intent("BUY", a["ticker"], a["qty"],
+                         limit_buy(a["ticker"], a["qty"], a["max_price"]), position=pid,
+                         limit=float(a["max_price"]), stop_price=float(a["stop_price"]),
+                         approval_id=a["approval_id"])
         oid = self._send(i)
-        return dict(sent=True, order_id=oid, status=i["status"], est_cost=round(cost, 2))
+        res = dict(sent=True, order_id=oid, status=i["status"], max_cost=a["qty"] * a["max_price"])
+        res["monitor"] = self.monitor_entry(i, out)
+        return res
 
-    # ------------------------------------------------------------ sending
-    def _intent(self, side, ticker, qty, est, stop, order, **extra):
-        i = dict(id=uuid.uuid4().hex[:12], side=side, ticker=ticker, qty=int(qty),
-                 est_price=est or 0.0, stop_price=stop, order=order, status="submitting",
-                 created=_iso(self.now()), sent=None, order_id=None, **extra)
-        self.s["intents"].append(i)
-        self._persist()                         # saved BEFORE the order leaves
-        return i
-
-    def _send(self, i):
-        i["sent"] = _iso(self.now())
-        try:
-            oid = self.b.place(i["order"])
-        except OrderRejected as e:
-            i["status"], i["error"] = "rejected", str(e)
-            self._log(f"{i['side']} {i['ticker']} rejected: {e}")
-            self._persist()
-            return None
-        except SendUnknown as e:
-            i["status"], i["error"] = "unknown", str(e)
-            self._block(f"{i['side']} {i['ticker']} result unknown ({e}): reconciling, no resend")
-            self._persist()
-            return None
-        except BrokerUnavailable as e:
-            i["status"], i["error"] = "not_sent", str(e)
-            self._persist()
-            return None
-        i["order_id"], i["status"] = str(oid), "working"
-        self._persist()
-        return str(oid)
+    def monitor_entry(self, i, out) -> str:
+        """Right after the buy: poll, protect every filled share at once, cancel the unfilled
+        rest at the end. A fill that is still unprotected at the end -> EMERGENCY."""
+        if i["status"] in ("rejected", "not_sent"):
+            return i["status"]
+        deadline = self.now() + timedelta(seconds=MONITOR_SEC)
+        while True:
+            try:
+                self.refresh()
+                self.step(out)
+            except BrokerUnavailable as e:
+                self._alert("Pilot: broker lost during entry", str(e))
+                self._persist()
+                if self.now() >= deadline:
+                    break
+                self.sleep(POLL_SEC)
+                continue
+            p = self._pos(i["position"])
+            done = i["status"] not in UNRESOLVED + ("working",)
+            if done and (p is None or p.get("protected") or p["status"] == "closed"):
+                return "done"
+            if self.now() >= deadline:
+                break
+            self.sleep(POLL_SEC)
+        if i["status"] == "working":                     # unfilled remainder: cancel (own order)
+            try:
+                o = self._order(i["order_id"])
+                if self._cancel_confirmed([o], out):
+                    self.refresh()
+                    self.step(out)
+            except BrokerUnavailable as e:
+                self._alert("Pilot: cannot cancel the entry remainder", str(e))
+        p = self._pos(i["position"])
+        if ((p is not None and p["qty"] > 0 and not p.get("protected"))
+                or i["status"] in UNRESOLVED + ("working",)):
+            self._block(f"EMERGENCY: {i['ticker']} entry not confirmed protected within "
+                        f"{MONITOR_SEC}s ({'order not confirmed' if i['status'] != 'filled' and p is None else 'no stop'})"
+                        " — owner: check Schwab now and place a stop for the pilot's shares")
+            return "emergency"
+        return "done"
