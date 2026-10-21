@@ -56,7 +56,15 @@ jobs:
           path: v2
       - run: sha256sum v2/*/dataset_v2.csv.gz
       - name: Train, gate (written first), then the historical window once
-        run: python -m research.ai_rank.v2_train --pr5 dataset --v2 v2
+        run: |
+          set +e
+          python -m research.ai_rank.v2_train --pr5 dataset --v2 v2 > train.log 2>&1
+          rc=$?
+          tail -40 train.log
+          if [ $rc -ne 0 ]; then
+            python -c "t=open('train.log').read()[-3000:].replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=train::'+t)"
+          fi
+          exit $rc
       - name: Live state untouched
         if: always()
         run: test -z "$(git status --porcelain paper/state paper/data state)" || { echo "::error::live state changed"; exit 1; }
