@@ -1,0 +1,42 @@
+{
+  "note": "NOT an independent test (window used for strategy choice); computed once after the gate decision; cannot change it",
+  "rs_first": {
+    "return_pct": 27.500511583492717,
+    "cagr_pct": 36.08595447419687,
+    "max_dd_pct": -7.716921121764598,
+    "trades": 57,
+    "closed": 53,
+    "expectancy_r": 0.4685045391266353,
+    "expectancy_usd": 46.58896049976795,
+    "win_rate": 54.71698113207547,
+    "yearly_return_pct": {
+      "2025": -0.47,
+      "2026": 28.1
+    }
+  },
+  "model": {
+    "return_pct": 13.969394623437204,
+    "cagr_pct": 18.03763627520807,
+    "max_dd_pct": -14.049585242403651,
+    "trades": 62,
+    "closed": 57,
+    "expectancy_r": 0.2441879563029271,
+    "expectancy_usd": 22.676625706765183,
+    "win_rate": 38.59649122807017,
+    "yearly_return_pct": {
+      "2025": -0.47,
+      "2026": 14.51
+    }
+  },
+  "ic_mean": 0.053460122504451285,
+  "ic_days": 135,
+  "ic_ci90": [
+    -0.004660899589620024,
+    0.10967576038227751
+  ],
+  "random_return_pct": {
+    "median": 7.611490049062885,
+    "p10": -3.533121280417751,
+    "p90": 22.66221385566347
+  }
+}

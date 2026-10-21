@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/runner/work/stock-screener/stock-screener/research/ai_rank/v2_train.py", line 266, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/runner/work/stock-screener/stock-screener/research/ai_rank/v2_train.py", line 221, in main
+    runs = {k: experiment(k, pool, data, cal, deciding, v0, t0, log)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/stock-screener/stock-screener/research/ai_rank/v2_train.py", line 105, in experiment
+    nonoverlap_train=int(E.non_overlapping(d[d["split"] == "train"]).sum()),
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/stock-screener/stock-screener/research/sp1500/engine.py", line 394, in non_overlapping
+    busy = i + 1 + int(b)
+                   ^^^^^^
+ValueError: cannot convert float NaN to integer
+

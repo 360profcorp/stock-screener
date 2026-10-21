@@ -1,0 +1,86 @@
+name: Research AI ranking v2 (research branch only)
+
+# PREREG v2.1: research only. Guards the live paper strategy (fingerprint 17454c61f631,
+# fingerprinted files identical to main, paper/state + paper/data untouched). No schedule,
+# nothing connected to the bot. This workflow BUILDS the v2 dataset only; model training is
+# not part of it until Muse's data audit has passed (a separate, explicit step then).
+on:
+  push:
+    branches: [research/ai-rank-v2]
+    paths:
+      - "research/ai_rank/v2_build.py"
+      - "research/ai_rank/v2_compare.py"
+      - "research/ai_rank/test_v2_build.py"
+      - "research/sp1500/**"
+      - ".github/workflows/research-ai-rank-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-ai-rank-v2
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/ai-rank-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests scikit-learn
+      - name: Guard — live paper strategy unchanged
+        env:
+          REQUIRE_MAIN: "1"
+        run: python -m unittest research.ai_rank.test_guard -v
+      - name: Research tests
+        run: python -m unittest research.ai_rank.test_ai_rank research.ai_rank.test_v2_build research.sp1500.test_sp1500 -v
+      - name: Fetch the PR #5 dataset artifact (run 38773034101)
+        uses: actions/download-artifact@v4
+        with:
+          name: sp1500-dataset-38773034101
+          run-id: 38773034101
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dataset
+      - name: Fetch the first v2 build (dataset + saved earnings_raw.json, run 39507927139)
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-rank-v2-dataset-39507927139
+          run-id: 39507927139
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: v2_first
+      - name: Rebuild v2 dataset on the same prices + saved earnings (BUILD ONLY — no training)
+        run: |
+          E=$(ls v2_first/*/earnings_raw.json)
+          python -m research.ai_rank.v2_build --dataset dataset --earnings-json "$E"
+      - name: Compare with the first build (rank_rs fix)
+        run: |
+          OLD=$(ls v2_first/*/dataset_v2.csv.gz); NEW=$(ls -t dist/ai_rank_v2/*/dataset_v2.csv.gz | head -1)
+          sha256sum "$(ls v2_first/*/earnings_raw.json)" "$OLD" "$NEW"
+          python -m research.ai_rank.v2_compare "$OLD" "$NEW" research/results/ai_rank/v2_build/rank_fix_compare_${{ github.run_id }}.json
+      - name: Upload v2 dataset
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-rank-v2-dataset-${{ github.run_id }}
+          path: dist/ai_rank_v2
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Commit build report
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/ai_rank/v2_build || true
+          git diff --cached --quiet || git commit -m "Research AI rank v2: data build $(date -u +%F_%H%M)"
+          git pull --rebase && git push
+      - name: Live state untouched by this run
+        if: always()
+        run: test -z "$(git status --porcelain paper/state paper/data state)" || { echo "::error::live state changed"; exit 1; }

@@ -1,0 +1,74 @@
+name: Research AI ranking v2 — training + gate (research branch only)
+
+# PREREG v2.1 §3-§5a. Owner approved training on 2026-10-20 after the rank_rs fix.
+# Uses ONLY the audited rebuild (artifact run 39517028737, dataset sha256 e1b40d2f…, checked
+# in code). Writes gate.json BEFORE the historical window. Nothing is frozen, nothing touches
+# the bot; the guard keeps the live strategy fingerprint and live state unchanged.
+on:
+  # FROZEN 2026-10-20: experiment closed after audit; no push trigger, no further training
+  # (v2_train.main also refuses to run while research/results/ai_rank/v2_train/FREEZE exists)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-ai-rank-v2-train
+  cancel-in-progress: false
+
+jobs:
+  train:
+    if: github.ref == 'refs/heads/research/ai-rank-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests scikit-learn
+      - name: Guard — live paper strategy unchanged
+        env:
+          REQUIRE_MAIN: "1"
+        run: python -m unittest research.ai_rank.test_guard -v
+      - name: Tests
+        run: python -m unittest research.ai_rank.test_v2_train research.ai_rank.test_v2_build research.ai_rank.test_ai_rank -v
+      - name: PR #5 dataset (prices, PR #5 pool)
+        uses: actions/download-artifact@v4
+        with:
+          name: sp1500-dataset-38773034101
+          run-id: 38773034101
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dataset
+      - name: Audited v2 rebuild (run 39517028737)
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-rank-v2-dataset-39517028737
+          run-id: 39517028737
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: v2
+      - run: sha256sum v2/*/dataset_v2.csv.gz
+      - name: Train, gate (written first), then the historical window once
+        run: |
+          set +e
+          python -m research.ai_rank.v2_train --pr5 dataset --v2 v2 > train.log 2>&1
+          rc=$?
+          tail -40 train.log
+          if [ $rc -ne 0 ]; then
+            python -c "t=open('train.log').read()[-3000:].replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=train::'+t)"
+          fi
+          exit $rc
+      - name: Live state untouched
+        if: always()
+        run: test -z "$(git status --porcelain paper/state paper/data state)" || { echo "::error::live state changed"; exit 1; }
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/ai_rank/v2_train || true
+          git diff --cached --quiet || git commit -m "Research AI rank v2: training + gate $(date -u +%F_%H%M)"
+          git pull --rebase && git push
