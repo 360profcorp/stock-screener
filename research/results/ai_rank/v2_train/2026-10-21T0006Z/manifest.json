@@ -1,0 +1,17 @@
+{
+  "run_id": "2026-10-21T0006Z",
+  "git": "ed3368822dc7d3180d729341fce14e671b231666",
+  "files": {
+    "2026-10-21T0006Z/gate.json": "802d0dc5b069ace5fd5000158dcb9df8d58a97b581d3626ce4b5efe2c6fb1e8d",
+    "2026-10-21T0006Z/results.json": "1a363c07dd3e2d7f98cb92001466885a31e551abdb2fbf7f9f4ba83ad6af56ec",
+    "2026-10-21T0006Z/historical_window.json": "e354e623e3122232eb470ec1d55d548c739bbb329138a21cbe171d6a25c6b025",
+    "2026-10-21T0006Z/REPORT.md": "5748b7a17d8fd5867e0503cf9136cb7339b512bde57967d063f257d42f67b8aa"
+  },
+  "inputs": {
+    "pr5": {
+      "signals": "dataset/2026-10-15T1656Z/signals.csv.gz",
+      "bars": "dataset/2026-10-15T1656Z/bars.pkl.gz"
+    },
+    "v2_sha256": "e1b40d2fc6f61f3aca6b4deae7b83805ac80065d2abfaadda13fdd3f8cf1a097"
+  }
+}

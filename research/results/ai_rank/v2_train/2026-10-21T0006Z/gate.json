@@ -1,0 +1,59 @@
+{
+  "prereg": "v2.1",
+  "decided_at": "2026-10-21T00:16:13+00:00",
+  "inputs": {
+    "pr5": {
+      "signals": "dataset/2026-10-15T1656Z/signals.csv.gz",
+      "bars": "dataset/2026-10-15T1656Z/bars.pkl.gz"
+    },
+    "v2_sha256": "e1b40d2fc6f61f3aca6b4deae7b83805ac80065d2abfaadda13fdd3f8cf1a097"
+  },
+  "deciding_features": [
+    "rs_score",
+    "rank_rs",
+    "log_adv",
+    "atr14_pct",
+    "vol_ratio",
+    "vol10_vs_50",
+    "ret_1d",
+    "ret_5d",
+    "ret_20d",
+    "ret_63d",
+    "dist_ma50",
+    "dist_ma150",
+    "dist_ma200",
+    "dist_52w_high",
+    "dist_52w_low",
+    "dist_level_pct",
+    "risk_at_close_pct",
+    "spy_above200",
+    "spy_ret_20d",
+    "sess_since_earn",
+    "sector_rs_median",
+    "sector_ret20_median",
+    "rs_minus_sector",
+    "breadth_ma50",
+    "breadth_new_high",
+    "breadth_chg5"
+  ],
+  "deciding": {
+    "eligible": true,
+    "g1_ic_positive_every_wf_year_and_validation": false,
+    "g2_pooled_ic_ge_0_03_and_ci_above_0": false,
+    "g3_portfolio_vs_rs_first_and_random": false,
+    "worst_wf_return_gap_pp": -10.711297516386374,
+    "passed": false
+  },
+  "deciding_chosen": {
+    "model": "ridge",
+    "params": {
+      "alpha": 100.0
+    },
+    "val_ic_mean": 0.015138161555684785,
+    "val_ic_days": 126,
+    "val_return_pct": 12.5932052153916,
+    "val_max_dd_pct": -6.033883516873962
+  },
+  "verdict": "FAILED \u2014 v2 is reported as failed and RS-first stays",
+  "sensitivity_note": "sensitivity and secondary runs can never pass the gate"
+}
