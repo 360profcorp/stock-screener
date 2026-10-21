@@ -1,0 +1,54 @@
+name: Paper comparison (Breakout RS-first vs Retest RS-first)
+
+# Paper trading only: no broker, no orders. Two NEW books in paper/compare/. The original
+# Retest paper book (paper/state, paper/data, paper-daily.yml) is never written by this job.
+# Schedule: NOT active until the owner's activation after CI, the real-data equivalence check
+# and Muse's review (the cron line below is commented out until then).
+on:
+  # schedule:
+  #   - cron: "5 22 * * 1-5"    # ~6:05 PM New York (summer) / 5:05 PM (winter), after the close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-compare
+  cancel-in-progress: false            # never two state updates at once
+
+jobs:
+  compare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Original Retest paper book - hash before
+        run: find paper/state paper/data -type f | sort | xargs sha256sum > "$RUNNER_TEMP/old_before.txt"; wc -l "$RUNNER_TEMP/old_before.txt"
+      - name: Run both books (one S&P 500 list, one price download)
+        run: python compare_run.py daily
+      - name: Original Retest paper book untouched
+        run: |
+          find paper/state paper/data -type f | sort | xargs sha256sum > "$RUNNER_TEMP/old_after.txt"
+          diff "$RUNNER_TEMP/old_before.txt" "$RUNNER_TEMP/old_after.txt"
+          git diff --exit-code HEAD -- paper/state paper/data
+      - name: Back up both books as a run artifact (kept 90 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-compare-${{ github.run_id }}
+          path: paper/compare
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Persist (retries, fails loudly on conflict)
+        run: |
+          git config user.name "visar-paper"
+          git config user.email "visar-paper@users.noreply.github.com"
+          scripts/persist_state.sh "Paper comparison $(date -u +%F_%H%M)" paper/compare
+      - name: Summary
+        if: always()
+        run: test -f paper/compare/COMPARISON.md && cat paper/compare/COMPARISON.md >> "$GITHUB_STEP_SUMMARY" || true
