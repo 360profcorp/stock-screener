@@ -1,0 +1,206 @@
+{
+  "prereg": "v1.1",
+  "rules_version": "bullflag/1.0",
+  "dataset_sha256": {
+    "signals.csv.gz": "98b6f81623ea3f20e5e5adc313891762c1a4e3ff0970f907fe7f17081a241cf3",
+    "bars.pkl.gz": "3df57ff951cf7f580ffbc088be003dfcdb872fabd66000e74b508cd73f69283e"
+  },
+  "data_end": "2026-10-14",
+  "exploratory": true,
+  "flags_detected_all_bars": 2143,
+  "flags_not_a_raw_breakout": 0,
+  "eligible_breakouts": 13380,
+  "eligible_flags": 528,
+  "overlap": {
+    "flags": 528,
+    "same_day_breakout": 528,
+    "same_day_retest": 277,
+    "same_day_vcp": 79,
+    "same_day_dbottom": 0,
+    "near_any": 381,
+    "new_vs_retest_vcp": 147
+  },
+  "experiment_A": {
+    "groups_nonoverlap": {
+      "flag": {
+        "trades": 145,
+        "mean_r": -0.060634614737248196,
+        "median_r": -1.0322277570604006,
+        "win_rate": 33.793103448275865,
+        "profit_factor": 0.909675152867001,
+        "ci90": [
+          -0.2940219828483821,
+          0.21338394639987873
+        ]
+      },
+      "nonflag": {
+        "trades": 3699,
+        "mean_r": 0.01389512350457205,
+        "median_r": -1.0328718777127468,
+        "win_rate": 36.57745336577453,
+        "profit_factor": 1.0209608860389383,
+        "ci90": [
+          -0.12731548421700525,
+          0.15475669914337783
+        ]
+      }
+    },
+    "S4_10bps": {
+      "matched_days": 118,
+      "n_flag": 135,
+      "n_nonflag": 858,
+      "S4": 0.05520428489053157,
+      "months": 42,
+      "ci90": [
+        -0.21158496662222928,
+        0.36094787674224244
+      ]
+    },
+    "S4_25bps": {
+      "matched_days": 118,
+      "n_flag": 135,
+      "n_nonflag": 858,
+      "S4": 0.06498922259043402,
+      "months": 42,
+      "ci90": [
+        -0.20287667811904206,
+        0.37132280603187406
+      ]
+    },
+    "S4_sensitivity_no_overlap_rule": {
+      "matched_days": 302,
+      "n_flag": 514,
+      "n_nonflag": 6114,
+      "S4": 0.07790910174238766,
+      "months": 44,
+      "ci90": [
+        -0.07846445447229491,
+        0.23561468972449665
+      ]
+    }
+  },
+  "experiment_B": {
+    "signal_level": {
+      "base_10bps": {
+        "trades": 426,
+        "mean_r": 0.02788901060203581,
+        "median_r": -0.21863966718611344,
+        "win_rate": 44.13145539906103,
+        "profit_factor": 1.0605865694882037,
+        "ci90": [
+          -0.11453811165947753,
+          0.1730612591436136
+        ]
+      },
+      "wide_25bps": {
+        "trades": 426,
+        "mean_r": -0.007839364286522845,
+        "median_r": -0.24453427712459608,
+        "win_rate": 42.95774647887324,
+        "profit_factor": 0.9836813131887908,
+        "ci90": [
+          -0.1503317905589114,
+          0.13682565685503184
+        ]
+      },
+      "stress_50bps": {
+        "trades": 426,
+        "mean_r": -0.06738665576745392,
+        "median_r": -0.283262369757932,
+        "win_rate": 41.07981220657277,
+        "profit_factor": 0.8691113176948092,
+        "ci90": [
+          -0.20954100645926735,
+          0.07716895376453603
+        ]
+      }
+    },
+    "by_year": {
+      "2022": {
+        "trades": 22,
+        "mean_r": -0.4302195268917593,
+        "win_rate": 27.27272727272727
+      },
+      "2023": {
+        "trades": 83,
+        "mean_r": 0.18308892875237104,
+        "win_rate": 59.036144578313255
+      },
+      "2024": {
+        "trades": 122,
+        "mean_r": 0.09621972942864851,
+        "win_rate": 45.90163934426229
+      },
+      "2025": {
+        "trades": 106,
+        "mean_r": 0.01774407839099066,
+        "win_rate": 45.28301886792453
+      },
+      "2026": {
+        "trades": 93,
+        "mean_r": -0.08032808901183827,
+        "win_rate": 31.182795698924732
+      }
+    },
+    "nonoverlap_trades": 432,
+    "all_trades": 528
+  },
+  "secondary_current_list": {
+    "eligible_flags": 605,
+    "mean_net_r_breakout_stop": 0.17410800390871287
+  },
+  "portfolio": {
+    "a_retest": {
+      "return_pct": 68.35310415699882,
+      "cagr_pct": 14.041528575651107,
+      "max_dd_pct": -19.20456303303514,
+      "trades": 265,
+      "expectancy_r": 0.22771964261522995,
+      "yearly_return_pct": {
+        "2022": -10.11,
+        "2023": 2.6,
+        "2024": 15.43,
+        "2025": 20.71,
+        "2026": 31.0
+      }
+    },
+    "b_retest_plus_flag": {
+      "return_pct": 75.41547379480333,
+      "cagr_pct": 15.229792422921285,
+      "max_dd_pct": -16.51000910093994,
+      "trades": 262,
+      "expectancy_r": 0.2634055451852816,
+      "yearly_return_pct": {
+        "2022": -10.12,
+        "2023": 5.86,
+        "2024": 14.24,
+        "2025": 24.32,
+        "2026": 29.82
+      }
+    },
+    "c_retest_plus_breakouts": {
+      "return_pct": 57.24339680589963,
+      "cagr_pct": 12.09450051877523,
+      "max_dd_pct": -20.515784294225924,
+      "trades": 328,
+      "expectancy_r": 0.34720959357057135,
+      "yearly_return_pct": {
+        "2022": -11.7,
+        "2023": 5.48,
+        "2024": 18.37,
+        "2025": 7.99,
+        "2026": 32.07
+      }
+    }
+  },
+  "criteria": {
+    "S1_trades_ge_100": true,
+    "S2_mean_gt_0_and_ci_low_gt_0": false,
+    "S3_mean_25bps_gt_0": false,
+    "S4_diff_gt_0_and_ci_low_gt_0": false,
+    "S5_positive_in_2_of_3_years": true,
+    "S6_book_b_ge_a_and_dd_within_3pp": true,
+    "S1_S5_all": false
+  },
+  "verdict": "FAILED: flag v1 is a closed hypothesis (no re-parametrisation)"
+}
