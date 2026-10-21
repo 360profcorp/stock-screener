@@ -62,8 +62,8 @@ Run `python -m unittest test_pilot -v`.
    is never used.
 3. Shared account (`…1725` is the only linked account): pilot budget, trades and order ids are
    tracked separately; the existing manual position's ticker is refused.
-5. Runner with encrypted pilot state and alerts: a separate PR, not merged without approval.
-6. Review by the owner and Muse, then the owner confirms one concrete order.
+4. Runner with encrypted pilot state and alerts: a separate PR, not merged without approval.
+5. Review by the owner and Muse, then the owner confirms one concrete order.
 
 ## 5. First trade sequence (after the blockers)
 1. Snapshot → guards → intent saved → `LIMIT BUY 1 DAY @ max_price`.
