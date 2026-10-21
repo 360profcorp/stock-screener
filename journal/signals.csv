@@ -1,4 +1,11 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-21,breakout,DELL,99,Information Technology,485.88,473.5,459.29,5.47
+2026-10-21,breakout,ILMN,97,Health Care,282.86,272.01,263.85,6.72
+2026-10-21,breakout,DDOG,95,Information Technology,273.09,269.1,261.03,4.42
+2026-10-21,breakout,PTC,93,Information Technology,194.38,194.1,188.28,3.14
+2026-10-21,breakout,CTSH,87,Information Technology,69.55,68.75,66.69,4.12
+2026-10-21,retest,ACN,90,Information Technology,240.26,231.36,224.42,6.59
+2026-10-21,retest,MTD,85,Health Care,1677.94,1619.58,1557.82,7.16
 2026-10-20,breakout,CRL,95,Health Care,315.45,309.48,300.2,4.84
 2026-10-20,breakout,ZBRA,94,Information Technology,384.08,380.65,369.23,3.87
 2026-10-20,breakout,WDAY,91,Information Technology,203.98,200.23,194.22,4.78
