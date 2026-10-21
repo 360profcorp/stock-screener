@@ -152,8 +152,8 @@ def main(argv=None):
         raise SystemExit("saved RS-first result not reproduced: stop and explain first")
 
     # ---- context for every candidate (sector, SPY vs MA200) ---------------------------------
-    ctx = pool[["ticker", "i", "sector", "spy_above200"]].rename(columns={"i": "_sig_i"})
-    trc = tr.merge(ctx, on=["ticker", "_sig_i"], how="left", validate="many_to_one")
+    ctx = pool[["ticker", "signal_date", "sector", "spy_above200"]]
+    trc = tr.merge(ctx, on=["ticker", "signal_date"], how="left", validate="many_to_one")
     assert trc["spy_above200"].notna().all()
     trc["net_r_10"] = np.where(trc["status"] == "closed",
                                net_r_px(trc["entry"], trc["exit"], trc["stop"], 10), np.nan)
