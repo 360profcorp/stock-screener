@@ -70,7 +70,8 @@ class FakeBroker:
                     orders=[copy.deepcopy(o) for o in self.orders.values()
                             if datetime.fromisoformat(o["entered"]) >=
                             self.clock() - timedelta(days=self.window_days)],
-                    balances=dict(cash=self.cash, cash_available=self.cash), flags={})
+                    balances=dict(cash=self.cash, cash_available=self.cash,
+                                  cash_no_margin=self.cash), flags={})
 
     def get_order(self, oid):
         if self.down:
@@ -568,6 +569,22 @@ class Guards(Base):
         self.p.cycle()
         self.p.cycle()
         self.assertEqual(len(self.b.sent_types("MARKET", "SELL")), 1)
+
+    def test_no_margin_and_unknown_cash_refused(self):
+        self.b.cash = 40.0                                         # less than 1 x $60 limit
+        r = self.p.cycle(approval())
+        self.assertTrue(any("own cash" in w for w in r["entry"]["why"]))
+        orig = self.b.snapshot
+
+        def no_cash():
+            s = orig()
+            s["balances"] = dict(cash=None, cash_available=None, cash_no_margin=None,
+                                 buying_power=10000)               # leverage only
+            return s
+        self.b.snapshot = no_cash
+        r = self.p.cycle(approval(approval_id="A2"))
+        self.assertTrue(any("cash unknown" in w for w in r["entry"]["why"]))
+        self.assertEqual(self.b.sent, [])
 
     def test_kill_switch_keeps_protection(self):
         self.after_trade()

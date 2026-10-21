@@ -488,9 +488,11 @@ class Pilot:
             why.append(f"first trade max ${cost:.2f} > ${FIRST_TRADE_MAX_USD:.0f}")
         if self.committed_usd() + cost > BUDGET_USD:
             why.append(f"budget: ${self.committed_usd() + cost:.2f} > ${BUDGET_USD:.0f}")
-        cash = self.snap["balances"].get("cash_available")
-        if cash is not None and cost > float(cash):
-            why.append(f"cash available ${cash} < ${cost:.2f}")
+        cash = self.snap["balances"].get("cash_no_margin")
+        if cash is None:
+            why.append("own cash unknown (no leverage allowed): refused")
+        elif cost > float(cash):
+            why.append(f"own cash ${float(cash):.2f} < ${cost:.2f} (no margin)")
         return why
 
     def enter(self, a: dict, out=None) -> dict:

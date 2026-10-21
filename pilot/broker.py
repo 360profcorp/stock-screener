@@ -155,6 +155,11 @@ class SchwabPilotBroker:
                     positions=pos, orders=orders,
                     balances=dict(cash=cb.get("cashBalance"),
                                   cash_available=cb.get("cashAvailableForTrading"),
+                                  # own cash only (margin accounts have no cashAvailableForTrading;
+                                  # buying power includes leverage, so it is never used)
+                                  cash_no_margin=(cb.get("cashAvailableForTrading")
+                                                  if cb.get("cashAvailableForTrading") is not None
+                                                  else cb.get("cashBalance")),
                                   buying_power=cb.get("buyingPower"),
                                   liquidation_value=cb.get("liquidationValue")),
                     flags=dict(is_day_trader=a.get("isDayTrader"),

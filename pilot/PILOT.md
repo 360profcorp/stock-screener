@@ -7,19 +7,21 @@ dry-mode bot are unchanged. Engine v2 addresses the owner's review of v1 (§2).
 ## 1. Real API, read-only (`pilot/readonly_check.py`, workflow `pilot-readonly.yml`)
 All calls go through `ReadOnlyHTTP`: only GET requests and the OAuth token refresh can leave
 the process. `state/trader.enc` is compared before and after each run and was unchanged.
+Details (balances, positions) are encrypted to a one-off key and are not in logs or the repo.
 
-| Check | Result (2026-10-21 04:04 UTC) |
+**2026-10-21 run 39666235303 (after the owner added the secrets and logged in again): passed.**
+
+| Check | Result |
 |---|---|
-| Saved Schwab login in the bot state | present; refresh token created 5.49 days earlier, so it expires around **2026-10-22 16:20 UTC** |
-| `SCHWAB_APP_KEY` / `SCHWAB_APP_SECRET` as seen by this Actions job | empty |
-| Token refresh | 401 invalid_client (consistent with empty client credentials in this job) |
-| Account, balances, positions, open orders | not reached yet |
-| Calls other than GET + token | 0 |
+| Keys in Actions | `SCHWAB_APP_KEY` and `SCHWAB_APP_SECRET` set (values not shown) |
+| Login used | the new saved login from `state/trader.enc` on main (`682c143`; login committed `e2a5e9d`), age 0.01 days, so it is in the repo for Actions, not only in the Streamlit session |
+| Token refresh | ok; the refresh token did not rotate |
+| Accounts | 1 linked, `…1725`, type **MARGIN**; not day-trader flagged, not closing-only |
+| Balances, positions, orders | read ok: 1 equity position (manual), 0 open orders, 0 orders in the last 60 days |
+| Calls | token refresh + 4 GETs; 0 order calls |
 
-What this shows: in this job the two secrets were empty. It does **not** prove that the
-connection never worked. They may be stored elsewhere, for example in the app only or in a
-GitHub environment this job does not use. The owner adds them directly in GitHub Secrets
-(never in the chat); then the read-only check is repeated.
+Earlier runs (04:04 and 12:36 UTC) failed with 401 invalid_client because the two secrets were
+empty in that job. This does not mean the connection never worked elsewhere.
 
 ## 2. Engine v2 (`pilot/engine.py`): owner's review points
 | # | Review point | v2 behaviour | Tests |
@@ -48,16 +50,18 @@ The existing live path in `trader.py` is not used for the pilot. Its known issue
 - the OTO child stop sized to the ordered quantity;
 - no handling of unknown send results.
 
-## 3. Tests (`test_pilot.py`, 39 tests, scripted broker, no network)
+## 3. Tests (`test_pilot.py`, 40 tests, scripted broker, no network)
 Run `python -m unittest test_pilot -v`.
 
 ## 4. Blockers before the first real order
-1. Owner adds `SCHWAB_APP_KEY` and `SCHWAB_APP_SECRET` in GitHub Secrets.
-2. Owner logs in to Schwab again from the app (the current login expires around
-   2026-10-22 16:20 UTC).
-3. The read-only check is repeated and shows the account (last 4 digits), type, balances,
-   positions and open orders.
-4. Separate or shared account: owner's decision.
+1. ~~Secrets~~ and ~~a fresh login~~ (done 2026-10-21; the login lasts 7 days and must be
+   renewed weekly).
+2. **Own cash for the pilot.** The account's own cash is below the first trade's $100 cap.
+   The account is a margin account; the pilot uses own cash only (`cashAvailableForTrading`,
+   else `cashBalance`) and refuses when it is unknown. Buying power, which includes leverage,
+   is never used.
+3. Shared account (`…1725` is the only linked account): pilot budget, trades and order ids are
+   tracked separately; the existing manual position's ticker is refused.
 5. Runner with encrypted pilot state and alerts: a separate PR, not merged without approval.
 6. Review by the owner and Muse, then the owner confirms one concrete order.
 
