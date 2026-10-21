@@ -16,6 +16,7 @@ import streamlit as st
 
 import bot_status
 import vault
+import schwab_auth
 from schwab_api import auth_url, exchange_code, refresh_age_days
 
 TX = {
@@ -42,6 +43,19 @@ TX = {
         "sch_save": "Подключить", "sch_done": "Schwab подключён ✅",
         "no_key": "Нет SCHWAB_APP_KEY / SCHWAB_APP_SECRET в Secrets Streamlit.",
         "no_gh": "Нет GH_TOKEN в Secrets Streamlit — приложение не может сохранять изменения.",
+        "renew": "🔑 Продлить подключение Schwab",
+        "renew_go": "➡️ Перейти ко входу Schwab (ссылка одноразовая, 10 минут)",
+        "renew_help": "Войди в Schwab и разреши доступ — сканер откроется сам и сохранит вход.",
+        "renew_no_cb": "Автопродление выключено: в Secrets Streamlit нет SCHWAB_CALLBACK_URL "
+                       "(адрес сканера, зарегистрированный в Schwab Developer Portal).",
+        "renew_ok": "✅ Подключение Schwab продлено и сохранено. Вход действует до {t} (Нью-Йорк).",
+        "renew_fail": "❌ Подключение не продлено: {r}",
+        "expires": "Вход действует до {t} (Нью-Йорк), осталось {h:.0f} ч.",
+        "expired": "⛔ Вход в Schwab истёк — новые входы бота заблокированы, стопы у Schwab "
+                   "остаются. Продли подключение.",
+        "revoked": "⛔ Schwab отклонил вход досрочно — новые входы заблокированы, стопы у Schwab "
+                   "остаются. Войди заново.",
+        "manual_way": "Запасной способ (вставить адрес вручную)",
         "plan": "План на утро (покупка на открытии)", "plan_none": "Плана нет.",
         "plan_note": "VCP и ретест покупаются на открытии следующего дня. Пробои бот покупает "
                      "сам в тот же день около 15:30, если пробой держится.",
@@ -101,6 +115,19 @@ TX = {
         "sch_save": "Connect", "sch_done": "Schwab connected ✅",
         "no_key": "SCHWAB_APP_KEY / SCHWAB_APP_SECRET missing in Streamlit secrets.",
         "no_gh": "GH_TOKEN missing in Streamlit secrets — the app can't save changes.",
+        "renew": "🔑 Renew Schwab connection",
+        "renew_go": "➡️ Go to the Schwab login (one-time link, 10 minutes)",
+        "renew_help": "Log in to Schwab and allow access — the scanner reopens and saves the login.",
+        "renew_no_cb": "Automatic renewal is off: SCHWAB_CALLBACK_URL is missing in Streamlit "
+                       "secrets (the scanner address registered in the Schwab Developer Portal).",
+        "renew_ok": "✅ Schwab connection renewed and saved. Login valid until {t} (New York).",
+        "renew_fail": "❌ Connection not renewed: {r}",
+        "expires": "Login valid until {t} (New York), {h:.0f} h left.",
+        "expired": "⛔ The Schwab login has expired — the bot's new entries are blocked, stops at "
+                   "Schwab stay. Renew the connection.",
+        "revoked": "⛔ Schwab refused the login early — new entries are blocked, stops at Schwab "
+                   "stay. Log in again.",
+        "manual_way": "Fallback (paste the address manually)",
         "plan": "Morning plan (buy at the open)", "plan_none": "No plan.",
         "plan_note": "VCP and retest are bought at the next open. Breakouts are bought by the "
                      "bot the same day around 3:30 PM if the breakout holds.",
@@ -220,6 +247,67 @@ def render_status(state, lang, now=None):
     return S
 
 
+@st.cache_resource
+def _pending_states():
+    """One-time login states, shared by the app's sessions (Schwab's redirect opens a new
+    session). Only hashes are kept."""
+    return schwab_auth.PendingStates()
+
+
+def _ny(ts):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.fromtimestamp(ts, ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M")
+
+
+def save_token(store, token, attempts=3):
+    """Put the new login into the encrypted state through the GitHub API (the store Actions
+    read). Reloads and retries when the bot saved in between. Raises if it could not save."""
+    import time as _t
+    last = None
+    for _ in range(attempts):
+        state, sha = store.get()
+        state["token"] = token
+        state["schwab_reconnected_at"] = _t.strftime("%Y-%m-%d %H:%M:%S", _t.gmtime())
+        vault.log(state, "schwab login renewed in the app")
+        try:
+            store.put(state, sha, "Bot: Schwab login (renewed)")
+            return state
+        except RuntimeError as e:                 # 409: changed meanwhile -> reload, retry
+            last = e
+    raise last or RuntimeError("could not save")
+
+
+def handle_schwab_return(X, password, http=None):
+    """Runs on every page load BEFORE the password prompt: Schwab's code lives ~30 s.
+    Only a one-time state issued by an unlocked session is accepted. The address bar is
+    cleaned in every case; success is shown only after the token was saved."""
+    qp = st.query_params
+    if "code" not in qp and "state" not in qp:
+        return None
+    params = {k: qp.get(k) for k in ("code", "state", "error")}
+    st.query_params.clear()                        # code/state never stay in the address bar
+    key, secret = _secret("SCHWAB_APP_KEY"), _secret("SCHWAB_APP_SECRET")
+    cb = _secret("SCHWAB_CALLBACK_URL")
+    if not (password and key and secret and cb):
+        res = dict(ok=False, reason="the app is not configured for automatic renewal",
+                   step="config")
+    else:
+        import requests
+        store = vault.GitHubStore(password, _secret("GH_TOKEN") or None)
+        res = schwab_auth.handle_callback(
+            params, _pending_states(),
+            lambda code: schwab_auth.exchange(key, secret, code, cb, http or requests),
+            lambda token: save_token(store, token))
+    if res["ok"]:
+        st.session_state.pop("bot_state", None)    # reload the saved state on unlock
+        st.success(X["renew_ok"].format(t=_ny(res["expires_at"])))
+    elif res["ok"] is False:
+        st.error(X["renew_fail"].format(r=res["reason"]))
+    st.session_state["sch_last_result"] = {k: res[k] for k in ("ok", "step", "reason")}
+    return res
+
+
 def _secret(name):
     try:
         return st.secrets.get(name, "")
@@ -230,6 +318,7 @@ def _secret(name):
 def render(T, lang, get_prices):
     X = TX[lang]
     password = _secret("STATE_PASSWORD")
+    handle_schwab_return(X, password)
     if not password:
         st.info(X["no_setup"])
         return
@@ -273,22 +362,45 @@ def render(T, lang, get_prices):
     # ---------- Schwab ----------
     with st.expander(X["schwab"], expanded=False):
         age = refresh_age_days(state.get("token"))
+        S = schwab_auth.status(state.get("token"))
+        auth = state.get("schwab_auth") or {}
+        login = (str(int(float(state["token"]["refresh_created"])))
+                 if S["state"] != "none" else None)
         if age is None:
             st.write(X["sch_none"])
+        elif S["state"] == "expired":
+            st.error(X["expired"])
+        elif auth.get("revoked") and auth.get("login") == login:
+            st.error(X["revoked"])
         elif 7 - age < 1.5:
             st.warning(X["sch_soon"].format(d=max(0, 7 - age)))
         else:
             st.success(X["sch_ok"].format(d=7 - age))
+        if S["expires_at"] and S["state"] != "expired":
+            st.caption(X["expires"].format(t=_ny(S["expires_at"]), h=S["seconds_left"] / 3600))
         key, secret = _secret("SCHWAB_APP_KEY"), _secret("SCHWAB_APP_SECRET")
+        cb = _secret("SCHWAB_CALLBACK_URL")
         if not (key and secret):
             st.caption(X["no_key"])
+        elif not cb:
+            st.caption(X["renew_no_cb"])
         else:
+            if st.button(X["renew"], type="primary", use_container_width=True):
+                st.session_state["sch_login_url"] = schwab_auth.login_url(
+                    key, cb, _pending_states().issue())
+            if st.session_state.get("sch_login_url"):
+                st.link_button(X["renew_go"], st.session_state["sch_login_url"],
+                               use_container_width=True)
+                st.caption(X["renew_help"])
+        if key and secret and st.toggle(X["manual_way"], key="sch_manual", value=not cb):
             st.markdown(X["sch_steps"])
             st.link_button(X["sch_link"], auth_url(key), use_container_width=True)
             url = st.text_input(X["sch_paste"], key="sch_url")
             if st.button(X["sch_save"], type="primary", disabled=not url):
                 try:
                     state["token"] = exchange_code(key, secret, url)
+                    state["schwab_reconnected_at"] = time.strftime("%Y-%m-%d %H:%M:%S",
+                                                                   time.gmtime())
                     vault.log(state, "schwab connected")
                     if save("Bot: Schwab login"):
                         st.success(X["sch_done"])

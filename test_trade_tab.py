@@ -143,6 +143,27 @@ class TestApp(unittest.TestCase):
             self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
             self.assertIn(X["pos_none"], [m.value for m in at.markdown])
 
+    def test_schwab_return_with_a_foreign_state_is_rejected_and_url_cleaned(self):
+        from streamlit.testing.v1 import AppTest
+        for lang in ("ru", "en"):
+            at = AppTest.from_file("app.py", default_timeout=180)
+            at.secrets["STATE_PASSWORD"] = "test"
+            at.secrets["SCHWAB_APP_KEY"] = "k"
+            at.secrets["SCHWAB_APP_SECRET"] = "s"
+            at.secrets["SCHWAB_CALLBACK_URL"] = "https://example.streamlit.app"
+            at.session_state["lang"] = "EN" if lang == "en" else "RU"
+            at.query_params["code"] = "SECRET-CODE"
+            at.query_params["state"] = "forged"
+            at.run()
+            self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
+            errs = " ".join(e.value for e in at.error)
+            self.assertIn(tt.TX[lang]["renew_fail"].split("{")[0].strip(), errs)
+            self.assertIn("unknown", errs)
+            self.assertNotIn("SECRET-CODE", errs)
+            self.assertNotIn("code", dict(at.query_params))
+            self.assertEqual(at.session_state["sch_last_result"]["step"], "state")
+            self.assertEqual(len(at.success), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

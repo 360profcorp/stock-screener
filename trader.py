@@ -39,6 +39,7 @@ import requests
 
 import core
 import vault
+import schwab_auth
 from schwab_api import Schwab, SchwabError, refresh_age_days
 
 ROOT = Path(__file__).parent
@@ -189,14 +190,37 @@ def load_state():
 
 
 def schwab_or_none(state):
-    """Live broker, or None (+ push) when the weekly Schwab login has expired."""
-    age = refresh_age_days(state.get("token"))
-    if age is None or age >= 7:
-        push("VISAR бот: нужен вход в Schwab",
-             "Доступ к Schwab истёк (живёт 7 дней). Открой приложение → «Торговля» → "
-             "«Подключить Schwab». Пока бот не торгует.", tags="warning")
+    """Live broker, or None when the weekly login has expired or Schwab revoked it early.
+    None blocks new entries only: nothing is cancelled, so stops already at Schwab stay.
+    The owner is notified once per login (shared with the expiry monitor)."""
+    tok = state.get("token")
+    s = schwab_auth.status(tok)
+    auth = state.get("schwab_auth") or {}
+    login = str(int(float(tok["refresh_created"]))) if s["state"] != "none" else None
+    revoked = bool(auth.get("revoked")) and auth.get("login") == login
+    if s["state"] in ("none", "expired") or revoked:
+        name = "revoked" if revoked and s["state"] != "expired" else "expired"
+        sent = state.setdefault("schwab_notices", {})
+        if login and name not in sent.setdefault(login, []):
+            sent[login].append(name)
+            title, text = schwab_auth.TEXT[name]
+            push(title, text, tags="warning")
+        elif not login:
+            print("Schwab is not connected")
         return None
-    return Schwab(APP_KEY, APP_SECRET, state["token"], ACCOUNT)
+    return Schwab(APP_KEY, APP_SECRET, tok, ACCOUNT)
+
+
+def reconcile_after_reconnect(state, broker, today, events) -> bool:
+    """After a new Schwab login, positions and orders are reconciled with the broker FIRST,
+    before any new order. Returns True if it ran."""
+    rc = state.get("schwab_reconnected_at")
+    if not rc or (state.get("schwab_reconciled_at") or "") >= rc:
+        return False
+    reconcile_live(state, broker, today, events)
+    state["schwab_reconciled_at"] = rc
+    events.append("🔄 Новый вход в Schwab: позиции и заявки сверены перед любыми заявками.")
+    return True
 
 
 # =====================================================================
@@ -449,6 +473,8 @@ def cmd_plan():
         try:
             reconcile_live(state, Schwab(APP_KEY, APP_SECRET, state["token"], ACCOUNT),
                            today, events)
+            if state.get("schwab_reconnected_at"):
+                state["schwab_reconciled_at"] = state["schwab_reconnected_at"]
         except SchwabError as e:
             events.append(f"⚠️ Schwab: {str(e)[:120]}")
 
@@ -627,6 +653,8 @@ def cmd_execute():
             vault.save_file(STATE_FILE, state, PASSWORD)
             return
 
+    if MODE != "dry":
+        reconcile_after_reconnect(state, broker, today, events)
     run_execute(state, broker, today, events, now)
     state["last_execute"] = today
     plan = state.get("plan") or {}
@@ -721,6 +749,10 @@ def cmd_preclose():
             broker = schwab_or_none(state)
             if broker is None:
                 cand = cand.iloc[0:0]
+            else:
+                ev = []
+                reconcile_after_reconnect(state, broker, today, ev)
+                lines += ev
     quotes = broker.quotes(list(cand["ticker"].head(room + 5))) if broker and room else {}
 
     bought = []

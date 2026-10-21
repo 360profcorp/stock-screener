@@ -104,8 +104,9 @@ class GitHubStore:
 
 
 # ---------------------------------------------------------------- concurrent updates
-APP_KEYS = ("token", "auto_breakouts")      # written by the app (Trading tab)
+APP_KEYS = ("token", "auto_breakouts", "schwab_reconnected_at")   # written by the app
 APP_PLAN_KEYS = ("approved", "rejected")     # plan approval written by the app
+MONITOR_KEYS = ("schwab_auth", "schwab_notices")   # written by the login monitor and the bot
 
 
 class StateConflict(RuntimeError):
@@ -119,7 +120,7 @@ def merge_states(base: dict, ours: dict, theirs: dict) -> dict:
     taken from it; log entries are united; every other field is the bot's. If `theirs`
     changed a bot-owned field, nothing is guessed: StateConflict is raised."""
     out = json.loads(json.dumps(ours, default=str))
-    skip = set(APP_KEYS) | {"log", "plan", "updated"}
+    skip = set(APP_KEYS) | set(MONITOR_KEYS) | {"log", "plan", "updated"}
     for k in set(base) | set(theirs):
         if k in skip:
             continue
@@ -140,6 +141,8 @@ def merge_states(base: dict, ours: dict, theirs: dict) -> dict:
         else:
             raise StateConflict("plan approval changed for a plan the bot already replaced "
                                 "or executed")
+    for k, v in merge_monitor_keys(base, out, theirs).items():
+        out[k] = v
     seen, merged = set(), []
     for row in sorted((base.get("log") or []) + (ours.get("log") or []) +
                       (theirs.get("log") or []), key=lambda r: r.get("t", "")):
@@ -148,4 +151,34 @@ def merge_states(base: dict, ours: dict, theirs: dict) -> dict:
             seen.add(key)
             merged.append(row)
     out["log"] = merged[-200:]
+    return out
+
+
+def _union_notices(a: dict, b: dict) -> dict:
+    """Notices sent, per login: union, keeping only the newest login."""
+    keys = sorted(set(a or {}) | set(b or {}), key=lambda k: float(k))
+    if not keys:
+        return {}
+    k = keys[-1]
+    return {k: sorted(set((a or {}).get(k, [])) | set((b or {}).get(k, [])))}
+
+
+def merge_monitor_keys(base: dict, ours: dict, theirs: dict) -> dict:
+    """schwab_notices: union (a notice sent by either side is never sent again);
+    schwab_auth: the side that changed it wins, theirs on a tie."""
+    out = {}
+    if (ours.get("schwab_notices") or theirs.get("schwab_notices")):
+        out["schwab_notices"] = _union_notices(ours.get("schwab_notices"),
+                                               theirs.get("schwab_notices"))
+    a = theirs.get("schwab_auth") if theirs.get("schwab_auth") != base.get("schwab_auth") \
+        else ours.get("schwab_auth")
+    if a is not None:
+        out["schwab_auth"] = a
+    return out
+
+
+def merge_monitor(base: dict, ours: dict, theirs: dict) -> dict:
+    """The login monitor only changes MONITOR_KEYS: everything else is taken from theirs."""
+    out = json.loads(json.dumps(theirs, default=str))
+    out.update(merge_monitor_keys(base, ours, theirs))
     return out
