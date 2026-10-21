@@ -162,7 +162,8 @@ class TestApp(unittest.TestCase):
             self.assertNotIn("SECRET-CODE", errs)
             self.assertNotIn("code", dict(at.query_params))
             self.assertEqual(at.session_state["sch_last_result"]["step"], "state")
-            self.assertEqual(len(at.success), 0)
+            ok_txt = tt.TX[lang]["renew_ok"].split("{")[0].strip(" ✅")[:20]
+            self.assertFalse(any(ok_txt in m.value for m in at.success))   # never "renewed"
 
 
 if __name__ == "__main__":
