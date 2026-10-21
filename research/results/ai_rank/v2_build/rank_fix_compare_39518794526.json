@@ -1,0 +1,67 @@
+{
+  "old_sha256": "48077f8f6b998c5bad80536ac27a95e63b47e37f8dbf0b7d5a55890cf0efe982",
+  "new_sha256": "e1b40d2fc6f61f3aca6b4deae7b83805ac80065d2abfaadda13fdd3f8cf1a097",
+  "rows_old": 25801,
+  "rows_new": 25801,
+  "same_signals": true,
+  "unchanged": {
+    "split": true,
+    "label_end": true,
+    "trade_status": true,
+    "exit_date": true,
+    "entry_date": true,
+    "net_r_base": true,
+    "rs": true,
+    "i": true
+  },
+  "other_columns_unchanged": {
+    "sector": true,
+    "rs_score": true,
+    "log_adv": true,
+    "atr14_pct": true,
+    "vol_ratio": true,
+    "vol10_vs_50": true,
+    "ret_1d": true,
+    "ret_5d": true,
+    "ret_20d": true,
+    "ret_63d": true,
+    "dist_ma50": true,
+    "dist_ma150": true,
+    "dist_ma200": true,
+    "dist_52w_high": true,
+    "dist_52w_low": true,
+    "dist_level_pct": true,
+    "risk_at_close_pct": true,
+    "spy_above200": true,
+    "spy_ret_20d": true,
+    "sess_since_earn": true,
+    "sector_rs_median": true,
+    "sector_ret20_median": true,
+    "rs_minus_sector": true,
+    "breadth_ma50": true,
+    "breadth_new_high": true,
+    "breadth_chg5": true,
+    "earn_within_5": true,
+    "earn_last_date_used": true,
+    "breadth_members": true,
+    "sector_members": true
+  },
+  "rank_rs_changed": {
+    "breakout": 13100,
+    "dbottom": 18,
+    "retest": 6881,
+    "vcp": 5208
+  },
+  "rank_rs_changed_total": 25207,
+  "retest_rank_rs_changed_by_split": {
+    "train": 3809,
+    "test": 1506,
+    "validation": 1275,
+    "purged": 242,
+    "embargo": 49
+  },
+  "new_columns": [
+    "rank_rs_all"
+  ],
+  "ok": true
+}
