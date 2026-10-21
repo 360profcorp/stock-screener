@@ -5,12 +5,8 @@ name: Research AI ranking v2 — training + gate (research branch only)
 # in code). Writes gate.json BEFORE the historical window. Nothing is frozen, nothing touches
 # the bot; the guard keeps the live strategy fingerprint and live state unchanged.
 on:
-  push:
-    branches: [research/ai-rank-v2]
-    paths:
-      - "research/ai_rank/v2_train.py"
-      - "research/ai_rank/test_v2_train.py"
-      - ".github/workflows/research-ai-rank-v2-train.yml"
+  # FROZEN 2026-10-20: experiment closed after audit; no push trigger, no further training
+  # (v2_train.main also refuses to run while research/results/ai_rank/v2_train/FREEZE exists)
   workflow_dispatch:
 
 permissions:

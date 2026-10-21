@@ -1,0 +1,85 @@
+{
+  "experiment": "AI ranking v2.1 (retest ranker)",
+  "status": "FROZEN — closed after audit; no further training",
+  "conclusion_ru": "В проверенном эксперименте AI v2 не улучшил отбор ретестов. RS-first остаётся без изменений.",
+  "conclusion_en": "In the audited experiment AI v2 did not improve retest selection. RS-first stays unchanged.",
+  "prereg": {
+    "file": "research/ai_rank/PREREG_v2.md",
+    "version": "v2.1",
+    "sha256_at_training_commit": "3eb607d3c052ee132063bd688fbe4efc2d3ed8f132058485fdb8dc974a16a580"
+  },
+  "code": {
+    "training_commit": "ed3368822dc7d3180d729341fce14e671b231666",
+    "files_sha256": {
+      "research/ai_rank/v2_train.py": "d18610b86b4be554f81308a71c8074860d47a38fcf12df49f7c1c5be895e1297",
+      "research/ai_rank/pipeline.py": "15ff9bd791f366ea8d8e07dea8fafa15ddce3180c16f8d7f3864b9a4f9cc3b57",
+      "research/ai_rank/v2_build.py": "8104fbfa6413bfcf3c61f90984a12d0db32d3f2d7f1e4424ee6fc05729693a72",
+      "research/ai_rank/v2_compare.py": "f798a52c91318955961ed4c4c0651d797405e2aa7c0307bd0a7974d7bf789d51",
+      "research/sp1500/engine.py": "1be6a60bee7dfdb943302729af69822e446861a2c841dc48a28d1535e571f8f0",
+      "research/sp1500/rules.py": "56c82dd410bce32611f48255b0e017588c96228d7167dce1647d51117371fc7e",
+      "portfolio_bt.py": "83c4e73ce0fee988bc7b71a280ffbb4e51531b511dc114c621b261762ffcc8ee",
+      "backtest.py": "0603d121147070e1e846dcdc83199f1f1efa54d6b53e2a3b91a116b0d533881e",
+      ".github/workflows/research-ai-rank-v2-train.yml": "742ba82b87eb2bef48f9be7c433b4c4a99eae877a57ce8a762ce4307b8ca8cf7"
+    }
+  },
+  "data": {
+    "pr5_artifact": {
+      "name": "sp1500-dataset-38773034101",
+      "run": 38773034101,
+      "bars.pkl.gz": "3df57ff951cf7f580ffbc088be003dfcdb872fabd66000e74b508cd73f69283e",
+      "signals.csv.gz": "98b6f81623ea3f20e5e5adc313891762c1a4e3ff0970f907fe7f17081a241cf3"
+    },
+    "v2_dataset_artifact": {
+      "name": "ai-rank-v2-dataset-39517028737",
+      "run": 39517028737,
+      "dataset_v2.csv.gz": "e1b40d2fc6f61f3aca6b4deae7b83805ac80065d2abfaadda13fdd3f8cf1a097",
+      "earnings_raw.json": "6124ef832241d30e69e2f8d40f1bb4b6b1469a3c915db27c884afbf42c04d68b",
+      "build_report": "research/results/ai_rank/v2_build/2026-10-20T2346Z/build_report.json"
+    }
+  },
+  "results": {
+    "dir": "research/results/ai_rank/v2_train/2026-10-21T0006Z",
+    "files_sha256": {
+      "2026-10-21T0006Z/gate.json": "802d0dc5b069ace5fd5000158dcb9df8d58a97b581d3626ce4b5efe2c6fb1e8d",
+      "2026-10-21T0006Z/results.json": "1a363c07dd3e2d7f98cb92001466885a31e551abdb2fbf7f9f4ba83ad6af56ec",
+      "2026-10-21T0006Z/historical_window.json": "e354e623e3122232eb470ec1d55d548c739bbb329138a21cbe171d6a25c6b025",
+      "2026-10-21T0006Z/REPORT.md": "5748b7a17d8fd5867e0503cf9136cb7339b512bde57967d063f257d42f67b8aa"
+    }
+  },
+  "runs": [
+    {
+      "run": 39518794506,
+      "commit": "b8f9386",
+      "result": "failure",
+      "train_step": "2026-10-21T00:02:49Z -> 00:03:07Z (18 s)",
+      "error": "not captured in an annotation (added in the next commit); code under research/ identical to the next run (git diff b8f9386 dfaafea touches only the workflow file and build outputs), so the same deterministic error",
+      "outputs": "none (no gate.json, no results committed)"
+    },
+    {
+      "run": 39518992733,
+      "commit": "dfaafea",
+      "result": "failure",
+      "train_step": "2026-10-21T00:04:42Z -> 00:04:55Z (13 s)",
+      "error": "ValueError in engine.non_overlapping (bars_held missing from the v2 dataset), raised inside experiment() while counting non-overlapping TRAIN signals — before any validation, walk-forward, gate or test computation",
+      "log": "failed_run_39518992733_traceback.txt",
+      "outputs": "none (no gate.json, no results committed)"
+    },
+    {
+      "run": 39519200849,
+      "commit": "ed33688",
+      "result": "success",
+      "fix": "bars_held taken from the PR #5 pool (2-line change, no change to splits, features, models or gate)",
+      "train_step": "2026-10-21T00:06:40Z -> 00:18:44Z",
+      "gate_written_at": "2026-10-21T00:16:13+00:00 (gate.json decided_at)",
+      "historical_window": "computed after gate.json was written, within the same step, finished by 00:18:44Z"
+    }
+  ],
+  "gate_before_test_evidence": [
+    "gate.json decided_at 2026-10-21T00:16:13Z; the training step ran until 00:18:44Z — the remaining 2.5 min are the historical window and file writes",
+    "code order in v2_train.main(): write_once(gate.json) precedes historical_window(); asserted by test_v2_train.test_gate_written_before_historical_window",
+    "inside experiment() every evaluation is restricted to dates < test start (2025-12-30): validation window, walk-forward years capped at the last session before the test start",
+    "both failed runs stopped within 13-18 s inside experiment(), long before any gate computation; they produced no files (only one v2_train run directory exists)",
+    "disclosure: the PR #5 dataset contains labels for the test window by construction, and trade lists for all periods are simulated in memory at the start of each experiment; no metric of the test window is computed or read before gate.json"
+  ],
+  "logs_note": "Full GitHub Actions job logs cannot be downloaded from this environment (log storage host blocked); step timings come from the Actions API, the traceback from the run's check-run annotation."
+}

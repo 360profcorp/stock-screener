@@ -201,6 +201,9 @@ def clean(r):
 
 
 def main(argv=None):
+    frozen = ROOT / "research/results/ai_rank/v2_train/FREEZE/FREEZE.json"
+    if frozen.exists():
+        raise SystemExit("AI ranking v2 is FROZEN (see FREEZE.json): no further training")
     ap = argparse.ArgumentParser()
     ap.add_argument("--pr5", required=True)
     ap.add_argument("--v2", required=True)

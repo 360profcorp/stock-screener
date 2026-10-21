@@ -44,6 +44,11 @@ audited v2 dataset (sha256 `e1b40d2f…`, rank_rs fix applied). The gate was wri
 - IC +0.054 over 135 days, 90 % interval [−0.005, +0.110], which includes 0. This window does not
   change the decision.
 
+## Final wording (owner)
+**«В проверенном эксперименте AI v2 не улучшил отбор ретестов. RS-first остаётся без изменений.»**
+(In the audited experiment AI v2 did not improve retest selection. RS-first stays unchanged.)
+Frozen 2026-10-20: see `research/results/ai_rank/v2_train/FREEZE/FREEZE.json`.
+
 ## Conclusion
 Inside one setup, the new information (earnings timing, sector strength, breadth) does not
 order retests better than RS. The validation IC is close to 0 and the sign flips between years.
