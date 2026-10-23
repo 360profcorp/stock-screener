@@ -76,7 +76,7 @@ TX = {
                 "intraday_hit": "сработал"},
         "pos": "Открытые позиции", "pos_none": "Открытых позиций нет.",
         "closed": "Закрытые сделки", "closed_none": "Закрытых сделок пока нет.",
-        "summary": "Сделок: {n} · в плюсе: {w:.0f}% · итого: ${p:+,.0f} · среднее: {r:+.2f}R",
+        "summary": "Сделок: {n} · в плюсе: {w} · итого: {p} · среднее: {r}",
         "log": "Журнал бота",
         "cols": {"ticker": "Тикер", "mode": "Сетап", "rs": "RS", "close": "Закрытие",
                  "level": "Уровень", "est": "≈ Цена", "how": "Когда вход", "date": "Дата",
@@ -136,7 +136,7 @@ TX = {
                 "intraday_hit": "hit"},
         "pos": "Open positions", "pos_none": "No open positions.",
         "closed": "Closed trades", "closed_none": "No closed trades yet.",
-        "summary": "Trades: {n} · winners: {w:.0f}% · total: ${p:+,.0f} · average: {r:+.2f}R",
+        "summary": "Trades: {n} · winners: {w} · total: {p} · average: {r}",
         "log": "Bot log",
         "cols": {"ticker": "Ticker", "mode": "Setup", "rs": "RS", "close": "Close",
                  "level": "Level", "est": "≈ Price", "how": "Entry timing", "date": "Date",
@@ -330,6 +330,27 @@ def closed_table(closed, T, X) -> pd.DataFrame:
     df["mode"] = mode.map(lambda m: T.get(f"mode_{m}", m))
     df["reason"] = reason.map(lambda x: X["reasons"].get(x, x) if isinstance(x, str) else x)
     return _view(df.iloc[::-1], CLOSED_COLS, X["cols"])
+
+
+def _num_col(df: pd.DataFrame, name: str) -> pd.Series:
+    """Numeric Series for column `name`, ALWAYS a Series aligned to df.index — even when
+    the column is entirely absent (old records) — so callers never get a bare scalar from
+    df.get(name). Non-numeric values become NaN."""
+    s = df[name] if name in df.columns else pd.Series(index=df.index, dtype="float64")
+    return pd.to_numeric(s, errors="coerce")
+
+
+def closed_summary(closed, X) -> str:
+    """One-line closed-trades summary. Missing/unavailable metrics render as '—', never
+    'nan', and a wholly missing pnl/r column can't crash the tab."""
+    df = pd.DataFrame(closed)
+    pnl, rr = _num_col(df, "pnl"), _num_col(df, "r")
+    has_pnl, has_r = bool(pnl.notna().any()), bool(rr.notna().any())
+    return X["summary"].format(
+        n=len(df),
+        w=f"{(pnl.dropna() > 0).mean() * 100:.0f}%" if has_pnl else "—",
+        p=f"${pnl.sum():+,.0f}" if has_pnl else "—",
+        r=f"{rr.dropna().mean():+.2f}R" if has_r else "—")
 
 
 def _strategy_switch(P):
@@ -735,14 +756,7 @@ def render(T, lang, get_prices):
     if not closed:
         st.write(X["closed_none"])
     else:
-        df = pd.DataFrame(closed)
-        pnl = pd.to_numeric(df.get("pnl"), errors="coerce")        # old records may be sparse
-        rr = pd.to_numeric(df.get("r"), errors="coerce")
-        st.markdown(X["summary"].format(
-            n=len(df),
-            w=(pnl > 0).mean() * 100 if pnl.notna().any() else float("nan"),
-            p=float(pnl.sum()),
-            r=rr.dropna().mean() if rr.notna().any() else float("nan")))
+        st.markdown(closed_summary(closed, X))
         st.dataframe(closed_table(closed, T, X), hide_index=True, use_container_width=True)
 
     # ---------- trade journal (filters + click-to-chart) ----------

@@ -110,6 +110,40 @@ class TestLabels(unittest.TestCase):
             pa.Table.from_pandas(bad)
 
 
+class TestClosedSummary(unittest.TestCase):
+    """Legacy one-line closed-trades summary must tolerate sparse/absent columns and show
+    '—' (never 'nan') for unavailable metrics."""
+
+    def test_normal(self):
+        for lang in ("ru", "en"):
+            s = tt.closed_summary([CLOSED], tt.TX[lang])
+            self.assertNotIn("nan", s.lower())
+            self.assertIn("1.20R", s)                      # avg R present
+            self.assertIn("$+40", s)                       # total P&L present
+
+    def test_both_pnl_and_r_columns_entirely_absent(self):
+        # several closed trades, NONE carrying pnl or r
+        closed = [{"ticker": "X1", "mode": "breakout", "entry_date": "2026-09-01",
+                   "exit_date": "2026-09-15", "qty": 1},
+                  {"ticker": "X2", "mode": "vcp", "entry_date": "2026-09-02",
+                   "exit_date": "2026-09-09", "qty": 2}]
+        for lang in ("ru", "en"):
+            s = tt.closed_summary(closed, tt.TX[lang])
+            self.assertNotIn("nan", s.lower())
+            self.assertEqual(s.count("—"), 3)              # win rate, total P&L, avg R
+            self.assertIn("2", s)                          # trade count still shown
+
+    def test_pnl_present_r_absent(self):
+        closed = [dict(CLOSED), {"ticker": "Y", "mode": "retest", "pnl": -5.0}]
+        for c in closed:
+            c.pop("r", None)
+        for lang in ("ru", "en"):
+            s = tt.closed_summary(closed, tt.TX[lang])
+            self.assertNotIn("nan", s.lower())
+            self.assertEqual(s.count("—"), 1)              # only avg R is "—"
+            self.assertIn("$+35", s)                       # 40 + (-5)
+
+
 @unittest.skipUnless(HAVE_ST or REQUIRE, "streamlit not installed")
 class TestApp(unittest.TestCase):
     """Run the whole app (all tabs execute on every run) with an unlocked Trading tab."""
@@ -198,6 +232,24 @@ class TestApp(unittest.TestCase):
         for lang in ("ru", "en"):
             at = self.run_app(lang, state)
             self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
+
+    def test_closed_records_missing_pnl_and_r_columns_do_not_crash(self):
+        """All closed trades lack pnl AND r entirely: tab renders, summary shows '—'."""
+        closed = [{"ticker": "X1", "mode": "breakout", "entry_date": "2026-09-01",
+                   "exit_date": "2026-09-15", "qty": 1, "entry": 100.0, "exit": 110.0,
+                   "reason": "time"},
+                  {"ticker": "X2", "mode": "vcp", "entry_date": "2026-09-02",
+                   "exit_date": "2026-09-09", "qty": 2, "entry": 80.0, "exit": 74.0,
+                   "reason": "stop"}]
+        state = {"mode": "dry", "positions": [POSITION], "closed": closed, "log": []}
+        for lang in ("ru", "en"):
+            at = self.run_app(lang, state)
+            self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
+            summary = [m.value for m in at.markdown
+                       if m.value.startswith(("Сделок:", "Trades:"))]
+            self.assertTrue(summary, "summary line not found")
+            self.assertNotIn("nan", summary[0].lower())
+            self.assertIn("—", summary[0])
 
 
 @unittest.skipUnless(HAVE_ST or REQUIRE, "streamlit not installed")
