@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-22T22:28:59+00:00",
+ "updated": "2026-10-23T22:29:23+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 3,
- "processed_through": "2026-10-22",
+ "revision": 4,
+ "processed_through": "2026-10-23",
  "cash": 5140.1728875631725,
  "open_positions": 3,
  "pending_orders": 0,
@@ -13,32 +13,32 @@
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-10-22",
+   "genuine_through": "2026-10-23",
    "reason": null,
    "metrics": {
-    "days": 3,
-    "final_equity": 9785.252904653016,
-    "return_pct": -2.147470953469832,
+    "days": 4,
+    "final_equity": 9762.752721547547,
+    "return_pct": -2.3724727845245264,
     "cagr_pct": NaN,
-    "max_drawdown_pct": -2.147470953469832,
-    "current_drawdown_pct": -2.147470953469832,
-    "exposure_pct": 66.66666666666666,
-    "spy_price_return_pct": -0.661851102152633,
-    "excess_vs_spy_price_pct": -1.4856198513171992
+    "max_drawdown_pct": -2.3724727845245264,
+    "current_drawdown_pct": -2.3724727845245264,
+    "exposure_pct": 75.0,
+    "spy_price_return_pct": -1.1806797001455926,
+    "excess_vs_spy_price_pct": -1.1917930843789337
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 3,
-    "final_equity": 9785.252904653016,
-    "return_pct": -2.147470953469832,
+    "days": 4,
+    "final_equity": 9762.752721547547,
+    "return_pct": -2.3724727845245264,
     "cagr_pct": NaN,
-    "max_drawdown_pct": -2.147470953469832,
-    "current_drawdown_pct": -2.147470953469832,
-    "exposure_pct": 66.66666666666666,
-    "spy_price_return_pct": -0.661851102152633,
-    "excess_vs_spy_price_pct": -1.4856198513171992
+    "max_drawdown_pct": -2.3724727845245264,
+    "current_drawdown_pct": -2.3724727845245264,
+    "exposure_pct": 75.0,
+    "spy_price_return_pct": -1.1806797001455926,
+    "excess_vs_spy_price_pct": -1.1917930843789337
    }
   },
   "timely": {
