@@ -22,7 +22,9 @@ def git(*a, check=True):
     return subprocess.run(["git", *a], check=check, capture_output=True, text=True)
 
 
-def main(base_file, msg, attempts=4):
+def main(base_file, msg, attempts=4, monitor=False):
+    """monitor=True: the run only changed vault.MONITOR_KEYS (login monitor), so the saved
+    state is taken as it is and only those keys are merged in — never a conflict."""
     pw = os.environ["STATE_PASSWORD"]
     base = vault.decrypt(Path(base_file).read_bytes(), pw)
     ours_blob = Path(PATH).read_bytes()
@@ -37,7 +39,8 @@ def main(base_file, msg, attempts=4):
                                      capture_output=True).stdout if remote.returncode == 0 else None
         if theirs_blob is not None and theirs_blob != Path(base_file).read_bytes():
             theirs = vault.decrypt(theirs_blob, pw)
-            state = vault.merge_states(base, ours, theirs)     # StateConflict -> exit 1
+            state = (vault.merge_monitor(base, ours, theirs) if monitor else
+                     vault.merge_states(base, ours, theirs))     # StateConflict -> exit 1
             print("remote state changed during the run — merged app fields")
         else:
             state = ours
@@ -61,4 +64,5 @@ def main(base_file, msg, attempts=4):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1], sys.argv[2]))
+    args = [a for a in sys.argv[1:] if a != "--monitor"]
+    sys.exit(main(args[0], args[1], monitor="--monitor" in sys.argv))

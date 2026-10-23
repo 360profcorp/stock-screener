@@ -1,0 +1,46 @@
+name: Schwab login monitor
+
+# Every 30 min: sends the 24 h / 2 h / expired notices once per login from the saved state.
+# Calls no Schwab endpoint (never uses the refresh token); places, changes and cancels no order. Its own
+# concurrency group (it must never queue behind or replace a pending bot run); it saves only its
+# key (schwab_notices) on top of whatever is saved, so it cannot conflict.
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: schwab-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests cryptography "pandas>=2.0"
+      - name: Keep a copy of the state the monitor starts from
+        run: cp state/trader.enc "$RUNNER_TEMP/base.enc" 2>/dev/null || true
+      - name: Check the login and send due notices
+        env:
+          STATE_PASSWORD: ${{ secrets.STATE_PASSWORD }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python scripts/schwab_monitor.py
+      - name: Save flags (3-way merge with a concurrent app save)
+        env:
+          STATE_PASSWORD: ${{ secrets.STATE_PASSWORD }}
+        run: |
+          git config user.name "visar-bot"
+          git config user.email "visar-bot@users.noreply.github.com"
+          if [ -f "$RUNNER_TEMP/base.enc" ] && ! cmp -s state/trader.enc "$RUNNER_TEMP/base.enc"; then
+            python scripts/save_trader_state.py --monitor "$RUNNER_TEMP/base.enc" "Schwab monitor $(date -u +%F_%H%M)"
+          else
+            echo "nothing to save"
+          fi
