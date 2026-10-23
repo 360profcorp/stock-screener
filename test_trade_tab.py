@@ -110,6 +110,40 @@ class TestLabels(unittest.TestCase):
             pa.Table.from_pandas(bad)
 
 
+class TestClosedSummary(unittest.TestCase):
+    """Legacy one-line closed-trades summary must tolerate sparse/absent columns and show
+    '—' (never 'nan') for unavailable metrics."""
+
+    def test_normal(self):
+        for lang in ("ru", "en"):
+            s = tt.closed_summary([CLOSED], tt.TX[lang])
+            self.assertNotIn("nan", s.lower())
+            self.assertIn("1.20R", s)                      # avg R present
+            self.assertIn("$+40", s)                       # total P&L present
+
+    def test_both_pnl_and_r_columns_entirely_absent(self):
+        # several closed trades, NONE carrying pnl or r
+        closed = [{"ticker": "X1", "mode": "breakout", "entry_date": "2026-09-01",
+                   "exit_date": "2026-09-15", "qty": 1},
+                  {"ticker": "X2", "mode": "vcp", "entry_date": "2026-09-02",
+                   "exit_date": "2026-09-09", "qty": 2}]
+        for lang in ("ru", "en"):
+            s = tt.closed_summary(closed, tt.TX[lang])
+            self.assertNotIn("nan", s.lower())
+            self.assertEqual(s.count("—"), 3)              # win rate, total P&L, avg R
+            self.assertIn("2", s)                          # trade count still shown
+
+    def test_pnl_present_r_absent(self):
+        closed = [dict(CLOSED), {"ticker": "Y", "mode": "retest", "pnl": -5.0}]
+        for c in closed:
+            c.pop("r", None)
+        for lang in ("ru", "en"):
+            s = tt.closed_summary(closed, tt.TX[lang])
+            self.assertNotIn("nan", s.lower())
+            self.assertEqual(s.count("—"), 1)              # only avg R is "—"
+            self.assertIn("$+35", s)                       # 40 + (-5)
+
+
 @unittest.skipUnless(HAVE_ST or REQUIRE, "streamlit not installed")
 class TestApp(unittest.TestCase):
     """Run the whole app (all tabs execute on every run) with an unlocked Trading tab."""
@@ -142,6 +176,111 @@ class TestApp(unittest.TestCase):
             at = self.run_app(lang, empty)
             self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
             self.assertIn(X["pos_none"], [m.value for m in at.markdown])
+
+    def test_performance_section_renders(self):
+        """Trading Performance block: cards, strategy-P&L/R charts, comparison table."""
+        closed = [CLOSED,
+                  dict(CLOSED, ticker="AAA", mode="breakout", pnl=120.0, r=2.4,
+                       entry_date="2026-08-03", exit_date="2026-08-17"),
+                  dict(CLOSED, ticker="BBB", mode="breakout", pnl=-40.0, r=-1.0,
+                       entry_date="2026-08-04", exit_date="2026-08-11")]
+        state = {"mode": "dry", "positions": [POSITION, POSITION_CLOSE], "closed": closed,
+                 "log": []}
+        for lang in ("ru", "en"):
+            P = tt.PERF[lang]
+            at = self.run_app(lang, state)
+            self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
+            md = [m.value for m in at.markdown]
+            self.assertIn(f"### {P['title']}", md)                      # performance header
+            self.assertIn(f"**{P['cmp']}**", md)                       # comparison table title
+            self.assertGreaterEqual(len(at.metric), 11)                # all metric cards
+            labels = [m.label for m in at.metric]
+            self.assertIn(P["win"], labels)
+            self.assertIn(P["pf"], labels)
+            self.assertIn(P["max_dd"], labels)                         # shown as "—"
+
+    def test_strategy_switch_filters_without_error(self):
+        closed = [dict(CLOSED, ticker="AAA", mode="breakout", pnl=50.0, r=1.0),
+                  dict(CLOSED, ticker="CCC", mode="retest", pnl=10.0, r=0.5)]
+        state = {"mode": "dry", "positions": [POSITION], "closed": closed, "log": []}
+        for choice in ("BREAKOUT", "RETEST", "VCP", "ALL"):
+            from streamlit.testing.v1 import AppTest
+            at = AppTest.from_file("app.py", default_timeout=180)
+            at.secrets["STATE_PASSWORD"] = "test"
+            at.session_state["lang"] = "RU"
+            at.session_state["bot_unlocked"] = True
+            at.session_state["bot_state"] = state
+            at.session_state["bot_sha"] = "abc"
+            at.session_state["trade_perf_strategy"] = choice      # pre-set the switcher
+            at.run()
+            self.assertEqual(len(at.exception), 0,
+                             (choice, [e.value for e in at.exception]))
+            # comparison table is always present regardless of the filter
+            self.assertIn(f"**{tt.PERF['ru']['cmp']}**", [m.value for m in at.markdown])
+
+    def test_sparse_and_old_closed_records_do_not_crash_journal(self):
+        """Records missing dry / mode / reason / dates / numeric values must not break
+        the tab (old state/trader.enc entries)."""
+        sparse = [
+            {"ticker": "OLD1", "pnl": 12.0},                           # mode/r/dates/dry absent
+            {"ticker": "OLD2", "mode": "breakout", "entry_date": "2026-09-01",
+             "exit_date": "2026-09-15", "pnl": -8.0},                  # r/qty/dry/reason absent
+            {"ticker": "OLD3", "mode": "vcp", "pnl": "oops", "r": None, "reason": None,
+             "dry": True},                                             # non-numeric pnl, no dates
+        ]
+        state = {"mode": "dry", "positions": [POSITION], "closed": sparse, "log": []}
+        for lang in ("ru", "en"):
+            at = self.run_app(lang, state)
+            self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
+
+    def test_closed_records_missing_pnl_and_r_columns_do_not_crash(self):
+        """All closed trades lack pnl AND r entirely: tab renders, summary shows '—'."""
+        closed = [{"ticker": "X1", "mode": "breakout", "entry_date": "2026-09-01",
+                   "exit_date": "2026-09-15", "qty": 1, "entry": 100.0, "exit": 110.0,
+                   "reason": "time"},
+                  {"ticker": "X2", "mode": "vcp", "entry_date": "2026-09-02",
+                   "exit_date": "2026-09-09", "qty": 2, "entry": 80.0, "exit": 74.0,
+                   "reason": "stop"}]
+        state = {"mode": "dry", "positions": [POSITION], "closed": closed, "log": []}
+        for lang in ("ru", "en"):
+            at = self.run_app(lang, state)
+            self.assertEqual(len(at.exception), 0, [e.value for e in at.exception])
+            summary = [m.value for m in at.markdown
+                       if m.value.startswith(("Сделок:", "Trades:"))]
+            self.assertTrue(summary, "summary line not found")
+            self.assertNotIn("nan", summary[0].lower())
+            self.assertIn("—", summary[0])
+
+
+@unittest.skipUnless(HAVE_ST or REQUIRE, "streamlit not installed")
+class TestJournalHelpers(unittest.TestCase):
+    """Row selection -> trade chart path, independent of the live dataframe widget."""
+
+    def test_selected_rows_shapes(self):
+        class _Sel:
+            def __init__(self, rows): self.rows = rows
+        class _Evt:
+            def __init__(self, rows): self.selection = _Sel(rows)
+        self.assertEqual(tt._selected_rows(_Evt([2])), [2])
+        self.assertEqual(tt._selected_rows({"selection": {"rows": [0, 1]}}), [0, 1])
+        self.assertEqual(tt._selected_rows(None), [])
+        self.assertEqual(tt._selected_rows(_Evt([])), [])
+
+    def test_trade_chart_online_and_offline(self):
+        row = {"ticker": "AAPL", "entry_date": "2026-10-13", "exit_date": "2026-10-20",
+               "entry": 230.5, "exit": 240.0}
+
+        def prices_ok(tickers):
+            idx = pd.bdate_range("2026-10-01", periods=20)
+            return pd.concat({t: pd.DataFrame({"Close": np.linspace(220, 245, 20)}, index=idx)
+                              for t in tickers}, axis=1)
+
+        def prices_off(tickers):
+            raise RuntimeError("offline")
+
+        for lang in ("ru", "en"):
+            tt._trade_chart(row, lang, prices_ok)          # should not raise
+            tt._trade_chart(row, lang, prices_off)         # offline -> caption, no raise
 
 
 if __name__ == "__main__":
