@@ -15,8 +15,18 @@ import pandas as pd
 import streamlit as st
 
 import bot_status
+import trade_metrics as tm
 import vault
 from schwab_api import auth_url, exchange_code, refresh_age_days
+
+# plotly is imported lazily inside the chart helpers so the table/label unit tests
+# (test_trade_tab.TestLabels) can import this module without plotly installed.
+
+# Plotly palette — identical to the Paper tab so the two books read as one app.
+C_BREAKOUT, C_RETEST, C_VCP = "#9B5CF0", "#39B5A8", "#E6A23C"
+C_WIN, C_LOSS = "#30A46C", "#E5484D"
+C_GRID, C_BG, C_FG = "#23232E", "#0B0B12", "#EDEDF5"
+STRAT_COLOR = {"breakout": C_BREAKOUT, "retest": C_RETEST, "vcp": C_VCP}
 
 TX = {
     "ru": {
@@ -142,6 +152,114 @@ TX = {
 }
 
 
+# ===================================================================== performance section
+# Separate translation table so the large TX dict above is left untouched.
+PERF = {
+    "ru": {
+        "title": "Trading Performance",
+        "pick": "Стратегия",
+        "empty": "Пока нет ни закрытых сделок, ни открытых позиций — статистика появится "
+                 "после первых сделок бота.",
+        "total": "Сделок (закрыто)", "open": "Открыто позиций", "win": "Win Rate",
+        "pf": "Profit Factor", "total_pnl": "Итого P&L", "avg_pnl": "Средний P&L",
+        "exp_r": "Ожидание R", "avg_win": "Средний плюс", "avg_loss": "Средний минус",
+        "avg_hold": "Средн. удержание", "days_u": "дн.",
+        "max_dd": "Макс. просадка",
+        "max_dd_help": "Нужна достоверная кривая капитала. Бот не ведёт учёт капитала, "
+                       "историю восстановить нельзя — показатель появится, когда учёт Equity "
+                       "будет запущен с проверенной точки. Выдуманную кривую не строим.",
+        "strat_pnl": "Накопленный P&L закрытых сделок по стратегиям",
+        "strat_pnl_note": "Это накопленный реализованный P&L закрытых сделок (в $), "
+                          "НЕ кривая капитала: отдельный капитал по стратегиям не выделяется.",
+        "dist": "Распределение результатов, R",
+        "dist_win": "Плюсовые", "dist_loss": "Минусовые",
+        "no_closed": "Закрытых сделок пока нет.", "no_r": "Нет данных по R.",
+        "equity_deferred": "📉 Графики «Капитал против SPY» и «Просадка портфеля» будут "
+                           "добавлены отдельно: бот не хранит кэш и ежедневную стоимость "
+                           "портфеля, поэтому честную кривую капитала можно вести только "
+                           "вперёд, с проверенной стартовой точки. Выдуманную историю "
+                           "доходности не показываем.",
+        "cmp": "Сравнение стратегий",
+        "c_strat": "Стратегия", "c_trades": "Сделок", "c_win": "Win Rate %",
+        "c_pf": "PF", "c_r": "Ср. R", "c_pnl": "P&L $",
+        "journal": "Журнал сделок",
+        "f_reason": "Причина", "f_kind": "Тип", "f_from": "С даты", "f_to": "По дату",
+        "kind_all": "все", "kind_dry": "тренировка", "kind_real": "реальные",
+        "j_none": "Под выбранные фильтры сделок нет.",
+        "j_pnl_pct": "P&L %", "j_hold": "Дней",
+        "j_pick": "Выбери сделку в таблице, чтобы открыть её график.",
+        "j_chart": "График сделки: {t} ({a} → {b})",
+        "j_no_px": "Нет истории котировок для {t} в доступном окне.",
+        "j_entry": "вход", "j_exit": "выход",
+    },
+    "en": {
+        "title": "Trading Performance",
+        "pick": "Strategy",
+        "empty": "No closed trades or open positions yet — statistics appear after the "
+                 "bot's first trades.",
+        "total": "Trades (closed)", "open": "Open positions", "win": "Win Rate",
+        "pf": "Profit Factor", "total_pnl": "Total P&L", "avg_pnl": "Average P&L",
+        "exp_r": "Expectancy R", "avg_win": "Avg winner", "avg_loss": "Avg loser",
+        "avg_hold": "Avg holding", "days_u": "d",
+        "max_dd": "Max drawdown",
+        "max_dd_help": "Needs a reliable equity curve. The bot keeps no capital model and "
+                       "history cannot be reconstructed — this appears once Equity accounting "
+                       "is started from a verified point. We do not fabricate a curve.",
+        "strat_pnl": "Cumulative closed-trade P&L by strategy",
+        "strat_pnl_note": "Cumulative realized P&L of closed trades (in $), NOT an equity "
+                          "curve: no capital is allocated per strategy.",
+        "dist": "Outcome distribution, R",
+        "dist_win": "Winners", "dist_loss": "Losers",
+        "no_closed": "No closed trades yet.", "no_r": "No R data.",
+        "equity_deferred": "📉 The 'Equity vs SPY' and 'Portfolio drawdown' charts will be "
+                           "added separately: the bot stores no cash or daily portfolio value, "
+                           "so an honest equity curve can only run forward from a verified "
+                           "start. We do not show a fabricated return history.",
+        "cmp": "Strategy comparison",
+        "c_strat": "Strategy", "c_trades": "Trades", "c_win": "Win Rate %",
+        "c_pf": "PF", "c_r": "Avg R", "c_pnl": "P&L $",
+        "journal": "Trade journal",
+        "f_reason": "Reason", "f_kind": "Type", "f_from": "From", "f_to": "To",
+        "kind_all": "all", "kind_dry": "training", "kind_real": "real",
+        "j_none": "No trades match the selected filters.",
+        "j_pnl_pct": "P&L %", "j_hold": "Days",
+        "j_pick": "Select a trade in the table to open its chart.",
+        "j_chart": "Trade chart: {t} ({a} → {b})",
+        "j_no_px": "No quote history for {t} in the available window.",
+        "j_entry": "entry", "j_exit": "exit",
+    },
+}
+
+
+def _usd(v):
+    return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f"${v:+,.0f}"
+
+
+def _pct(v):
+    return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f"{v:.0f}%"
+
+
+def _rr(v):
+    return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f"{v:+.2f}R"
+
+
+def _num(v):
+    return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f"{v:.2f}"
+
+
+def _days(v, unit):
+    return "—" if v is None or (isinstance(v, float) and not np.isfinite(v)) else f"{v:.0f} {unit}"
+
+
+def _style(fig, height):
+    fig.update_layout(height=height, margin=dict(l=8, r=8, t=12, b=8),
+                      paper_bgcolor=C_BG, plot_bgcolor=C_BG, font=dict(color=C_FG),
+                      legend=dict(orientation="h", y=1.14, x=0),
+                      xaxis=dict(gridcolor=C_GRID, zerolinecolor=C_GRID),
+                      yaxis=dict(gridcolor=C_GRID, zerolinecolor=C_GRID))
+    return fig
+
+
 PLAN_COLS = ["ticker", "mode", "rs", "close", "stop", "est_qty", "est_cost"]
 ORDER_COLS = ["ticker", "mode", "date", "est", "stop", "qty", "dry"]
 POS_COLS = ["ticker", "mode", "how", "entry_date", "entry", "stop", "qty", "days", "last",
@@ -202,6 +320,221 @@ def closed_table(closed, T, X) -> pd.DataFrame:
     df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
     df["reason"] = df["reason"].map(X["reasons"])
     return _view(df.iloc[::-1], CLOSED_COLS, X["cols"])
+
+
+def _strategy_switch(P):
+    opts = ["ALL", "BREAKOUT", "RETEST", "VCP"]
+    try:
+        sel = st.segmented_control(P["pick"], opts, default="ALL",
+                                   key="trade_perf_strategy", label_visibility="collapsed")
+    except Exception:                                   # older streamlit: plain radio
+        sel = st.radio(P["pick"], opts, horizontal=True,
+                       key="trade_perf_strategy_r", label_visibility="collapsed")
+    return (sel or "ALL").lower()
+
+
+def render_performance(state, lang):
+    """Top 'Trading Performance' block: strategy switch + metric cards. Returns the
+    selected strategy ('all'/'breakout'/'retest'/'vcp') for the rest of the tab."""
+    P = PERF[lang]
+    closed = state.get("closed") or []
+    positions = state.get("positions") or []
+    st.markdown(f"### {P['title']}")
+    strat = _strategy_switch(P)
+    if not closed and not positions:
+        st.info(P["empty"])
+        return strat
+    s = tm.strategy_stats(closed, positions, strat)
+    r1 = st.columns(4)
+    r1[0].metric(P["total"], s["total_trades"])
+    r1[1].metric(P["open"], s["open_positions"] if s["open_positions"] is not None else "—")
+    r1[2].metric(P["win"], _pct(s["win_rate_pct"]))
+    r1[3].metric(P["pf"], _num(s["profit_factor"]))
+    r2 = st.columns(4)
+    r2[0].metric(P["total_pnl"], _usd(s["total_pnl_usd"]))
+    r2[1].metric(P["avg_pnl"], _usd(s["avg_pnl_usd"]))
+    r2[2].metric(P["exp_r"], _rr(s["expectancy_r"]))
+    r2[3].metric(P["avg_hold"], _days(s["avg_holding_days"], P["days_u"]))
+    r3 = st.columns(4)
+    r3[0].metric(P["avg_win"], _usd(s["avg_winner_usd"]))
+    r3[1].metric(P["avg_loss"], _usd(s["avg_loser_usd"]))
+    r3[2].metric(P["max_dd"], "—", help=P["max_dd_help"])
+    return strat
+
+
+def render_perf_charts(state, lang, strat):
+    """B) cumulative closed-trade P&L by strategy, D) R distribution. Equity/drawdown
+    (A/C) are deferred — a clear note stands in instead of a fabricated curve."""
+    import plotly.graph_objects as go
+    P = PERF[lang]
+    closed = state.get("closed") or []
+
+    st.markdown(f"**{P['strat_pnl']}**")
+    wide = tm.cumulative_pnl_by_strategy(closed, strat)
+    if wide.empty:
+        st.caption(P["no_closed"])
+    else:
+        fig = go.Figure()
+        for col in wide.columns:
+            fig.add_scatter(x=wide.index, y=wide[col], mode="lines", name=col.capitalize(),
+                            line=dict(color=STRAT_COLOR.get(col, C_FG), width=2))
+        st.plotly_chart(_style(fig, 280), use_container_width=True,
+                        config={"displayModeBar": False})
+    st.caption(P["strat_pnl_note"])
+
+    st.markdown(f"**{P['dist']}**")
+    r = tm.r_values(closed, strat)
+    if not len(r):
+        st.caption(P["no_r"])
+    else:
+        wins, losses = r[r > 0], r[r <= 0]
+        fig = go.Figure()
+        if len(losses):
+            fig.add_histogram(x=losses, name=P["dist_loss"], marker_color=C_LOSS,
+                              xbins=dict(size=0.5), opacity=0.85)
+        if len(wins):
+            fig.add_histogram(x=wins, name=P["dist_win"], marker_color=C_WIN,
+                              xbins=dict(size=0.5), opacity=0.85)
+        fig.update_layout(barmode="overlay", bargap=0.05)
+        st.plotly_chart(_style(fig, 240), use_container_width=True,
+                        config={"displayModeBar": False})
+    st.caption(P["equity_deferred"])
+
+
+def render_comparison(state, lang):
+    P = PERF[lang]
+
+    def rnd(v, n):
+        return round(v, n) if isinstance(v, (int, float)) and np.isfinite(v) else v
+
+    rows = tm.comparison_rows(state.get("closed") or [], state.get("positions") or [])
+    df = pd.DataFrame([{
+        P["c_strat"]: r["strategy"].capitalize(),
+        P["c_trades"]: r["total_trades"],
+        P["c_win"]: rnd(r["win_rate_pct"], 1),
+        P["c_pf"]: rnd(r["profit_factor"], 2),
+        P["c_r"]: rnd(r["expectancy_r"], 2),
+        P["c_pnl"]: rnd(r["total_pnl_usd"], 2),
+    } for r in rows])
+    st.markdown(f"**{P['cmp']}**")
+    st.dataframe(df, hide_index=True, use_container_width=True)
+
+
+def _selected_rows(event):
+    """Row indices selected in an st.dataframe(on_select=...) — tolerant of the object
+    shape across streamlit versions and of AppTest returning nothing."""
+    sel = getattr(event, "selection", None)
+    if sel is None and isinstance(event, dict):
+        sel = event.get("selection")
+    if sel is None:
+        return []
+    rows = getattr(sel, "rows", None)
+    if rows is None and isinstance(sel, dict):
+        rows = sel.get("rows")
+    return list(rows or [])
+
+
+def _trade_chart(row, lang, get_prices):
+    import plotly.graph_objects as go
+    P = PERF[lang]
+    t = row.get("ticker")
+    a, b = str(row.get("entry_date"))[:10], str(row.get("exit_date"))[:10]
+    st.markdown(f"_{P['j_chart'].format(t=t, a=a, b=b)}_")
+    try:
+        close = get_prices((t,))[t]["Close"].dropna()
+        close.index = pd.to_datetime(close.index)
+    except Exception:
+        close = pd.Series(dtype=float)
+    if len(close):
+        lo = pd.to_datetime(a) - pd.Timedelta(days=12)
+        hi = pd.to_datetime(b) + pd.Timedelta(days=12)
+        close = close[(close.index >= lo) & (close.index <= hi)]
+    if not len(close):
+        st.caption(P["j_no_px"].format(t=t))
+        return
+    fig = go.Figure()
+    fig.add_scatter(x=close.index, y=close.values, mode="lines", name=t,
+                    line=dict(color=C_FG, width=1.6))
+    for d, price, color, lbl in [(a, row.get("entry"), C_WIN, P["j_entry"]),
+                                 (b, row.get("exit"), C_LOSS, P["j_exit"])]:
+        try:
+            fig.add_scatter(x=[pd.to_datetime(d)], y=[float(price)], mode="markers+text",
+                            marker=dict(color=color, size=11), text=[lbl],
+                            textposition="top center", showlegend=False)
+        except Exception:
+            pass
+    st.plotly_chart(_style(fig, 260), use_container_width=True,
+                    config={"displayModeBar": False})
+
+
+def render_journal(state, lang, strat, get_prices):
+    """Filterable closed-trade journal (strategy/reason/type/date) with click-to-chart."""
+    P, X = PERF[lang], TX[lang]
+    st.markdown(f"**{P['journal']}**")
+    closed = state.get("closed") or []
+    if not closed:
+        st.write(X["closed_none"])
+        return
+    df = pd.DataFrame(closed)
+    if strat and strat != "all":
+        df = df[df["mode"] == strat]
+
+    f1, f2, f3 = st.columns(3)
+    reasons = sorted(df["reason"].dropna().unique().tolist()) if "reason" in df else []
+    pick_reason = f1.multiselect(P["f_reason"], reasons,
+                                 format_func=lambda x: X["reasons"].get(x, x),
+                                 key="journal_reason")
+    kind = f2.selectbox(P["f_kind"], [P["kind_all"], P["kind_dry"], P["kind_real"]],
+                        key="journal_kind")
+    if pick_reason:
+        df = df[df["reason"].isin(pick_reason)]
+    if kind == P["kind_dry"]:
+        df = df[df.get("dry") == True]                                      # noqa: E712
+    elif kind == P["kind_real"]:
+        df = df[df.get("dry") != True]                                      # noqa: E712
+
+    ed = pd.to_datetime(df.get("exit_date"), errors="coerce") if len(df) else pd.Series([])
+    if len(df) and ed.notna().any():
+        dmin, dmax = ed.min().date(), ed.max().date()
+        rng = f3.date_input(f"{P['f_from']} — {P['f_to']}", value=(dmin, dmax),
+                            min_value=dmin, max_value=dmax, key="journal_dates")
+        if isinstance(rng, (list, tuple)) and len(rng) == 2:
+            lo, hi = pd.to_datetime(rng[0]), pd.to_datetime(rng[1])
+            df = df[(ed >= lo) & (ed <= hi)]
+
+    if not len(df):
+        st.caption(P["j_none"])
+        return
+    df = df.reset_index(drop=True)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        df["pnl_pct"] = pd.to_numeric(df["pnl"], errors="coerce") / (
+            pd.to_numeric(df["entry"], errors="coerce")
+            * pd.to_numeric(df["qty"], errors="coerce")) * 100
+    df["hold"] = df.apply(lambda r: tm.holding_days(r["entry_date"], r["exit_date"]), axis=1)
+
+    show = df.iloc[::-1].reset_index().rename(columns={"index": "_src"})
+    C = X["cols"]
+    disp = pd.DataFrame({
+        C["ticker"]: show["ticker"],
+        C["mode"]: show["mode"].map(lambda m: m.capitalize() if isinstance(m, str) else m),
+        C["entry_date"]: show["entry_date"], C["entry"]: show["entry"],
+        C["exit_date"]: show["exit_date"], C["exit"]: show["exit"],
+        C["qty"]: show["qty"],
+        C["pnl"]: pd.to_numeric(show["pnl"], errors="coerce").round(2),
+        P["j_pnl_pct"]: show["pnl_pct"].round(1),
+        C["r"]: pd.to_numeric(show["r"], errors="coerce").round(2),
+        C["reason"]: show["reason"].map(lambda x: X["reasons"].get(x, x)),
+        P["j_hold"]: show["hold"],
+    })
+    if "stop" in show and show["stop"].notna().any():                       # only if recorded
+        disp[C["stop"]] = show["stop"]
+    event = st.dataframe(disp, hide_index=True, use_container_width=True,
+                         on_select="rerun", selection_mode="single-row", key="journal_tbl")
+    rows = _selected_rows(event)
+    if rows:
+        _trade_chart(df.iloc[int(show.iloc[rows[0]]["_src"])], lang, get_prices)
+    else:
+        st.caption(P["j_pick"])
 
 
 def render_status(state, lang, now=None):
@@ -269,6 +602,13 @@ def render(T, lang, get_prices):
         st.caption(X["no_state"])
     render_status(state, lang)
     st.caption(X["rules"])
+
+    # ---------- Trading Performance (per-strategy analytics) ----------
+    perf_strat = render_performance(state, lang)
+    if state.get("closed"):                 # charts/comparison need closed trades
+        render_perf_charts(state, lang, perf_strat)
+        render_comparison(state, lang)
+    st.divider()
 
     # ---------- Schwab ----------
     with st.expander(X["schwab"], expanded=False):
@@ -356,6 +696,10 @@ def render(T, lang, get_prices):
         st.markdown(X["summary"].format(n=len(df), w=(df["pnl"] > 0).mean() * 100,
                                         p=df["pnl"].sum(), r=df["r"].dropna().mean()))
         st.dataframe(closed_table(closed, T, X), hide_index=True, use_container_width=True)
+
+    # ---------- trade journal (filters + click-to-chart) ----------
+    with st.expander(PERF[lang]["journal"], expanded=False):
+        render_journal(state, lang, perf_strat, get_prices)
 
     with st.expander(X["log"], expanded=False):
         for row in reversed(state.get("log", [])[-30:]):
