@@ -321,8 +321,14 @@ def positions_table(pos, T, X, get_prices, today=None) -> pd.DataFrame:
 
 def closed_table(closed, T, X) -> pd.DataFrame:
     df = pd.DataFrame(closed)
-    df["mode"] = df["mode"].map(lambda m: T.get(f"mode_{m}", m))
-    df["reason"] = df["reason"].map(X["reasons"])
+    # tolerate old/partial records: missing columns and non-numeric values must not crash
+    for c in ("entry", "exit", "qty", "pnl", "r"):
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+    mode = df["mode"] if "mode" in df.columns else pd.Series(index=df.index, dtype=object)
+    reason = df["reason"] if "reason" in df.columns else pd.Series(index=df.index, dtype=object)
+    df["mode"] = mode.map(lambda m: T.get(f"mode_{m}", m))
+    df["reason"] = reason.map(lambda x: X["reasons"].get(x, x) if isinstance(x, str) else x)
     return _view(df.iloc[::-1], CLOSED_COLS, X["cols"])
 
 
@@ -730,8 +736,13 @@ def render(T, lang, get_prices):
         st.write(X["closed_none"])
     else:
         df = pd.DataFrame(closed)
-        st.markdown(X["summary"].format(n=len(df), w=(df["pnl"] > 0).mean() * 100,
-                                        p=df["pnl"].sum(), r=df["r"].dropna().mean()))
+        pnl = pd.to_numeric(df.get("pnl"), errors="coerce")        # old records may be sparse
+        rr = pd.to_numeric(df.get("r"), errors="coerce")
+        st.markdown(X["summary"].format(
+            n=len(df),
+            w=(pnl > 0).mean() * 100 if pnl.notna().any() else float("nan"),
+            p=float(pnl.sum()),
+            r=rr.dropna().mean() if rr.notna().any() else float("nan")))
         st.dataframe(closed_table(closed, T, X), hide_index=True, use_container_width=True)
 
     # ---------- trade journal (filters + click-to-chart) ----------
