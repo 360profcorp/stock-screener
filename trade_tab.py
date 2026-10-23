@@ -180,6 +180,8 @@ PERF = {
                            "вперёд, с проверенной стартовой точки. Выдуманную историю "
                            "доходности не показываем.",
         "cmp": "Сравнение стратегий",
+        "cmp_note": "Таблица всегда показывает все три стратегии, независимо от "
+                    "переключателя выше (он фильтрует карточки и графики).",
         "c_strat": "Стратегия", "c_trades": "Сделок", "c_win": "Win Rate %",
         "c_pf": "PF", "c_r": "Ср. R", "c_pnl": "P&L $",
         "journal": "Журнал сделок",
@@ -216,6 +218,8 @@ PERF = {
                            "so an honest equity curve can only run forward from a verified "
                            "start. We do not show a fabricated return history.",
         "cmp": "Strategy comparison",
+        "cmp_note": "This table always shows all three strategies, regardless of the "
+                    "switch above (which filters the cards and charts).",
         "c_strat": "Strategy", "c_trades": "Trades", "c_win": "Win Rate %",
         "c_pf": "PF", "c_r": "Avg R", "c_pnl": "P&L $",
         "journal": "Trade journal",
@@ -323,14 +327,37 @@ def closed_table(closed, T, X) -> pd.DataFrame:
 
 
 def _strategy_switch(P):
+    """ALL|BREAKOUT|RETEST|VCP switch. Seeds session_state before the widget (instead of
+    passing default=) so the initial value is ALL AND tests/callers can preset the choice
+    via session_state without the default+session_state conflict Streamlit raises on."""
     opts = ["ALL", "BREAKOUT", "RETEST", "VCP"]
+    key = "trade_perf_strategy"
+    if key not in st.session_state:
+        st.session_state[key] = "ALL"
     try:
-        sel = st.segmented_control(P["pick"], opts, default="ALL",
-                                   key="trade_perf_strategy", label_visibility="collapsed")
+        sel = st.segmented_control(P["pick"], opts, key=key, label_visibility="collapsed")
     except Exception:                                   # older streamlit: plain radio
-        sel = st.radio(P["pick"], opts, horizontal=True,
-                       key="trade_perf_strategy_r", label_visibility="collapsed")
+        rkey = "trade_perf_strategy_r"
+        if rkey not in st.session_state:
+            st.session_state[rkey] = "ALL"
+        sel = st.radio(P["pick"], opts, horizontal=True, key=rkey,
+                       label_visibility="collapsed")
     return (sel or "ALL").lower()
+
+
+def _inject_card_css():
+    """At most 2 metric cards per row on phones (<=640px); the natural 4-wide layout
+    stays on wider screens. Scoped to column rows that actually contain a metric, so
+    button/filter rows are untouched. Re-injected every run (Streamlit rebuilds the DOM)."""
+    st.markdown(
+        '<style>@media (max-width:640px){'
+        'div[data-testid="stHorizontalBlock"]:has(div[data-testid="stMetric"])'
+        '{flex-wrap:wrap!important}'
+        'div[data-testid="stHorizontalBlock"]:has(div[data-testid="stMetric"])'
+        '>div[data-testid="stColumn"]'
+        '{flex:1 1 calc(50% - 0.5rem)!important;min-width:calc(50% - 0.5rem)!important;'
+        'width:calc(50% - 0.5rem)!important}}</style>',
+        unsafe_allow_html=True)
 
 
 def render_performance(state, lang):
@@ -344,6 +371,7 @@ def render_performance(state, lang):
     if not closed and not positions:
         st.info(P["empty"])
         return strat
+    _inject_card_css()
     s = tm.strategy_stats(closed, positions, strat)
     r1 = st.columns(4)
     r1[0].metric(P["total"], s["total_trades"])
@@ -418,6 +446,7 @@ def render_comparison(state, lang):
     } for r in rows])
     st.markdown(f"**{P['cmp']}**")
     st.dataframe(df, hide_index=True, use_container_width=True)
+    st.caption(P["cmp_note"])
 
 
 def _selected_rows(event):
@@ -475,12 +504,19 @@ def render_journal(state, lang, strat, get_prices):
     if not closed:
         st.write(X["closed_none"])
         return
-    df = pd.DataFrame(closed)
+    # Normalise to a canonical schema so old/partial records never KeyError or crash the
+    # tab: missing fields become NaN, numeric fields are coerced (non-numeric -> NaN).
+    CANON = ["ticker", "mode", "entry_date", "entry", "exit_date", "exit", "qty",
+             "reason", "pnl", "r", "dry", "stop"]
+    df = pd.DataFrame(closed).reindex(columns=CANON)
+    for c in ("entry", "exit", "qty", "pnl", "r", "stop"):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+
     if strat and strat != "all":
         df = df[df["mode"] == strat]
 
     f1, f2, f3 = st.columns(3)
-    reasons = sorted(df["reason"].dropna().unique().tolist()) if "reason" in df else []
+    reasons = sorted(df["reason"].dropna().unique().tolist())
     pick_reason = f1.multiselect(P["f_reason"], reasons,
                                  format_func=lambda x: X["reasons"].get(x, x),
                                  key="journal_reason")
@@ -488,12 +524,13 @@ def render_journal(state, lang, strat, get_prices):
                         key="journal_kind")
     if pick_reason:
         df = df[df["reason"].isin(pick_reason)]
+    dry = df["dry"]                             # present after reindex; NaN where unrecorded
     if kind == P["kind_dry"]:
-        df = df[df.get("dry") == True]                                      # noqa: E712
+        df = df[dry == True]                                                # noqa: E712
     elif kind == P["kind_real"]:
-        df = df[df.get("dry") != True]                                      # noqa: E712
+        df = df[dry == False]                   # unrecorded (NaN) shows only under "all"
 
-    ed = pd.to_datetime(df.get("exit_date"), errors="coerce") if len(df) else pd.Series([])
+    ed = pd.to_datetime(df["exit_date"], errors="coerce") if len(df) else pd.Series([], dtype="datetime64[ns]")
     if len(df) and ed.notna().any():
         dmin, dmax = ed.min().date(), ed.max().date()
         rng = f3.date_input(f"{P['f_from']} — {P['f_to']}", value=(dmin, dmax),

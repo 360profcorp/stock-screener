@@ -21,15 +21,23 @@ rules (see the rules caption on each tab).
 import numpy as np
 import pandas as pd
 
+from paper import nyse
+
 # The three setups the bot trades. Fixed order for stable tables/legends.
 STRATEGIES = ("breakout", "retest", "vcp")
 
 
 def holding_days(entry_date, exit_date) -> float:
-    """Business days held, entry -> exit. NaN if either date is missing/unparseable."""
+    """NYSE trading days held, entry -> exit (half-open [entry, exit): weekends AND NYSE
+    holidays excluded, via the rule-based calendar in paper/nyse.py). This is the exchange
+    sessions the position was actually held across, not plain calendar business days.
+    NaN if either date is missing/unparseable."""
     try:
-        return float(np.busday_count(np.datetime64(str(entry_date)[:10]),
-                                     np.datetime64(str(exit_date)[:10])))
+        a = np.datetime64(str(entry_date)[:10])
+        b = np.datetime64(str(exit_date)[:10])
+        ya, yb = int(str(a)[:4]), int(str(b)[:4])
+        hol = nyse.holiday_list(min(ya, yb), max(ya, yb))
+        return float(np.busday_count(a, b, holidays=hol))
     except Exception:
         return np.nan
 

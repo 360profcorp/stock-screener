@@ -65,11 +65,18 @@ class TestStrategyStats(unittest.TestCase):
         self.assertIsNone(s["profit_factor"])                     # no losing trades
         self.assertIsNone(s["avg_loser_usd"])
 
-    def test_holding_days(self):
-        # breakout trades: 2026-09-01->09-15 = 10 busdays ; 09-02->09-09 = 5 busdays
+    def test_holding_days_nyse_calendar(self):
+        # NYSE sessions (Labor Day 2026-09-07 excluded):
+        #   09-01 -> 09-15 = 9 sessions ; 09-02 -> 09-09 = 4 sessions
         s = tm.strategy_stats(CLOSED, None, "breakout")
         self.assertIsNone(s["open_positions"])                    # positions not provided
-        self.assertAlmostEqual(s["avg_holding_days"], (10 + 5) / 2)
+        self.assertAlmostEqual(s["avg_holding_days"], (9 + 4) / 2)
+
+    def test_holding_days_excludes_nyse_holiday(self):
+        # 09-04 (Fri) -> 09-08 (Tue): Mon 09-07 is Labor Day, so 1 session, not 2
+        self.assertEqual(tm.holding_days("2026-09-04", "2026-09-08"), 1.0)
+        self.assertTrue(np.isnan(tm.holding_days(None, "2026-09-08")))
+        self.assertTrue(np.isnan(tm.holding_days("2026-09-04", "not-a-date")))
 
     def test_empty(self):
         s = tm.strategy_stats([], [], "all")
@@ -114,6 +121,39 @@ class TestRValues(unittest.TestCase):
         r = tm.r_values(CLOSED, "breakout")
         self.assertEqual(sorted(r.tolist()), [-1.0, 2.0])
         self.assertEqual(len(tm.r_values([], "all")), 0)
+
+
+class TestSparseRecords(unittest.TestCase):
+    """Old/partial state rows must never crash the metrics."""
+
+    SPARSE = [
+        {"ticker": "A", "pnl": 10.0},                                  # no mode/r/dates
+        {"ticker": "B", "mode": "vcp", "pnl": "bad", "r": None},       # non-numeric pnl
+        {"mode": "breakout", "entry_date": "2026-09-01", "exit_date": "2026-09-15",
+         "pnl": -5.0, "r": -0.5},                                      # no ticker
+        {},                                                            # empty row
+    ]
+
+    def test_all_does_not_crash_and_counts_numeric_pnl(self):
+        s = tm.strategy_stats(self.SPARSE, None, "all")
+        self.assertEqual(s["total_trades"], 4)
+        self.assertAlmostEqual(s["total_pnl_usd"], 5.0)                # 10 + (-5); "bad"->NaN
+        self.assertAlmostEqual(s["expectancy_r"], -0.5)               # only one real R
+
+    def test_strategy_filter_on_missing_mode(self):
+        s = tm.strategy_stats(self.SPARSE, None, "breakout")
+        self.assertEqual(s["total_trades"], 1)
+        self.assertAlmostEqual(s["total_pnl_usd"], -5.0)
+
+    def test_cumulative_drops_rows_without_exit_date(self):
+        w = tm.cumulative_pnl_by_strategy(self.SPARSE, "all")
+        # only the breakout row has a usable exit_date
+        self.assertEqual(list(w.columns), ["breakout"])
+        self.assertAlmostEqual(w["breakout"].iloc[-1], -5.0)
+
+    def test_comparison_rows_never_raise(self):
+        rows = tm.comparison_rows(self.SPARSE, None)
+        self.assertEqual([r["strategy"] for r in rows], list(tm.STRATEGIES))
 
 
 if __name__ == "__main__":
