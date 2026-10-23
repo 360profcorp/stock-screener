@@ -189,40 +189,126 @@ def load_state():
     return state
 
 
+def _notify_once(state, tok, name):
+    """Send a login notice once per login; recorded only after ntfy confirmed it."""
+    sent = state.setdefault("schwab_notices", {})
+    if name not in sent.get(schwab_auth.login_key(tok), []):
+        title, text = schwab_auth.TEXT[name]
+        print(f"[push] {title}")
+        if schwab_auth.send_ntfy(TOPIC, title, text, requests):
+            schwab_auth.mark_sent(tok, sent, name)
+
+
 def schwab_or_none(state):
-    """Live broker, or None when the weekly login has expired or Schwab refused it (login
-    refused early, or app credentials refused). None blocks new entries only: nothing is
-    cancelled, so stops already at Schwab stay. The owner is notified once per login, and the
-    notice is recorded only after ntfy confirmed it (shared with the login monitor)."""
+    """Live broker, or None when the weekly login has expired or Schwab refuses it.
+    None blocks new entries only: nothing is cancelled, so stops already at Schwab stay.
+
+    The login is checked here by the bot's own normal access-token refresh (the only place
+    the refresh token is used; the login monitor never calls Schwab). If Schwab answers with
+    a NEW refresh token, Schwab() stores it in state["token"] (same dict) and the run saves it.
+    Answers are classified: login refused / app credentials refused -> blocked + notice once;
+    temporary failure -> no broker this run, nothing recorded."""
     tok = state.get("token")
     s = schwab_auth.status(tok)
     if s["state"] == "none":
         print("Schwab is not connected")
         return None
+    login = schwab_auth.login_key(tok)
     auth = state.get("schwab_auth") or {}
-    blocked = auth.get("blocked") if auth.get("login") == schwab_auth.login_key(tok) else None
-    if s["state"] == "expired" or blocked:
-        name = "expired" if s["state"] == "expired" else schwab_auth.REFRESH_NOTICE[blocked]
-        sent = state.setdefault("schwab_notices", {})
-        if name not in sent.get(schwab_auth.login_key(tok), []):
-            title, text = schwab_auth.TEXT[name]
-            print(f"[push] {title}")
-            if schwab_auth.send_ntfy(TOPIC, title, text, requests):
-                schwab_auth.mark_sent(tok, sent, name)
+    if auth.get("login") != login:
+        auth = dict(login=login, blocked=None)
+        state["schwab_auth"] = auth
+    if s["state"] == "expired":
+        _notify_once(state, tok, "expired")
         return None
-    return Schwab(APP_KEY, APP_SECRET, tok, ACCOUNT)
+    broker = Schwab(APP_KEY, APP_SECRET, tok, ACCOUNT)
+    if not (APP_KEY and APP_SECRET):
+        cls = "client_or_token"
+    else:
+        try:
+            broker._access()                     # refreshes only if the access token expired
+            cls = "ok"
+        except SchwabError as e:
+            cls = (schwab_auth.classify(e.status_code, e.body) if e.status_code
+                   else "temporary")
+        except requests.RequestException:
+            cls = "temporary"
+    if cls == "ok":
+        auth["blocked"] = None
+        return broker
+    if cls in schwab_auth.REFRESH_NOTICE:
+        auth["blocked"] = cls
+        _notify_once(state, tok, schwab_auth.REFRESH_NOTICE[cls])
+    print(f"Schwab not usable this run: {cls}")
+    return None
 
 
-def reconcile_after_reconnect(state, broker, today, events) -> bool:
-    """After a new Schwab login, positions and orders are reconciled with the broker FIRST,
-    before any new order. Returns True if it ran."""
-    rc = state.get("schwab_reconnected_at")
-    if not rc or (state.get("schwab_reconciled_at") or "") >= rc:
-        return False
-    reconcile_live(state, broker, today, events)
-    state["schwab_reconciled_at"] = rc
-    events.append("🔄 Новый вход в Schwab: позиции и заявки сверены перед любыми заявками.")
+LIVE_ORDER = {"WORKING", "PENDING_ACTIVATION", "QUEUED", "ACCEPTED", "AWAITING_PARENT_ORDER",
+              "AWAITING_CONDITION", "AWAITING_STOP_CONDITION", "NEW"}
+
+
+def _flat_orders(orders):
+    out = []
+
+    def walk(o):
+        out.append(o)
+        for ch in o.get("childOrderStrategies", []) or []:
+            walk(ch)
+    for o in orders or []:
+        walk(o)
+    return out
+
+
+def live_safety_check(state, broker, today, events) -> bool:
+    """Every live run, BEFORE any order (and so first after a new login):
+      1. positions and fills reconciled with the broker (reconcile_live);
+      2. each bot position must have a working STOP SELL at Schwab for its quantity at its stop
+         price, read from Schwab's order list — never assumed because the bot once sent one;
+      3. the bot's own submitted orders are looked up by id (rejected / cancelled reported).
+    Any gap, or a failed check, sets state["live_block"]: new entries are blocked (time exits
+    and existing stops are untouched) until a later check passes. Returns True when safe."""
+    try:
+        reconcile_live(state, broker, today, events)
+        flat = _flat_orders(broker.orders(days=60))
+    except (SchwabError, requests.RequestException) as e:
+        return _live_block(state, events, f"проверка у Schwab не выполнена ({type(e).__name__})")
+    gaps = []
+    for p in [p for p in state["positions"] if not is_dry(p)]:
+        sym = p["ticker"].replace("-", "/").upper()
+        stops = [o for o in flat if o.get("orderType") == "STOP" and o.get("status") in LIVE_ORDER
+                 and any(l.get("instruction") == "SELL" and l["instrument"]["symbol"] == sym
+                         for l in o.get("orderLegCollection", []) or [])]
+        good = [o for o in stops if int(float(o.get("quantity", 0)) - float(
+            o.get("filledQuantity", 0) or 0)) == int(p["qty"]) and abs(
+            float(o.get("stopPrice", 0)) - float(p["stop"])) <= 0.011]
+        p["protection"] = "ok" if good else ("mismatch" if stops else "missing")
+        p["protection_checked"] = today
+        if not good:
+            gaps.append(f"{p['ticker']}: стоп {'не совпадает' if stops else 'не найден'}")
+    by_id = {str(o.get("orderId")): o for o in flat}
+    for o in [o for o in state["orders"] if not is_dry(o) and o.get("order_id")]:
+        b = by_id.get(str(o["order_id"]))
+        st = b.get("status") if b else "не найден"
+        o["broker_status"] = st
+        if st in ("REJECTED", "CANCELED", "EXPIRED"):
+            events.append(f"⚠️ {o['ticker']}: заявка у Schwab {st}")
+    if gaps:
+        return _live_block(state, events, "нет подтверждённой защиты: " + "; ".join(gaps))
+    if state.get("live_block"):
+        events.append("✅ Защита позиций у Schwab подтверждена — новые входы снова разрешены.")
+    state["live_block"] = None
+    if state.get("schwab_reconnected_at"):
+        state["schwab_reconciled_at"] = state["schwab_reconnected_at"]
     return True
+
+
+def _live_block(state, events, reason) -> bool:
+    if (state.get("live_block") or {}).get("reason") != reason:
+        events.append(f"⛔ Новые входы заблокированы: {reason}. Стопы у Schwab не трогаются; "
+                      "проверь позиции и стопы в Schwab.")
+    state["live_block"] = {"reason": reason, "since": (state.get("live_block") or {}).get(
+        "since") or now_ny().strftime("%Y-%m-%d %H:%M")}
+    return False
 
 
 # =====================================================================
@@ -408,7 +494,7 @@ def reconcile_live(state, broker, today, events):
             state["positions"].append(p)
             known.add(p["ticker"])
             events.append(f"🟢 {p['ticker']} ({NAMES[p['mode']]}): куплено ~{p['entry']} × "
-                          f"{qty} шт, стоп {p['stop']} стоит у Schwab")
+                          f"{qty} шт, стоп {p['stop']} (наличие у Schwab проверяется)")
         elif qty < 1:
             events.append(f"⏭ {o['ticker']}: утренняя покупка не исполнилась")
     # 3. positions that are gone: stopped out or sold by time
@@ -475,8 +561,6 @@ def cmd_plan():
         try:
             reconcile_live(state, Schwab(APP_KEY, APP_SECRET, state["token"], ACCOUNT),
                            today, events)
-            if state.get("schwab_reconnected_at"):
-                state["schwab_reconciled_at"] = state["schwab_reconnected_at"]
         except SchwabError as e:
             events.append(f"⚠️ Schwab: {str(e)[:120]}")
 
@@ -569,6 +653,10 @@ def run_execute(state, broker, today, events, now=None):
         if not plan.get("rejected"):
             events.append("✋ План не подтверждён — покупок нет.")
         return
+    if not dry and state.get("live_block"):
+        plan["status"] = "blocked"
+        events.append(f"⛔ Покупки по плану не выставлены: {state['live_block']['reason']}")
+        return
     busy = {p["ticker"] for p in state["positions"]} | {o["ticker"] for o in state["orders"]}
     room = room_today(state, today)
     quotes = {} if dry else broker.quotes([i["ticker"] for i in plan["items"]])
@@ -656,7 +744,7 @@ def cmd_execute():
             return
 
     if MODE != "dry":
-        reconcile_after_reconnect(state, broker, today, events)
+        live_safety_check(state, broker, today, events)     # first, before any order
     run_execute(state, broker, today, events, now)
     state["last_execute"] = today
     plan = state.get("plan") or {}
@@ -753,7 +841,8 @@ def cmd_preclose():
                 cand = cand.iloc[0:0]
             else:
                 ev = []
-                reconcile_after_reconnect(state, broker, today, ev)
+                if not live_safety_check(state, broker, today, ev):
+                    cand = cand.iloc[0:0]                     # no new entries
                 lines += ev
     quotes = broker.quotes(list(cand["ticker"].head(room + 5))) if broker and room else {}
 

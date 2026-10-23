@@ -154,20 +154,21 @@ class Exchange(unittest.TestCase):
 
 
 class Classification(unittest.TestCase):
-    def test_refresh_results(self):
-        cases = [(R(200, {"access_token": "a"}), "ok"),
-                 (R(400, {"error": "invalid_grant"}), "token_refused"),
-                 (R(400, {"error": "refresh_token_authentication_error"}), "token_refused"),
-                 (R(401, {"error": "invalid_client"}), "client_or_token"),
-                 (R(500, {}), "temporary"), (R(503, {"error": "x"}), "temporary"),
-                 (R(429, {}), "temporary"), (R(400, {"error": "weird"}), "other")]
-        for resp, want in cases:
-            self.assertEqual(A.check_refresh("k", "s", TOKEN, Http(resp)), want, resp._b)
+    def test_classify(self):
+        cases = [(400, {"error": "invalid_grant"}, "token_refused"),
+                 (400, {"error": "refresh_token_authentication_error"}, "token_refused"),
+                 (401, {"error": "invalid_client"}, "client_or_token"),
+                 (500, {}, "temporary"), (503, {"error": "x"}, "temporary"), (429, {}, "temporary"),
+                 (400, {"error": "weird"}, "other")]
+        for code, body, want in cases:
+            self.assertEqual(A.classify(code, body), want, body)
 
-        class Down:
-            def post(self, *a, **k):
-                raise TimeoutError("timeout")
-        self.assertEqual(A.check_refresh("k", "s", TOKEN, Down()), "temporary")
+    def test_no_check_calls_the_token_endpoint(self):
+        import inspect
+        with open("scripts/schwab_monitor.py") as f:
+            src = (inspect.getsource(A) + f.read()).replace("'", '"')
+        self.assertNotIn("check_refresh", src)
+        self.assertNotIn('"grant_type": "refresh_token"', src)
 
     def test_exchange_errors_name_the_action(self):
         for resp, word in ((R(401, {"error": "invalid_client"}), "SCHWAB_APP_KEY"),
@@ -234,28 +235,13 @@ class Monitor(unittest.TestCase):
         spec.loader.exec_module(m)
         return m
 
-    def test_classified_results_and_blocking(self):
+    def test_monitor_never_calls_schwab(self):
         m = self.load()
-        pushed = []
-        ok = lambda t, x: pushed.append(t) or True                      # noqa: E731
-        st = {"token": dict(TOKEN)}
-        rep = m.run(st, "k", "s", ok, Http(R(400, {"error": "invalid_grant"})), now=T + 3600)
-        self.assertEqual((rep["refresh"], st["schwab_auth"]["blocked"]),
-                         ("token_refused", "token_refused"))
-        self.assertEqual(len(pushed), 1)
-        m.run(st, "k", "s", ok, Http(R(400, {"error": "invalid_grant"})), now=T + 5400)
-        self.assertEqual(len(pushed), 1)                                   # no duplicate
-        rep = m.run(st, "k", "s", ok, Http(R(503, {})), now=T + 6000)
-        self.assertEqual((rep["refresh"], st["schwab_auth"]["blocked"]),
-                         ("temporary", "token_refused"))                  # verdict kept
-        self.assertEqual(len(pushed), 1)                                   # nothing for a blip
-        m.run(st, "k", "s", ok, Http(R(200, {"access_token": "a"})), now=T + 7200)
-        self.assertIsNone(st["schwab_auth"]["blocked"])
-        rep = m.run(st, "k", "s", ok, Http(R(401, {"error": "invalid_client"})), now=T + 7300)
-        self.assertEqual(st["schwab_auth"]["blocked"], "client_or_token")
-        self.assertEqual(pushed[-1], A.TEXT["client"][0])
-        rep = m.run({"token": dict(TOKEN)}, "", "", ok, Http(), now=T + 7300)   # keys missing
-        self.assertEqual(rep["refresh"], "client_or_token")
+        with mock.patch("requests.post") as post, mock.patch("requests.request") as req:
+            rep = m.run({"token": dict(TOKEN)}, lambda t, x: True, now=T + 3600)
+        post.assert_not_called()
+        req.assert_not_called()
+        self.assertEqual(rep["sent"], [])
 
     def test_failed_delivery_is_retried(self):
         m = self.load()
@@ -267,21 +253,16 @@ class Monitor(unittest.TestCase):
                 self.mode = mode
 
             def post(self, url, **kw):
-                if "ntfy.sh" not in url:
-                    return R(200, {"access_token": "a"})
                 if self.mode == "timeout":
                     raise TimeoutError("read timeout")
                 return R(500 if self.mode == "500" else 200, {})
         for mode in ("timeout", "500"):
-            push = lambda t, x, h=Ntfy(mode): A.send_ntfy("topic", t, x, h)   # noqa: E731
-            rep = m.run(st, "k", "s", push, Ntfy(mode), now=when)
+            rep = m.run(st, lambda t, x, h=Ntfy(mode): A.send_ntfy("topic", t, x, h), now=when)
             self.assertEqual((rep["sent"], rep["failed"]), ([], ["24h"]), mode)
             self.assertNotIn("24h", st.get("schwab_notices", {}).get(A.login_key(TOKEN), []))
-        push = lambda t, x: A.send_ntfy("topic", t, x, Ntfy("ok"))            # noqa: E731
-        rep = m.run(st, "k", "s", push, Ntfy("ok"), now=when + 1800)
-        self.assertEqual(rep["sent"], ["24h"])
-        rep = m.run(st, "k", "s", push, Ntfy("ok"), now=when + 3600)
-        self.assertEqual(rep["sent"], [])
+        ok = lambda t, x: A.send_ntfy("topic", t, x, Ntfy("ok"))           # noqa: E731
+        self.assertEqual(m.run(st, ok, now=when + 1800)["sent"], ["24h"])
+        self.assertEqual(m.run(st, ok, now=when + 3600)["sent"], [])
 
     def test_state_file_round_trip_is_what_actions_read(self):
         m = self.load()
@@ -289,11 +270,9 @@ class Monitor(unittest.TestCase):
             path = Path(d) / "trader.enc"
             vault.save_file(str(path), {"token": dict(TOKEN), "positions": []}, "pw")
             with mock.patch.object(vault, "STATE_PATH", str(path)), \
-                    mock.patch.dict(os.environ, {"STATE_PASSWORD": "pw", "SCHWAB_APP_KEY": "",
-                                                 "SCHWAB_APP_SECRET": "", "NTFY_TOPIC": ""}):
-                m.main()
+                    mock.patch.dict(os.environ, {"STATE_PASSWORD": "pw", "NTFY_TOPIC": ""}):
                 before = path.read_bytes()
-                m.main()                                                  # nothing new
+                m.main()                                    # nothing due, nothing delivered
                 self.assertEqual(path.read_bytes(), before)
             st = vault.load_file(str(path), "pw")
             self.assertEqual(st["token"]["refresh_token"], "RT-secret")
@@ -315,6 +294,18 @@ class Merges(unittest.TestCase):
         self.assertEqual(out["schwab_auth"]["blocked"], "token_refused")
         self.assertEqual(out["positions"], [{"t": "X"}])
 
+    def test_token_rotation_by_the_bot_is_kept_and_a_new_login_wins(self):
+        rotated = dict(TOKEN, refresh_token="RT-rotated")
+        base = {"token": TOKEN, "positions": [], "log": []}
+        out = vault.merge_states(base, dict(base, token=rotated), dict(base))
+        self.assertEqual(out["token"]["refresh_token"], "RT-rotated")   # app did not touch it
+        new_login = dict(TOKEN, refresh_token="RT-new-login", refresh_created=T + 500)
+        out = vault.merge_states(base, dict(base, token=rotated), dict(base, token=new_login))
+        self.assertEqual(out["token"]["refresh_token"], "RT-new-login")  # the newer login wins
+        out = vault.merge_monitor(base, dict(base, schwab_notices={"1": ["24h"]}),
+                                  dict(base, token=rotated))
+        self.assertEqual(out["token"]["refresh_token"], "RT-rotated")   # monitor never writes it
+
     def test_monitor_save_never_touches_bot_fields(self):
         base = {"positions": [], "schwab_auth": None}
         ours = dict(base, schwab_auth={"login": "1", "blocked": "token_refused"})
@@ -324,45 +315,156 @@ class Merges(unittest.TestCase):
         self.assertEqual(out["schwab_auth"]["blocked"], "token_refused")
 
 
+class FakeSchwab:
+    """Stands in for schwab_api.Schwab: scripted _access() and orders()."""
+    def __init__(self, err=None, rotate=False, orders=None, positions=None):
+        self.err, self.rotate = err, rotate
+        self._orders, self._pos = orders or [], positions or {}
+
+    def __call__(self, key, secret, token, account):
+        self.token = token
+        return self
+
+    def _access(self):
+        if self.err:
+            raise self.err
+        if self.rotate:
+            self.token["refresh_token"] = "RT-rotated"                 # same dict as the state
+        return "AT"
+
+    def orders(self, days=60):
+        return self._orders
+
+    def positions(self):
+        return self._pos
+
+    def last_fill(self, t, instr="BUY"):
+        return None
+
+
+def stop_order(sym, qty, px, status="WORKING", oid=7):
+    return {"orderId": oid, "orderType": "STOP", "status": status, "quantity": qty,
+            "filledQuantity": 0, "stopPrice": px, "duration": "GOOD_TILL_CANCEL",
+            "orderLegCollection": [{"instruction": "SELL", "quantity": qty,
+                                    "instrument": {"symbol": sym}}]}
+
+
 class Bot(unittest.TestCase):
+    def setUp(self):
+        import time
+        import trader
+        self.trader = trader
+        self.tok = dict(TOKEN, refresh_created=time.time() - 3600)
+        self.p = mock.patch.multiple(trader, APP_KEY="k", APP_SECRET="s")
+        self.p.start()
+
+    def tearDown(self):
+        self.p.stop()
+
     def test_expired_blocks_without_cancelling_notice_recorded_after_delivery(self):
         import time
-        import trader
         st = {"token": dict(TOKEN, refresh_created=time.time() - A.REFRESH_TTL - 10)}
         with mock.patch.object(A, "send_ntfy", return_value=False) as sn, \
-                mock.patch.object(trader, "Schwab") as S:
-            self.assertIsNone(trader.schwab_or_none(st))
-            self.assertIsNone(trader.schwab_or_none(st))
+                mock.patch.object(self.trader, "Schwab") as S:
+            self.assertIsNone(self.trader.schwab_or_none(st))
+            self.assertIsNone(self.trader.schwab_or_none(st))
         self.assertEqual(sn.call_count, 2)                    # not delivered -> retried
         with mock.patch.object(A, "send_ntfy", return_value=True) as sn:
-            trader.schwab_or_none(st)
-            trader.schwab_or_none(st)
-        self.assertEqual(sn.call_count, 1)                    # delivered once, then recorded
+            self.trader.schwab_or_none(st)
+            self.trader.schwab_or_none(st)
+        self.assertEqual(sn.call_count, 1)
         S.assert_not_called()                                 # no broker: nothing cancelled
 
-    def test_refused_login_and_bad_keys_block(self):
-        import time
-        import trader
-        now = time.time()
-        tok = dict(TOKEN, refresh_created=now - 3600)
-        for blocked, word in (("token_refused", "досрочно"), ("client_or_token", "ключи")):
-            st = {"token": tok, "schwab_auth": {"login": A.login_key(tok), "blocked": blocked}}
-            with mock.patch.object(A, "send_ntfy", return_value=True) as sn:
-                self.assertIsNone(trader.schwab_or_none(st))
+    def test_refusals_classified_from_the_bots_own_refresh(self):
+        for status, body, blocked, word in (
+                (400, {"error": "invalid_grant"}, "token_refused", "досрочно"),
+                (401, {"error": "invalid_client"}, "client_or_token", "ключи")):
+            st = {"token": dict(self.tok)}
+            fake = FakeSchwab(err=SchwabError("x", status_code=status, body=body))
+            with mock.patch.object(self.trader, "Schwab", fake), \
+                    mock.patch.object(A, "send_ntfy", return_value=True) as sn:
+                self.assertIsNone(self.trader.schwab_or_none(st))
+            self.assertEqual(st["schwab_auth"]["blocked"], blocked)
             self.assertIn(word, sn.call_args[0][1])
-        st = {"token": tok, "schwab_auth": {"login": "old-login", "blocked": "token_refused"}}
-        with mock.patch.object(trader, "Schwab") as S:
-            self.assertIsNotNone(trader.schwab_or_none(st))    # a new login is not blocked
-        S.assert_called_once()
 
-    def test_reconcile_first_after_reconnect_once(self):
-        import trader
-        st = {"schwab_reconnected_at": "2026-10-21 20:00:00", "positions": [], "orders": []}
-        with mock.patch.object(trader, "reconcile_live") as rl:
-            ev = []
-            self.assertTrue(trader.reconcile_after_reconnect(st, object(), "2026-10-22", ev))
-            self.assertFalse(trader.reconcile_after_reconnect(st, object(), "2026-10-22", ev))
-        self.assertEqual(rl.call_count, 1)
+    def test_temporary_failure_blocks_this_run_only(self):
+        st = {"token": dict(self.tok)}
+        fake = FakeSchwab(err=SchwabError("x", status_code=503, body={}))
+        with mock.patch.object(self.trader, "Schwab", fake), \
+                mock.patch.object(A, "send_ntfy") as sn:
+            self.assertIsNone(self.trader.schwab_or_none(st))
+        sn.assert_not_called()
+        self.assertIsNone(st["schwab_auth"]["blocked"])
+
+    def test_rotated_refresh_token_lands_in_the_state(self):
+        st = {"token": dict(self.tok)}
+        with mock.patch.object(self.trader, "Schwab", FakeSchwab(rotate=True)):
+            self.assertIsNotNone(self.trader.schwab_or_none(st))
+        self.assertEqual(st["token"]["refresh_token"], "RT-rotated")
+
+    def pos(self, **kw):
+        p = {"ticker": "BRK-B", "mode": "retest", "qty": 3, "stop": 400.0, "entry": 420.0,
+             "entry_date": "2026-10-20", "dry": False}
+        p.update(kw)
+        return p
+
+    def check(self, orders, positions, st=None):
+        st = st or {"positions": [self.pos()], "orders": [], "closed": []}
+        ev = []
+        ok = self.trader.live_safety_check(st, FakeSchwab(orders=orders, positions=positions),
+                                           "2026-10-23", ev)
+        return ok, st, ev
+
+    def test_safety_check_requires_a_working_stop_at_schwab(self):
+        ok, st, ev = self.check([stop_order("BRK/B", 3, 400.0)], {"BRK-B": 3})
+        self.assertTrue(ok)
+        self.assertIsNone(st["live_block"])
+        self.assertEqual(st["positions"][0]["protection"], "ok")
+        for orders, why in (([], "missing"), ([stop_order("BRK/B", 2, 400.0)], "mismatch"),
+                            ([stop_order("BRK/B", 3, 390.0)], "mismatch"),
+                            ([stop_order("BRK/B", 3, 400.0, status="CANCELED")], "missing"),
+                            ([stop_order("BRK/B", 3, 400.0, status="PENDING_CANCEL")], "missing")):
+            ok, st, ev = self.check(orders, {"BRK-B": 3})
+            self.assertFalse(ok, orders)
+            self.assertEqual(st["positions"][0]["protection"], why)
+            self.assertIn("заблокированы", " ".join(ev))
+
+    def test_child_stop_of_a_trigger_order_counts(self):
+        parent = {"orderId": 1, "orderType": "MARKET", "status": "FILLED",
+                  "orderLegCollection": [{"instruction": "BUY", "instrument": {"symbol": "BRK/B"}}],
+                  "childOrderStrategies": [stop_order("BRK/B", 3, 400.0)]}
+        self.assertTrue(self.check([parent], {"BRK-B": 3})[0])
+
+    def test_blocked_check_stops_new_entries_but_not_exits(self):
+        st = {"positions": [], "orders": [], "closed": [], "live_block": {"reason": "x"},
+              "plan": {"status": "new", "date": "2026-10-22", "created": "2026-10-22 20:00",
+                       "for": "2026-10-23", "items": [{"ticker": "AAA", "mode": "retest",
+                                                       "rs": 90, "close": 10, "stop": 9}]}}
+        broker = mock.Mock(dry=False)
+        ev = []
+        from datetime import datetime
+        import core
+        self.trader.run_execute(st, broker, "2026-10-23", ev,
+                                datetime(2026, 10, 23, 9, 0, tzinfo=core.NY))
+        self.assertEqual(st["plan"]["status"], "blocked")
+        broker.buy_with_stop.assert_not_called()
+        broker.cancel.assert_not_called()
+
+    def test_failed_check_blocks(self):
+        class Down(FakeSchwab):
+            def positions(self):
+                raise SchwabError("down")
+        st = {"positions": [], "orders": [], "closed": []}
+        self.assertFalse(self.trader.live_safety_check(st, Down(), "2026-10-23", []))
+        self.assertIn("не выполнена", st["live_block"]["reason"])
+
+    def test_reconciled_marker_only_after_a_passing_check(self):
+        st = {"positions": [self.pos()], "orders": [], "closed": [],
+              "schwab_reconnected_at": "2026-10-23 10:00:00"}
+        self.check([], {"BRK-B": 3}, st)
+        self.assertIsNone(st.get("schwab_reconciled_at"))
+        self.check([stop_order("BRK/B", 3, 400.0)], {"BRK-B": 3}, st)
+        self.assertEqual(st["schwab_reconciled_at"], "2026-10-23 10:00:00")
 
 
 class AppSave(unittest.TestCase):

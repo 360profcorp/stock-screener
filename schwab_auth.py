@@ -19,6 +19,10 @@ Nothing here logs or returns a key, code or token: results carry only short reas
 Expiry: Schwab's refresh token lives 7 days from the login. due_notices() lists what should be
 sent; a notice is recorded with mark_sent() ONLY after the notification service confirmed it,
 so a failed delivery is retried by the next run.
+
+The refresh token is used ONLY by the bot's normal access-token refresh (schwab_api.Schwab),
+which keeps a refresh token Schwab may return and the run saves it. Nothing here calls the
+token endpoint for "checks", so no check can rotate or invalidate the saved login.
 """
 import hashlib
 import hmac
@@ -193,23 +197,7 @@ def status(token: dict | None, now=None) -> dict:
     return dict(state=st, seconds_left=left, expires_at=exp)
 
 
-def check_refresh(app_key, secret, token, http) -> str:
-    """'ok' | 'token_refused' | 'client_or_token' | 'temporary' | 'other'.
-    Only the token endpoint is called; the saved token is not changed."""
-    try:
-        r = http.post(f"{BASE}/v1/oauth/token",
-                      headers={"Authorization": _basic(app_key, secret),
-                               "Content-Type": "application/x-www-form-urlencoded"},
-                      data={"grant_type": "refresh_token",
-                            "refresh_token": token["refresh_token"]}, timeout=20)
-    except Exception:
-        return "temporary"
-    if r.status_code == 200:
-        return "ok"
-    return classify(r.status_code, _body(r))
-
-
-# refresh result -> notice name; 'temporary' / 'other' send nothing (retried next run)
+# classified refresh failure -> notice name; 'temporary' / 'other' send nothing
 REFRESH_NOTICE = {"token_refused": "revoked", "client_or_token": "client"}
 
 

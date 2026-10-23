@@ -26,7 +26,10 @@ ACCESS_TTL = 30 * 60
 
 
 class SchwabError(Exception):
-    pass
+    """status_code / body are set for HTTP answers (body: parsed JSON, never shown)."""
+    def __init__(self, msg="", status_code=None, body=None):
+        super().__init__(msg)
+        self.status_code, self.body = status_code, body
 
 
 def to_schwab(ticker: str) -> str:            # BRK-B (Yahoo) → BRK/B (Schwab)
@@ -96,7 +99,13 @@ class Schwab:
                            data={"grant_type": "refresh_token",
                                  "refresh_token": self.token["refresh_token"]}, timeout=20)
         if r.status_code != 200:
-            raise SchwabError(f"token refresh failed ({r.status_code}): {r.text[:200]}")
+            try:
+                body = r.json()
+            except Exception:
+                body = {}
+            err = str(body.get("error", ""))[:40] if isinstance(body, dict) else ""
+            raise SchwabError(f"token refresh failed ({r.status_code} {err})",
+                              status_code=r.status_code, body=body)
         t = r.json()
         self.token["access_token"] = t["access_token"]
         self.token["access_expires"] = time.time() + int(t.get("expires_in", ACCESS_TTL)) - 60

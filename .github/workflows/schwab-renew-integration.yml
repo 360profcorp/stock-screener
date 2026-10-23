@@ -1,0 +1,39 @@
+name: Schwab renewal integration (real browser + real Streamlit)
+
+# Dummy secrets only; no Schwab login, no state written, no orders.
+on:
+  push:
+    branches: [feature/schwab-renew]
+  pull_request:
+    paths: ["trade_tab.py", "schwab_auth.py", "tests_integration/**",
+            ".github/workflows/schwab-renew-integration.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt playwright && python -m playwright install --with-deps chromium
+      - name: Dummy Streamlit secrets (not real keys)
+        run: |
+          mkdir -p .streamlit
+          printf 'STATE_PASSWORD = "dummy"\nSCHWAB_APP_KEY = "dummy-key"\nSCHWAB_APP_SECRET = "dummy-secret"\nSCHWAB_CALLBACK_URL = "https://example.invalid"\n' > .streamlit/secrets.toml
+      - name: Start Streamlit
+        run: |
+          nohup streamlit run tests_integration/cookie_app.py --server.headless true --server.port 8599 > st.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:8599/_stcore/health && break; sleep 1; done
+      - name: Browser binding test
+        run: |
+          set +e
+          python tests_integration/test_cookie_binding.py http://localhost:8599 > it.log 2>&1; rc=$?
+          cat it.log; tail -30 st.log
+          [ $rc -eq 0 ] || python -c "t=open('it.log').read()[-2500:].replace('%','%25').replace('\n','%0A'); print('::error title=integration::'+t)"
+          [ $rc -eq 0 ] && grep "^[0-9]\. " it.log | sed 's/^/::notice title=integration::/'
+          exit $rc

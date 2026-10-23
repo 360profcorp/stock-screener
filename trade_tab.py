@@ -314,7 +314,8 @@ def handle_schwab_return(X, password, http=None):
         st.success(X["renew_ok"].format(t=_ny(res["expires_at"])))
     elif res["ok"] is False:
         st.error(X["renew_fail"].format(r=res["reason"]))
-    st.session_state["sch_last_result"] = {k: res[k] for k in ("ok", "step", "reason")}
+    st.session_state["sch_last_result"] = {k: res.get(k) for k in ("ok", "step", "reason",
+                                                                    "state_check")}
     _set_browser_cookie("", 0)                     # the browser secret is single use too
     return res
 
