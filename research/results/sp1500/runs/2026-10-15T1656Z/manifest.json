@@ -1,0 +1,60 @@
+{
+  "run_id": "2026-10-15T1656Z",
+  "rules_version": "sp1500-research/1.0",
+  "generated_at": "2026-10-15T17:22:43+00:00",
+  "data_end": "2026-10-14",
+  "first_session": "2021-10-15",
+  "period": "5y",
+  "prices_sha256": "547c70aa11fb5e00452c5beace631255a321356d60d3bc3832388a4455106e97",
+  "git": "52bf4c5a1281c93281fb29228d6382e0a74862ff",
+  "python": "3.12.15",
+  "pandas": "3.0.6",
+  "blockers": [],
+  "log": [
+    "    3.4s universe: 1503 tickers; sources {'sp500': 'wikipedia', 'sp400': 'wikipedia', 'sp600': 'wikipedia'}",
+    "   54.7s prices: 1688/1942 tickers, sessions 2021-10-15..2026-10-14",
+    "  303.6s detections: 661469",
+    " 1591.6s outcomes: 661469 rows",
+    " 1904.5s portfolio backtests done",
+    " 1910.6s equivalence: {'production_rows': 43214, 'research_rows': 43214, 'same_keys': True, 'level_equal': True, 'stop_base_equal': True, 'rs_equal': True, 'ok': True}"
+  ],
+  "dataset_files": {
+    "2026-10-15T1656Z/sources/sp500_ishares.csv": "fd76cdcc04700ca8b54ac473e4b1868f7318f4c5e089ce994aae51f0d924c084",
+    "2026-10-15T1656Z/sources/sp500_wikipedia.html": "8e61210401e2dfe44dd8deda987f80cc8113696f959047d6f486c325f8069c2c",
+    "2026-10-15T1656Z/sources/sp400_ishares.csv": "b2defb3ff1f34d15227ea6c8fbc6f1ec97b55f01fa233d18a96f328f69ebb0af",
+    "2026-10-15T1656Z/sources/sp400_wikipedia.html": "0746ad7c820e841aafe1cefde194dd9bdedf0fa417c24a2decb704927a1f09a3",
+    "2026-10-15T1656Z/sources/sp600_ishares.csv": "07dfcca8331befcf3135b39b617fc4bb2e37da460cd74ce478f08db2c39a14cb",
+    "2026-10-15T1656Z/sources/sp600_wikipedia.html": "25071907d9962ec696239a6fbeedfc52e918c1e0daaff5eeeffed7fba12f2a4f",
+    "2026-10-15T1656Z/sources/sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54",
+    "2026-10-15T1656Z/bars.pkl.gz": "3df57ff951cf7f580ffbc088be003dfcdb872fabd66000e74b508cd73f69283e",
+    "2026-10-15T1656Z/signals.csv.gz": "98b6f81623ea3f20e5e5adc313891762c1a4e3ff0970f907fe7f17081a241cf3"
+  },
+  "pit_sp500": true,
+  "pit_sources": {
+    "sp500": "fja05680/sp500 snapshots 1996-01-02..2026-08-18",
+    "sp400": "wikipedia change table (best effort)",
+    "sp600": "wikipedia change table (best effort)"
+  },
+  "removed_requested": 439,
+  "removed_with_data": 186,
+  "files": {
+    "2026-10-15T1656Z/universe.csv": "28d9a4e62ed423056c29cb8b7c8d36f1e9ba3c811e817e2ce5aa4db084c78ed9",
+    "2026-10-15T1656Z/universe_meta.json": "e781c38e4b79cc61a79eae3386ac6c6153c34807e58a4dcc3841003dd3ffc4e8",
+    "2026-10-15T1656Z/coverage.csv": "3e12302844dd76beb37e3f30792388e577be7e1133d50d074f30934a2b7fc538",
+    "2026-10-15T1656Z/download_report.csv": "14419486409dddcc1401daed7b864da5b5c5d3794b87e830a593add856013ba6",
+    "2026-10-15T1656Z/missing_sessions.csv": "dbee283e1342a95c2f78d94d73126d56b934ab46740da4fdb9d94450a6aec84b",
+    "2026-10-15T1656Z/counts.csv": "d6777377d76f395ee53f354893fc932d86c712d1d5f28d8922cae0c265a7231b",
+    "2026-10-15T1656Z/rejections.csv": "c7bf33a3d26bf2ab2c0523b7ca3b695ffc14e48d6489a042f91b21c95949a993",
+    "2026-10-15T1656Z/long_rs_ref500.csv": "f0dcab20cb7b88ce86f6e63be7903dabc0080972c7dc781a720cdd857ba4eb0b",
+    "2026-10-15T1656Z/long_rs_1500.csv": "71339cfb2faa9b7687564e70333eea6eb3f150fdd4683481e481e74cd192d3e5",
+    "2026-10-15T1656Z/long_slippage.csv": "e1e558bda897b9d6ef51d4882db49f4f99eaaf4cb707f6b9e75baa26ea6e5e1b",
+    "2026-10-15T1656Z/long_pit_vs_current.csv": "2d253baf2d8a9cc021da701ce4001228d7a906d0e934f5c980c406bea4dadbbb",
+    "2026-10-15T1656Z/short_cost_scenarios.csv": "4986d4b38d0d25e526303879fdbf72683ee88ee81595f64db1e1ba046e54a4e6",
+    "2026-10-15T1656Z/price_move_labels.csv": "99dc8028d3574c18184302143241175cd57af3fdcb5a8af4595e9788514e5f3d",
+    "2026-10-15T1656Z/portfolio_long.csv": "f3884d7e245f8149647e5d12adcb9e63cd1494e582913db6860fdaaa414a27de",
+    "2026-10-15T1656Z/splits.csv": "90ad57706c53000535694402820bce84d997f64ce8ac0d51044c8340928bb224",
+    "2026-10-15T1656Z/pit_membership_sanity.csv": "07e42eec76d1095a08614063656cb2eaf4459e917f84505ff636b2581efca8f1",
+    "2026-10-15T1656Z/equivalence.json": "aa924293081bb7fff03a0ef6c4514d6e95cf20acaaeb0e3133b3912b574056d2",
+    "2026-10-15T1656Z/REPORT.md": "6832affde499029fcbd9d9e14d83954a12ebcfdb40f4a491c0ee43288ba21dee"
+  }
+}

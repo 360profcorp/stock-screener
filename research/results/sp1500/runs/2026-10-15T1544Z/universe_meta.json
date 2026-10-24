@@ -1,0 +1,117 @@
+{
+  "retrieved_at": "2026-10-15T15:44:22+00:00",
+  "sources": {
+    "sp500": {
+      "source": "wikipedia",
+      "as_of": "None",
+      "count": 503,
+      "has_change_table": false
+    },
+    "sp400": {
+      "source": "wikipedia",
+      "as_of": "None",
+      "count": 400,
+      "has_change_table": true
+    },
+    "sp600": {
+      "source": "wikipedia",
+      "as_of": "None",
+      "count": 603,
+      "has_change_table": true
+    }
+  },
+  "overlaps": [
+    {
+      "ticker": "CORT",
+      "groups_listed": "sp400|sp600",
+      "group": "sp400",
+      "resolution": "change_table",
+      "evidence": "[[\"2026-09-21\", \"sp400\", \"added\"]]",
+      "name": "Corcept Therapeutics",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "EAT",
+      "groups_listed": "sp400|sp600",
+      "group": "sp400",
+      "resolution": "change_table",
+      "evidence": "[[\"2020-06-25\", \"sp400\", \"removed\"], [\"2020-06-25\", \"sp600\", \"added\"], [\"2026-09-21\", \"sp400\", \"added\"]]",
+      "name": "Brinker International",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "FORM",
+      "groups_listed": "sp400|sp600",
+      "group": "ambiguous",
+      "resolution": "unresolved",
+      "evidence": "",
+      "name": "FormFactor, Inc.",
+      "sector": "Information Technology"
+    }
+  ],
+  "survivorship_bias": {
+    "sp500": true,
+    "sp400": false,
+    "sp600": false
+  },
+  "attempts": [
+    {
+      "group": "sp500",
+      "source": "ishares",
+      "url": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf/1467271812596.ajax?fileType=csv&fileName=IVV_holdings&dataType=fund",
+      "ok": false,
+      "http": 200,
+      "sha256": "0ea3158259dc33c99286a89aadd589ea6d709579a199647dcb7fdfc5cddab2be",
+      "error": "ValueError: no Ticker header in iShares file"
+    },
+    {
+      "group": "sp500",
+      "source": "wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+      "ok": true,
+      "http": 200,
+      "sha256": "bab0dcd8c12bf8d3ec1e16b97d7bca0f96723aee00001ffec78cfdee33763243",
+      "rows": 503,
+      "change_rows": 0
+    },
+    {
+      "group": "sp400",
+      "source": "ishares",
+      "url": "https://www.ishares.com/us/products/239763/ishares-core-sp-midcap-etf/1467271812596.ajax?fileType=csv&fileName=IJH_holdings&dataType=fund",
+      "ok": false,
+      "http": 200,
+      "sha256": "f53d0c70107fccfdcb49f8ed4c23c7d23cd01e23530b5be60d4ac113ce4ce08a",
+      "error": "ValueError: no Ticker header in iShares file"
+    },
+    {
+      "group": "sp400",
+      "source": "wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies",
+      "ok": true,
+      "http": 200,
+      "sha256": "29a655ecd203253d2d7766853cacd6ace70232a0274b84acf372a0be252ebd0a",
+      "rows": 400,
+      "change_rows": 592
+    },
+    {
+      "group": "sp600",
+      "source": "ishares",
+      "url": "https://www.ishares.com/us/products/239774/ishares-core-sp-smallcap-etf/1467271812596.ajax?fileType=csv&fileName=IJR_holdings&dataType=fund",
+      "ok": false,
+      "http": 200,
+      "sha256": "8e92bbf4d45f39ccc351a4f43eb71ab760948d6fec36601912bacc473fef9da2",
+      "error": "ValueError: no Ticker header in iShares file"
+    },
+    {
+      "group": "sp600",
+      "source": "wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_S%26P_600_companies",
+      "ok": true,
+      "http": 200,
+      "sha256": "0810296d16091c21011929e2be4c04702435a33ed35282233fea48c81e9deafc",
+      "rows": 603,
+      "change_rows": 491
+    }
+  ],
+  "missing_groups": []
+}

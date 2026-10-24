@@ -1,0 +1,9 @@
+{
+  "production_rows": 43214,
+  "research_rows": 43214,
+  "same_keys": true,
+  "level_equal": true,
+  "stop_base_equal": true,
+  "rs_equal": true,
+  "ok": true
+}
