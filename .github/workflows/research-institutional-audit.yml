@@ -1,0 +1,73 @@
+name: Research institutional — identifier and 13F timing audit (research branch only)
+
+# AUDIT_PLAN.md. Read-only on SEC/EDGAR; no orders, no paper/state writes.
+on:
+  push:
+    branches: [research/institutional-ai-v1]
+    paths: ["research/institutional/audit_ids.py", ".github/workflows/research-institutional-audit.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-institutional-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/research/institutional-ai-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install "pandas>=2.0" numpy requests lxml
+          which pdftotext || (sudo apt-get update -q && sudo apt-get install -y -q poppler-utils)
+      - name: Tests
+        run: python -m unittest research.institutional.test_audit_ids
+      - name: PIT membership file
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: SEC tables of the PR #20 build
+        uses: actions/download-artifact@v4
+        with:
+          name: sec-inst-40160303607
+          run-id: 40160303607
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/sec
+      - name: Audit
+        run: |
+          set +e
+          PIT=$(find "${{ runner.temp }}/ds" -name sp500_pit_fja05680.csv | head -1)
+          python -m research.institutional.audit_ids --pit "$PIT" --sec "${{ runner.temp }}/sec" \
+            --features research/results/institutional/runs/2026-10-25T0406Z \
+            --out research/results/institutional/audit/${{ github.run_id }} \
+            --tables dist/audit_tables > a.log 2>&1; rc=$?
+          tail -80 a.log
+          [ $rc -eq 0 ] || python -c "t=open('a.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=audit::'+t)"
+          exit $rc
+      - name: Upload corrected tables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-tables-${{ github.run_id }}
+          path: dist/audit_tables
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Live state untouched
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit audit outputs
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/institutional/audit || true
+          git diff --cached --quiet || git commit -m "Institutional audit: outputs ${{ github.run_id }}"
+          git pull --rebase -q && git push
