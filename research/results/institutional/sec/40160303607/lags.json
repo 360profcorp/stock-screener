@@ -1,0 +1,22 @@
+{
+ "form4_filing_minus_transaction_days": {
+  "n": 31005,
+  "min": -169.0,
+  "p01": 0.0,
+  "median": 1.0,
+  "p90": 4.0,
+  "p99": 968.9,
+  "max": 4994.0,
+  "negative": 2
+ },
+ "f13_filing_minus_period_end_days": {
+  "n": 268454,
+  "min": 0.0,
+  "p01": 6.0,
+  "median": 41.0,
+  "p90": 46.0,
+  "p99": 923.0,
+  "max": 12831.0,
+  "negative": 0
+ }
+}
