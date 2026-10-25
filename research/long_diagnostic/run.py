@@ -260,6 +260,7 @@ def drawdown_episodes(curve, n=5):
 
 
 def window_stats(curve, ex, spy, a, b, initial):
+    a = max(pd.Timestamp(a), pd.Timestamp(curve["date"].iloc[0]))      # the book starts in Nov 2017
     eq = curve.set_index("date")["equity"]
     x = eq[(eq.index >= a) & (eq.index <= b)]
     if not len(x):
@@ -456,6 +457,20 @@ def make_diagnostics(trades, fills, curves, book_metrics, data, spy, cost_bps, i
                            mean_gross_r=float(ex["gross_r"].mean())),
                 dividends_not_credited_usd=float(ex["dividends_not_credited_usd"].sum()),
                 decomposition_usd=decomposition(ex, opn, curves, initial, cost_bps),
+                expectancy_r=dict(
+                    n=int(len(ex)),
+                    time_exits_gross_r_per_trade=float(ex.loc[ex["reason"] == "time", "gross_r"].sum() / len(ex)),
+                    stops_at_planned_stop_gross_r_per_trade=float(
+                        (ex.loc[ex["reason"] == "stop", "gross_r"] - ex.loc[ex["reason"] == "stop", "gap_extra_r"]).sum() / len(ex)),
+                    gaps_through_stop_r_per_trade=float(ex["gap_extra_r"].sum() / len(ex)),
+                    costs_r_per_trade=-float(ex["cost_r"].mean()),
+                    net_r_per_trade=float(ex["net_r"].mean()),
+                    win_rate=float((ex["net_r"] > 0).mean()), avg_win_r=float(ex.loc[ex["net_r"] > 0, "net_r"].mean()),
+                    avg_loss_r=float(ex.loc[ex["net_r"] <= 0, "net_r"].mean()),
+                    breakeven_win_rate_at_these_payoffs=float(
+                        -ex.loc[ex["net_r"] <= 0, "net_r"].mean() /
+                        (ex.loc[ex["net_r"] > 0, "net_r"].mean() - ex.loc[ex["net_r"] <= 0, "net_r"].mean())),
+                    mean_risk_pct=float(ex["risk_pct"].mean())),
                 concentration=conc, calendar_years=years, regimes=regimes, monthly_2018_2022=monthly,
                 drawdown_episodes=drawdown_episodes(curves), exposure=expo,
                 open_at_end=[dict(p) for p in opn],
@@ -661,6 +676,19 @@ def report(result, out):
               f"Gross mean {co['mean_gross_r']:+.3f} R, costs {co['mean_cost_r']:.3f} R per trade. "
               f"Dividends a holder would have received but the engine does not credit: "
               f"{money(d['dividends_not_credited_usd'])}.", "",
+              "### Expectancy per closed trade, in R (exact: components add up to the net mean)", "",
+              "| Component | R per trade |", "|---|---:|"]
+        xr = d["expectancy_r"]
+        L += [f"| time exits, gross | {xr['time_exits_gross_r_per_trade']:+.3f} |",
+              f"| stops at the planned stop, gross | {xr['stops_at_planned_stop_gross_r_per_trade']:+.3f} |",
+              f"| gaps through the stop | {xr['gaps_through_stop_r_per_trade']:+.3f} |",
+              f"| costs ({result['baselines'][st + '_10bps']['costs']['total_usd']:,.0f} $ at 10 bps) | {xr['costs_r_per_trade']:+.3f} |",
+              f"| **net** | **{xr['net_r_per_trade']:+.3f}** |", "",
+              f"Win rate {100 * xr['win_rate']:.1f} % against a break-even win rate of "
+              f"{100 * xr['breakeven_win_rate_at_these_payoffs']:.1f} % at these payoffs (avg win {xr['avg_win_r']:+.2f} R, "
+              f"avg loss {xr['avg_loss_r']:+.2f} R). Mean planned risk {xr['mean_risk_pct']:.1f} % of the entry price. "
+              f"Cost sensitivity (independent full replays): {d['cost_sensitivity']['return_10bps_pct']:+.2f} % at 10 bps vs "
+              f"{d['cost_sensitivity']['return_25bps_pct']:+.2f} % at 25 bps.", "",
               "### Candidate funnel (hypothetical R only for comparison, never added to P&L)", "",
               "| Set | Count | Mean R | Win % | PF (R) |", "|---|---:|---:|---:|---:|"]
         for k, v in d["funnel"].items():
@@ -687,13 +715,14 @@ def report(result, out):
               f"(gave back {e['time_exit_give_back_from_mfe_r_mean']:.2f} R from the best intraday high).", "",
               f"![mfe]({st}_mfe.png)", "", "### After the exit (hindsight, NOT a longer-hold backtest)", "",
               f"![post]({st}_post_exit.png)", "",
-              "| Exit group | Horizon | n | Mean % | Median % | % positive | Close above entry % |",
-              "|---|---|---:|---:|---:|---:|---:|"]
+              "| Exit group | Horizon | n | Mean % | Median % | % positive | Close above entry % | Best high after exit (mean) |",
+              "|---|---|---:|---:|---:|---:|---:|---:|"]
         for grp, v in e["post_exit"].items():
             for h in HORIZONS:
                 x = v[f"+{h}"]
                 L.append(f"| {grp} | +{h} | {x['n']} | {pct(x['mean_pct'], 2)} | {pct(x['median_pct'], 2)} | "
-                         f"{(x['positive_pct'] or 0):.1f} | {(x['close_above_entry_pct'] or 0):.1f} |")
+                         f"{(x['positive_pct'] or 0):.1f} | {(x['close_above_entry_pct'] or 0):.1f} | "
+                         f"{pct(x['mean_max_high_after_exit_pct'], 2)} |")
         k = d["concentration"]
         L += ["", "### Rare large winners", "", f"![conc]({st}_concentration.png)", "",
               f"Closed net P&L {money(k['total_closed_pnl_usd'])}; top 5 {money(k['top5_pnl_usd'])}, top 10 "
