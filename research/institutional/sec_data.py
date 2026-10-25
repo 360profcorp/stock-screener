@@ -79,8 +79,16 @@ def years_in(name):
     return [int(x) for x in m]
 
 
+def member(z, name):
+    """Archive member by base name (some SEC zips keep the files in a sub-folder)."""
+    for n in z.namelist():
+        if n.split("/")[-1].upper() == name.upper():
+            return n
+    raise KeyError(f"{name} not in archive ({z.namelist()[:5]})")
+
+
 def tsv(z, name, usecols=None):
-    with z.open(name) as f:
+    with z.open(member(z, name)) as f:
         return pd.read_csv(f, sep="\t", dtype=str, usecols=usecols, quoting=3,
                            on_bad_lines="skip", low_memory=False)
 
@@ -212,7 +220,7 @@ def form13f(F, cmap, out):
             filers.setdefault(per, set()).update(g["f"].tolist())
         a2 = sub.set_index("ACCESSION_NUMBER")[["f", "period"]]
         n = 0
-        with z.open("INFOTABLE.tsv") as fh:
+        with z.open(member(z, "INFOTABLE.tsv")) as fh:
             for ch in pd.read_csv(fh, sep="\t", dtype=str, quoting=3, on_bad_lines="skip",
                                   usecols=["ACCESSION_NUMBER", "CUSIP", "SSHPRNAMTTYPE",
                                            "PUTCALL"], chunksize=1_000_000):
