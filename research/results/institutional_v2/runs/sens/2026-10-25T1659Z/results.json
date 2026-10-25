@@ -1,0 +1,1914 @@
+{
+ "prereg": "research/institutional/PREREG_INSTITUTIONAL.md",
+ "dataset_sha256": {
+  "bars.pkl.gz": "98a68ab735d3a2535bdec6aaa22b152a68e9d30f1d94d19cb83524e95b4650ab",
+  "sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54"
+ },
+ "sec_summary": {
+  "version": "v2-sensitivity",
+  "study_tickers": 745,
+  "f13_breadth_rows": 26472,
+  "form4_buy_rows": 14623,
+  "form4_filing_days": 150750,
+  "note": "registry exclusions keep their PR #20 value"
+ },
+ "lags": {
+  "form4_filing_minus_transaction_days": {
+   "n": 14623,
+   "min": -169.0,
+   "p01": 0.0,
+   "median": 2.0,
+   "p90": 6.0,
+   "p99": 1518.0,
+   "max": 4994.0,
+   "negative": 2
+  },
+  "f13_filing_minus_period_end_days": {
+   "n": 236407,
+   "min": 0.0,
+   "p01": 6.0,
+   "median": 39.0,
+   "p90": 45.0,
+   "p99": 45.0,
+   "max": 45.0,
+   "negative": 0
+  }
+ },
+ "git": "1f3b68f2dd4f1d9a34f1cf477c927d163f08b438",
+ "data": {
+  "tickers_ever_member": 726,
+  "with_prices": 609,
+  "detections": 341084,
+  "pit_first": "1996-01-02",
+  "pit_last": "2026-08-18"
+ },
+ "note": "Research Breakout = next-open entry (backtest.simulate). It is NOT the bot's pre-close breakout purchase; results must not be mixed.",
+ "strategies": {
+  "breakout": {
+   "pit_check": {
+    "form4_filings_on_or_after_signal_day": 0,
+    "f13_quarters_not_yet_public": 0,
+    "rows": 26928
+   },
+   "coverage": {
+    "2017": {
+     "candidates": 535,
+     "form4_any_12m": 95.1,
+     "f1_positive": 5.2,
+     "f13_usable": 95.9
+    },
+    "2018": {
+     "candidates": 2266,
+     "form4_any_12m": 97.9,
+     "f1_positive": 12.8,
+     "f13_usable": 98.0
+    },
+    "2019": {
+     "candidates": 3106,
+     "form4_any_12m": 99.3,
+     "f1_positive": 10.1,
+     "f13_usable": 99.1
+    },
+    "2020": {
+     "candidates": 3033,
+     "form4_any_12m": 97.6,
+     "f1_positive": 10.7,
+     "f13_usable": 99.7
+    },
+    "2021": {
+     "candidates": 3536,
+     "form4_any_12m": 98.1,
+     "f1_positive": 7.0,
+     "f13_usable": 100.0
+    },
+    "2022": {
+     "candidates": 1511,
+     "form4_any_12m": 99.7,
+     "f1_positive": 14.2,
+     "f13_usable": 99.5
+    },
+    "2023": {
+     "candidates": 3088,
+     "form4_any_12m": 98.3,
+     "f1_positive": 6.9,
+     "f13_usable": 100.0
+    },
+    "2024": {
+     "candidates": 3806,
+     "form4_any_12m": 98.9,
+     "f1_positive": 7.3,
+     "f13_usable": 99.9
+    },
+    "2025": {
+     "candidates": 3274,
+     "form4_any_12m": 99.1,
+     "f1_positive": 10.5,
+     "f13_usable": 100.0
+    },
+    "2026": {
+     "candidates": 2773,
+     "form4_any_12m": 99.0,
+     "f1_positive": 7.0,
+     "f13_usable": 99.1
+    }
+   },
+   "books": {
+    "RS|full|10": {
+     "return_pct": -6.50882553835459,
+     "cagr_pct": -0.7475724320218702,
+     "max_dd_pct": -47.65579792520076,
+     "profit_factor": 0.9716978562452526,
+     "trades": 750,
+     "expectancy_r": -0.023358852291112397,
+     "yearly_return_pct": {
+      "2017": -2.2,
+      "2018": -21.71,
+      "2019": -9.42,
+      "2020": 27.69,
+      "2021": -4.31,
+      "2022": -31.61,
+      "2023": 16.28,
+      "2024": 21.84,
+      "2025": 5.03,
+      "2026": 8.41
+     },
+     "worst_dd_trough": "2023-04-12",
+     "sessions_trough_to_new_high": 768,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -8.98,
+       "spy_pct": -33.79,
+       "capture": 0.27
+      },
+      "covid_recovery": {
+       "book_pct": 20.05,
+       "spy_pct": 67.7,
+       "capture": 0.3
+      },
+      "bear_2022": {
+       "book_pct": -22.01,
+       "spy_pct": -24.93,
+       "capture": 0.88
+      },
+      "rebound_2022": {
+       "book_pct": 3.9,
+       "spy_pct": 28.39,
+       "capture": 0.14
+      }
+     }
+    },
+    "RS|full|25": {
+     "return_pct": -43.066013578315555,
+     "cagr_pct": -6.08699767595775,
+     "max_dd_pct": -56.29831332232785,
+     "profit_factor": 0.8431886343228786,
+     "trades": 752,
+     "expectancy_r": -0.11767093964974516,
+     "yearly_return_pct": {
+      "2017": -2.9,
+      "2018": -24.8,
+      "2019": -13.55,
+      "2020": 20.69,
+      "2021": -5.21,
+      "2022": -32.05,
+      "2023": 12.51,
+      "2024": 5.02,
+      "2025": 1.48,
+      "2026": -3.24
+     },
+     "worst_dd_trough": "2023-04-12",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -9.16,
+       "spy_pct": -33.79,
+       "capture": 0.27
+      },
+      "covid_recovery": {
+       "book_pct": 14.35,
+       "spy_pct": 67.7,
+       "capture": 0.21
+      },
+      "bear_2022": {
+       "book_pct": -22.59,
+       "spy_pct": -24.93,
+       "capture": 0.91
+      },
+      "rebound_2022": {
+       "book_pct": 1.26,
+       "spy_pct": 28.39,
+       "capture": 0.04
+      }
+     }
+    },
+    "RS|development|10": {
+     "return_pct": -15.255260734733344,
+     "cagr_pct": -3.9019876574512335,
+     "max_dd_pct": -37.15261291741753,
+     "profit_factor": 0.8916339790743667,
+     "trades": 357,
+     "expectancy_r": -0.07703204510842211,
+     "yearly_return_pct": {
+      "2017": -2.2,
+      "2018": -21.71,
+      "2019": -9.42,
+      "2020": 27.69,
+      "2021": -4.31
+     },
+     "worst_dd_trough": "2019-10-08",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -8.98,
+       "spy_pct": -33.79,
+       "capture": 0.27
+      },
+      "covid_recovery": {
+       "book_pct": 20.05,
+       "spy_pct": 67.7,
+       "capture": 0.3
+      }
+     }
+    },
+    "RS|development|25": {
+     "return_pct": -27.779617143594038,
+     "cagr_pct": -7.527170707627906,
+     "max_dd_pct": -41.978885586570534,
+     "profit_factor": 0.8083206717106434,
+     "trades": 354,
+     "expectancy_r": -0.13673233846626068,
+     "yearly_return_pct": {
+      "2017": -2.9,
+      "2018": -24.8,
+      "2019": -13.55,
+      "2020": 20.69,
+      "2021": -5.21
+     },
+     "worst_dd_trough": "2019-10-08",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -9.16,
+       "spy_pct": -33.79,
+       "capture": 0.27
+      },
+      "covid_recovery": {
+       "book_pct": 14.35,
+       "spy_pct": 67.7,
+       "capture": 0.21
+      }
+     }
+    },
+    "RS|holdout|10": {
+     "return_pct": 22.550795232760734,
+     "cagr_pct": 4.325578748655712,
+     "max_dd_pct": -35.85939589230105,
+     "profit_factor": 1.0977427377983726,
+     "trades": 399,
+     "expectancy_r": 0.05731867392611703,
+     "yearly_return_pct": {
+      "2022": -31.08,
+      "2023": 17.56,
+      "2024": 20.55,
+      "2025": 5.24,
+      "2026": 19.23
+     },
+     "worst_dd_trough": "2023-04-12",
+     "sessions_trough_to_new_high": 399,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -21.71,
+       "spy_pct": -24.93,
+       "capture": 0.87
+      },
+      "rebound_2022": {
+       "book_pct": 4.87,
+       "spy_pct": 28.39,
+       "capture": 0.17
+      }
+     }
+    },
+    "RS|holdout|25": {
+     "return_pct": -7.299636816643595,
+     "cagr_pct": -1.5660090444440167,
+     "max_dd_pct": -38.905662582823595,
+     "profit_factor": 0.9479082490074408,
+     "trades": 398,
+     "expectancy_r": -0.06576917290383934,
+     "yearly_return_pct": {
+      "2022": -33.48,
+      "2023": 12.58,
+      "2024": 16.39,
+      "2025": 1.6,
+      "2026": 4.68
+     },
+     "worst_dd_trough": "2023-04-12",
+     "sessions_trough_to_new_high": 463,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -23.57,
+       "spy_pct": -24.93,
+       "capture": 0.95
+      },
+      "rebound_2022": {
+       "book_pct": 0.73,
+       "spy_pct": 28.39,
+       "capture": 0.03
+      }
+     }
+    },
+    "INS|full|10": {
+     "return_pct": -15.308769520318089,
+     "cagr_pct": -1.8354873025378082,
+     "max_dd_pct": -47.302028380444646,
+     "profit_factor": 0.9346035395057216,
+     "trades": 730,
+     "expectancy_r": -0.052325217028528895,
+     "yearly_return_pct": {
+      "2017": 0.05,
+      "2018": -18.99,
+      "2019": -8.67,
+      "2020": 8.2,
+      "2021": -9.46,
+      "2022": -20.03,
+      "2023": 22.55,
+      "2024": -0.96,
+      "2025": 32.04,
+      "2026": -8.86
+     },
+     "worst_dd_trough": "2023-04-26",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -3.87,
+       "spy_pct": -33.79,
+       "capture": 0.11
+      },
+      "covid_recovery": {
+       "book_pct": 4.39,
+       "spy_pct": 67.7,
+       "capture": 0.06
+      },
+      "bear_2022": {
+       "book_pct": -15.59,
+       "spy_pct": -24.93,
+       "capture": 0.63
+      },
+      "rebound_2022": {
+       "book_pct": 8.92,
+       "spy_pct": 28.39,
+       "capture": 0.31
+      }
+     }
+    },
+    "INS|full|25": {
+     "return_pct": -49.28128757049166,
+     "cagr_pct": -7.289608197677211,
+     "max_dd_pct": -57.39877924622834,
+     "profit_factor": 0.8019631269295857,
+     "trades": 733,
+     "expectancy_r": -0.14951929681905538,
+     "yearly_return_pct": {
+      "2017": -0.55,
+      "2018": -21.94,
+      "2019": -12.04,
+      "2020": 4.56,
+      "2021": -14.08,
+      "2022": -22.88,
+      "2023": 18.75,
+      "2024": -14.48,
+      "2025": 29.17,
+      "2026": -18.27
+     },
+     "worst_dd_trough": "2023-04-26",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -3.95,
+       "spy_pct": -33.79,
+       "capture": 0.12
+      },
+      "covid_recovery": {
+       "book_pct": 1.49,
+       "spy_pct": 67.7,
+       "capture": 0.02
+      },
+      "bear_2022": {
+       "book_pct": -17.56,
+       "spy_pct": -24.93,
+       "capture": 0.7
+      },
+      "rebound_2022": {
+       "book_pct": 4.39,
+       "spy_pct": 28.39,
+       "capture": 0.15
+      }
+     }
+    },
+    "INS|development|10": {
+     "return_pct": -27.48869722521061,
+     "cagr_pct": -7.437737885047568,
+     "max_dd_pct": -33.746752411581525,
+     "profit_factor": 0.7901532046592599,
+     "trades": 354,
+     "expectancy_r": -0.10614172354709572,
+     "yearly_return_pct": {
+      "2017": 0.05,
+      "2018": -18.99,
+      "2019": -8.67,
+      "2020": 8.2,
+      "2021": -9.46
+     },
+     "worst_dd_trough": "2021-12-06",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -3.87,
+       "spy_pct": -33.79,
+       "capture": 0.11
+      },
+      "covid_recovery": {
+       "book_pct": 4.39,
+       "spy_pct": 67.7,
+       "capture": 0.06
+      }
+     }
+    },
+    "INS|development|25": {
+     "return_pct": -38.65394660441246,
+     "cagr_pct": -11.08554032380824,
+     "max_dd_pct": -43.35182187252082,
+     "profit_factor": 0.7111930449260349,
+     "trades": 354,
+     "expectancy_r": -0.18061171778556936,
+     "yearly_return_pct": {
+      "2017": -0.55,
+      "2018": -21.94,
+      "2019": -12.04,
+      "2020": 4.56,
+      "2021": -14.08
+     },
+     "worst_dd_trough": "2021-12-06",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -3.95,
+       "spy_pct": -33.79,
+       "capture": 0.12
+      },
+      "covid_recovery": {
+       "book_pct": 1.49,
+       "spy_pct": 67.7,
+       "capture": 0.02
+      }
+     }
+    },
+    "INS|holdout|10": {
+     "return_pct": 0.31191830390626674,
+     "cagr_pct": 0.06487328431838968,
+     "max_dd_pct": -23.254281985809733,
+     "profit_factor": 0.9806708827373077,
+     "trades": 390,
+     "expectancy_r": -0.06726555960435608,
+     "yearly_return_pct": {
+      "2022": -19.01,
+      "2023": 22.6,
+      "2024": -2.97,
+      "2025": 16.11,
+      "2026": -10.33
+     },
+     "worst_dd_trough": "2023-04-26",
+     "sessions_trough_to_new_high": 229,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -14.12,
+       "spy_pct": -24.93,
+       "capture": 0.57
+      },
+      "rebound_2022": {
+       "book_pct": 8.74,
+       "spy_pct": 28.39,
+       "capture": 0.31
+      }
+     }
+    },
+    "INS|holdout|25": {
+     "return_pct": -15.378025164112952,
+     "cagr_pct": -3.4173282939176097,
+     "max_dd_pct": -26.225414968983827,
+     "profit_factor": 0.8990334399742662,
+     "trades": 387,
+     "expectancy_r": -0.14355867980149403,
+     "yearly_return_pct": {
+      "2022": -21.48,
+      "2023": 19.39,
+      "2024": -6.99,
+      "2025": 11.77,
+      "2026": -13.17
+     },
+     "worst_dd_trough": "2023-04-26",
+     "sessions_trough_to_new_high": 563,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -16.14,
+       "spy_pct": -24.93,
+       "capture": 0.65
+      },
+      "rebound_2022": {
+       "book_pct": 5.61,
+       "spy_pct": 28.39,
+       "capture": 0.2
+      }
+     }
+    },
+    "BR|full|10": {
+     "return_pct": 65.90048450329206,
+     "cagr_pct": 5.80626961735311,
+     "max_dd_pct": -40.72527295201882,
+     "profit_factor": 1.1881336701770282,
+     "trades": 716,
+     "expectancy_r": 0.07233276684504154,
+     "yearly_return_pct": {
+      "2017": 1.62,
+      "2018": -0.35,
+      "2019": -5.16,
+      "2020": 2.93,
+      "2021": 10.86,
+      "2022": -28.12,
+      "2023": -0.37,
+      "2024": 11.31,
+      "2025": 14.48,
+      "2026": 65.89
+     },
+     "worst_dd_trough": "2023-11-06",
+     "sessions_trough_to_new_high": 482,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -6.87,
+       "spy_pct": -33.79,
+       "capture": 0.2
+      },
+      "covid_recovery": {
+       "book_pct": 2.95,
+       "spy_pct": 67.7,
+       "capture": 0.04
+      },
+      "bear_2022": {
+       "book_pct": -18.94,
+       "spy_pct": -24.93,
+       "capture": 0.76
+      },
+      "rebound_2022": {
+       "book_pct": -12.13,
+       "spy_pct": 28.39,
+       "capture": -0.43
+      }
+     }
+    },
+    "BR|full|25": {
+     "return_pct": -21.319237200292996,
+     "cagr_pct": -2.637860792350788,
+     "max_dd_pct": -52.814871576353404,
+     "profit_factor": 0.9324774925428152,
+     "trades": 722,
+     "expectancy_r": -0.0643065379773519,
+     "yearly_return_pct": {
+      "2017": 1.03,
+      "2018": -5.08,
+      "2019": -8.81,
+      "2020": -1.03,
+      "2021": 4.91,
+      "2022": -30.16,
+      "2023": -3.67,
+      "2024": 4.54,
+      "2025": 12.15,
+      "2026": 9.88
+     },
+     "worst_dd_trough": "2024-09-12",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.11,
+       "spy_pct": -33.79,
+       "capture": 0.21
+      },
+      "covid_recovery": {
+       "book_pct": -0.21,
+       "spy_pct": 67.7,
+       "capture": -0.0
+      },
+      "bear_2022": {
+       "book_pct": -20.57,
+       "spy_pct": -24.93,
+       "capture": 0.83
+      },
+      "rebound_2022": {
+       "book_pct": -14.97,
+       "spy_pct": 28.39,
+       "capture": -0.53
+      }
+     }
+    },
+    "BR|development|10": {
+     "return_pct": 9.584204498375094,
+     "cagr_pct": 2.2251050673301354,
+     "max_dd_pct": -25.53480755365466,
+     "profit_factor": 1.02827335072814,
+     "trades": 332,
+     "expectancy_r": 0.02874846670092268,
+     "yearly_return_pct": {
+      "2017": 1.62,
+      "2018": -0.35,
+      "2019": -5.16,
+      "2020": 2.93,
+      "2021": 10.86
+     },
+     "worst_dd_trough": "2021-04-30",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -6.87,
+       "spy_pct": -33.79,
+       "capture": 0.2
+      },
+      "covid_recovery": {
+       "book_pct": 2.95,
+       "spy_pct": 67.7,
+       "capture": 0.04
+      }
+     }
+    },
+    "BR|development|25": {
+     "return_pct": -9.207415536966224,
+     "cagr_pct": -2.2958444669529676,
+     "max_dd_pct": -32.33434489547394,
+     "profit_factor": 0.9239464923332018,
+     "trades": 332,
+     "expectancy_r": -0.05037610967933446,
+     "yearly_return_pct": {
+      "2017": 1.03,
+      "2018": -5.08,
+      "2019": -8.81,
+      "2020": -1.03,
+      "2021": 4.91
+     },
+     "worst_dd_trough": "2021-04-30",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.11,
+       "spy_pct": -33.79,
+       "capture": 0.21
+      },
+      "covid_recovery": {
+       "book_pct": -0.21,
+       "spy_pct": 67.7,
+       "capture": -0.0
+      }
+     }
+    },
+    "BR|holdout|10": {
+     "return_pct": 64.01710409187191,
+     "cagr_pct": 10.85317891398474,
+     "max_dd_pct": -35.28448014144423,
+     "profit_factor": 1.3623539252077737,
+     "trades": 388,
+     "expectancy_r": 0.10735969868960471,
+     "yearly_return_pct": {
+      "2022": -23.88,
+      "2023": -0.43,
+      "2024": 12.66,
+      "2025": 14.3,
+      "2026": 68.06
+     },
+     "worst_dd_trough": "2023-11-06",
+     "sessions_trough_to_new_high": 406,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -14.38,
+       "spy_pct": -24.93,
+       "capture": 0.58
+      },
+      "rebound_2022": {
+       "book_pct": -11.9,
+       "spy_pct": 28.39,
+       "capture": -0.42
+      }
+     }
+    },
+    "BR|holdout|25": {
+     "return_pct": 0.7028820561380877,
+     "cagr_pct": 0.1459613974679863,
+     "max_dd_pct": -40.08113976898273,
+     "profit_factor": 1.0066798321061075,
+     "trades": 389,
+     "expectancy_r": -0.05257994361167335,
+     "yearly_return_pct": {
+      "2022": -26.51,
+      "2023": -4.8,
+      "2024": 7.24,
+      "2025": 10.5,
+      "2026": 21.46
+     },
+     "worst_dd_trough": "2024-09-12",
+     "sessions_trough_to_new_high": 410,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -16.53,
+       "spy_pct": -24.93,
+       "capture": 0.66
+      },
+      "rebound_2022": {
+       "book_pct": -15.16,
+       "spy_pct": 28.39,
+       "capture": -0.53
+      }
+     }
+    },
+    "IR|full|10": {
+     "return_pct": -12.036136753042314,
+     "cagr_pct": -1.419654280084004,
+     "max_dd_pct": -36.037087936772686,
+     "profit_factor": 0.9645507182003025,
+     "trades": 724,
+     "expectancy_r": -0.010458706429061854,
+     "yearly_return_pct": {
+      "2017": -0.73,
+      "2018": -8.97,
+      "2019": -1.7,
+      "2020": 14.23,
+      "2021": 17.55,
+      "2022": -26.13,
+      "2023": 4.44,
+      "2024": 0.94,
+      "2025": -5.68,
+      "2026": 0.4
+     },
+     "worst_dd_trough": "2024-09-06",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -4.89,
+       "spy_pct": -33.79,
+       "capture": 0.14
+      },
+      "covid_recovery": {
+       "book_pct": 11.91,
+       "spy_pct": 67.7,
+       "capture": 0.18
+      },
+      "bear_2022": {
+       "book_pct": -18.98,
+       "spy_pct": -24.93,
+       "capture": 0.76
+      },
+      "rebound_2022": {
+       "book_pct": -10.68,
+       "spy_pct": 28.39,
+       "capture": -0.38
+      }
+     }
+    },
+    "IR|full|25": {
+     "return_pct": -37.62793935276034,
+     "cagr_pct": -5.126942437790117,
+     "max_dd_pct": -43.824518982049234,
+     "profit_factor": 0.8762223701711016,
+     "trades": 721,
+     "expectancy_r": -0.08680183866699025,
+     "yearly_return_pct": {
+      "2017": -1.37,
+      "2018": -13.06,
+      "2019": -5.71,
+      "2020": 9.96,
+      "2021": 13.46,
+      "2022": -25.87,
+      "2023": 1.31,
+      "2024": -4.15,
+      "2025": -10.2,
+      "2026": -4.34
+     },
+     "worst_dd_trough": "2026-09-14",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -4.64,
+       "spy_pct": -33.79,
+       "capture": 0.14
+      },
+      "covid_recovery": {
+       "book_pct": 8.66,
+       "spy_pct": 67.7,
+       "capture": 0.13
+      },
+      "bear_2022": {
+       "book_pct": -18.2,
+       "spy_pct": -24.93,
+       "capture": 0.73
+      },
+      "rebound_2022": {
+       "book_pct": -13.2,
+       "spy_pct": 28.39,
+       "capture": -0.47
+      }
+     }
+    },
+    "IR|development|10": {
+     "return_pct": 19.273634209322378,
+     "cagr_pct": 4.32909462341613,
+     "max_dd_pct": -20.048251228300796,
+     "profit_factor": 1.085023103485674,
+     "trades": 338,
+     "expectancy_r": 0.11099252813568461,
+     "yearly_return_pct": {
+      "2017": -0.73,
+      "2018": -8.97,
+      "2019": -1.7,
+      "2020": 14.23,
+      "2021": 17.55
+     },
+     "worst_dd_trough": "2021-04-30",
+     "sessions_trough_to_new_high": 129,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -4.89,
+       "spy_pct": -33.79,
+       "capture": 0.14
+      },
+      "covid_recovery": {
+       "book_pct": 11.91,
+       "spy_pct": 67.7,
+       "capture": 0.18
+      }
+     }
+    },
+    "IR|development|25": {
+     "return_pct": 0.867711996676479,
+     "cagr_pct": 0.20796095718647045,
+     "max_dd_pct": -25.683407960156856,
+     "profit_factor": 0.9745154335733791,
+     "trades": 338,
+     "expectancy_r": 0.03276089808041703,
+     "yearly_return_pct": {
+      "2017": -1.37,
+      "2018": -13.06,
+      "2019": -5.71,
+      "2020": 9.96,
+      "2021": 13.46
+     },
+     "worst_dd_trough": "2020-05-01",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -4.64,
+       "spy_pct": -33.79,
+       "capture": 0.14
+      },
+      "covid_recovery": {
+       "book_pct": 8.66,
+       "spy_pct": 67.7,
+       "capture": 0.13
+      }
+     }
+    },
+    "IR|holdout|10": {
+     "return_pct": -21.26412969951329,
+     "cagr_pct": -4.856491106478522,
+     "max_dd_pct": -32.35341629670967,
+     "profit_factor": 0.8659414496623511,
+     "trades": 388,
+     "expectancy_r": -0.1033753777292752,
+     "yearly_return_pct": {
+      "2022": -19.65,
+      "2023": 4.22,
+      "2024": 0.36,
+      "2025": -6.97,
+      "2026": 0.7
+     },
+     "worst_dd_trough": "2024-09-06",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "bear_2022": {
+       "book_pct": -11.79,
+       "spy_pct": -24.93,
+       "capture": 0.47
+      },
+      "rebound_2022": {
+       "book_pct": -11.07,
+       "spy_pct": 28.39,
+       "capture": -0.39
+      }
+     }
+    },
+    "IR|holdout|25": {
+     "return_pct": -36.76284113313631,
+     "cagr_pct": -9.10189738511652,
+     "max_dd_pct": -42.69108536550201,
+     "profit_factor": 0.7608724580207376,
+     "trades": 387,
+     "expectancy_r": -0.193590521719769,
+     "yearly_return_pct": {
+      "2022": -21.96,
+      "2023": 0.92,
+      "2024": -4.72,
+      "2025": -10.88,
+      "2026": -5.44
+     },
+     "worst_dd_trough": "2026-09-14",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "bear_2022": {
+       "book_pct": -13.72,
+       "spy_pct": -24.93,
+       "capture": 0.55
+      },
+      "rebound_2022": {
+       "book_pct": -13.52,
+       "spy_pct": 28.39,
+       "capture": -0.48
+      }
+     }
+    }
+   },
+   "random": {
+    "development": {
+     "n": 200,
+     "p50": -8.325412535060174,
+     "p80": 7.747912233695297,
+     "p95": 19.009326624934147
+    },
+    "holdout": {
+     "n": 200,
+     "p50": 6.112864139756047,
+     "p80": 29.203031661506614,
+     "p95": 46.09437655368146
+    }
+   },
+   "ic": {
+    "F1": {
+     "days": 474,
+     "mean_ic": -0.020949807379012912,
+     "ci90": [
+      -0.051318636428055675,
+      0.011231594690884063
+     ]
+    },
+    "F2": {
+     "days": 1016,
+     "mean_ic": -0.010920866277619326,
+     "ci90": [
+      -0.03950473286892391,
+      0.017441048252183695
+     ]
+    },
+    "rs": {
+     "days": 1013,
+     "mean_ic": -0.028967544502746526,
+     "ci90": [
+      -0.05508904593666557,
+      -0.003334449367296937
+     ]
+    }
+   },
+   "decision": {
+    "INS": "not improved",
+    "BR": "improves",
+    "IR": "not improved"
+   },
+   "undetermined_by_coverage": false
+  },
+  "retest": {
+   "pit_check": {
+    "form4_filings_on_or_after_signal_day": 0,
+    "f13_quarters_not_yet_public": 0,
+    "rows": 13609
+   },
+   "coverage": {
+    "2017": {
+     "candidates": 239,
+     "form4_any_12m": 97.1,
+     "f1_positive": 7.9,
+     "f13_usable": 100.0
+    },
+    "2018": {
+     "candidates": 858,
+     "form4_any_12m": 98.7,
+     "f1_positive": 16.9,
+     "f13_usable": 98.3
+    },
+    "2019": {
+     "candidates": 1196,
+     "form4_any_12m": 99.2,
+     "f1_positive": 11.5,
+     "f13_usable": 98.6
+    },
+    "2020": {
+     "candidates": 1850,
+     "form4_any_12m": 97.9,
+     "f1_positive": 11.1,
+     "f13_usable": 99.8
+    },
+    "2021": {
+     "candidates": 1880,
+     "form4_any_12m": 97.9,
+     "f1_positive": 7.1,
+     "f13_usable": 99.9
+    },
+    "2022": {
+     "candidates": 818,
+     "form4_any_12m": 99.6,
+     "f1_positive": 15.0,
+     "f13_usable": 99.8
+    },
+    "2023": {
+     "candidates": 1601,
+     "form4_any_12m": 97.9,
+     "f1_positive": 7.1,
+     "f13_usable": 100.0
+    },
+    "2024": {
+     "candidates": 1830,
+     "form4_any_12m": 98.4,
+     "f1_positive": 6.9,
+     "f13_usable": 99.7
+    },
+    "2025": {
+     "candidates": 1723,
+     "form4_any_12m": 99.1,
+     "f1_positive": 10.6,
+     "f13_usable": 100.0
+    },
+    "2026": {
+     "candidates": 1614,
+     "form4_any_12m": 99.1,
+     "f1_positive": 7.1,
+     "f13_usable": 99.3
+    }
+   },
+   "books": {
+    "RS|full|10": {
+     "return_pct": 1.262305465622271,
+     "cagr_pct": 0.139954791712249,
+     "max_dd_pct": -48.04986854708088,
+     "profit_factor": 1.0093184168279095,
+     "trades": 592,
+     "expectancy_r": 0.034646716885286276,
+     "yearly_return_pct": {
+      "2017": -1.09,
+      "2018": -22.02,
+      "2019": 4.06,
+      "2020": -4.31,
+      "2021": -9.34,
+      "2022": -16.01,
+      "2023": 3.43,
+      "2024": 18.04,
+      "2025": 19.73,
+      "2026": 18.47
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": 659,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -8.05,
+       "spy_pct": -33.79,
+       "capture": 0.24
+      },
+      "covid_recovery": {
+       "book_pct": 1.99,
+       "spy_pct": 67.7,
+       "capture": 0.03
+      },
+      "bear_2022": {
+       "book_pct": -6.53,
+       "spy_pct": -24.93,
+       "capture": 0.26
+      },
+      "rebound_2022": {
+       "book_pct": -6.09,
+       "spy_pct": 28.39,
+       "capture": -0.21
+      }
+     }
+    },
+    "RS|full|25": {
+     "return_pct": -20.060579821036796,
+     "cagr_pct": -2.465432346284868,
+     "max_dd_pct": -53.82015367991539,
+     "profit_factor": 0.9090205813745527,
+     "trades": 597,
+     "expectancy_r": -0.027806178268421224,
+     "yearly_return_pct": {
+      "2017": -1.57,
+      "2018": -24.23,
+      "2019": 1.51,
+      "2020": -5.53,
+      "2021": -12.08,
+      "2022": -16.05,
+      "2023": 0.35,
+      "2024": 15.69,
+      "2025": 19.13,
+      "2026": 9.5
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.72,
+       "spy_pct": -33.79,
+       "capture": 0.23
+      },
+      "covid_recovery": {
+       "book_pct": 0.98,
+       "spy_pct": 67.7,
+       "capture": 0.01
+      },
+      "bear_2022": {
+       "book_pct": -6.74,
+       "spy_pct": -24.93,
+       "capture": 0.27
+      },
+      "rebound_2022": {
+       "book_pct": -7.44,
+       "spy_pct": 28.39,
+       "capture": -0.26
+      }
+     }
+    },
+    "RS|development|10": {
+     "return_pct": -30.37894854598042,
+     "cagr_pct": -8.338638410999765,
+     "max_dd_pct": -36.28153359594255,
+     "profit_factor": 0.7179114114404869,
+     "trades": 293,
+     "expectancy_r": -0.11384269127853822,
+     "yearly_return_pct": {
+      "2017": -1.09,
+      "2018": -22.02,
+      "2019": 4.06,
+      "2020": -4.31,
+      "2021": -9.34
+     },
+     "worst_dd_trough": "2021-12-06",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -8.05,
+       "spy_pct": -33.79,
+       "capture": 0.24
+      },
+      "covid_recovery": {
+       "book_pct": 1.99,
+       "spy_pct": 67.7,
+       "capture": 0.03
+      }
+     }
+    },
+    "RS|development|25": {
+     "return_pct": -37.120693630416625,
+     "cagr_pct": -10.556181625713402,
+     "max_dd_pct": -41.87781017645955,
+     "profit_factor": 0.6654943801988991,
+     "trades": 293,
+     "expectancy_r": -0.164017137282844,
+     "yearly_return_pct": {
+      "2017": -1.57,
+      "2018": -24.23,
+      "2019": 1.51,
+      "2020": -5.53,
+      "2021": -12.08
+     },
+     "worst_dd_trough": "2021-12-20",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.72,
+       "spy_pct": -33.79,
+       "capture": 0.23
+      },
+      "covid_recovery": {
+       "book_pct": 0.98,
+       "spy_pct": 67.7,
+       "capture": 0.01
+      }
+     }
+    },
+    "RS|holdout|10": {
+     "return_pct": 70.72943801647722,
+     "cagr_pct": 11.782935785656123,
+     "max_dd_pct": -22.846486805163135,
+     "profit_factor": 1.4721535596260427,
+     "trades": 301,
+     "expectancy_r": 0.20486369396406412,
+     "yearly_return_pct": {
+      "2022": -9.29,
+      "2023": 2.73,
+      "2024": 15.34,
+      "2025": 20.21,
+      "2026": 32.15
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": 256,
+     "windows": {
+      "bear_2022": {
+       "book_pct": 0.83,
+       "spy_pct": -24.93,
+       "capture": -0.03
+      },
+      "rebound_2022": {
+       "book_pct": -6.56,
+       "spy_pct": 28.39,
+       "capture": -0.23
+      }
+     }
+    },
+    "RS|holdout|25": {
+     "return_pct": 48.45528482044019,
+     "cagr_pct": 8.575738300268165,
+     "max_dd_pct": -25.515891035004213,
+     "profit_factor": 1.3243342772393925,
+     "trades": 302,
+     "expectancy_r": 0.15379621536540625,
+     "yearly_return_pct": {
+      "2022": -11.08,
+      "2023": -0.2,
+      "2024": 10.46,
+      "2025": 16.86,
+      "2026": 29.59
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": 464,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -0.42,
+       "spy_pct": -24.93,
+       "capture": 0.02
+      },
+      "rebound_2022": {
+       "book_pct": -8.84,
+       "spy_pct": 28.39,
+       "capture": -0.31
+      }
+     }
+    },
+    "INS|full|10": {
+     "return_pct": -7.349057255735314,
+     "cagr_pct": -0.8474243212659216,
+     "max_dd_pct": -38.00809800192766,
+     "profit_factor": 0.9691333070917535,
+     "trades": 588,
+     "expectancy_r": 0.028547166899131973,
+     "yearly_return_pct": {
+      "2017": -0.07,
+      "2018": -20.43,
+      "2019": -1.27,
+      "2020": 2.12,
+      "2021": -2.69,
+      "2022": -11.47,
+      "2023": 9.72,
+      "2024": 2.13,
+      "2025": 6.56,
+      "2026": 12.33
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": 642,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.49,
+       "spy_pct": -33.79,
+       "capture": 0.22
+      },
+      "covid_recovery": {
+       "book_pct": 11.61,
+       "spy_pct": 67.7,
+       "capture": 0.17
+      },
+      "bear_2022": {
+       "book_pct": -8.36,
+       "spy_pct": -24.93,
+       "capture": 0.34
+      },
+      "rebound_2022": {
+       "book_pct": 3.49,
+       "spy_pct": 28.39,
+       "capture": 0.12
+      }
+     }
+    },
+    "INS|full|25": {
+     "return_pct": -25.098584770124766,
+     "cagr_pct": -3.1707524260551567,
+     "max_dd_pct": -48.15567115499276,
+     "profit_factor": 0.8829877118605134,
+     "trades": 588,
+     "expectancy_r": -0.008291909115658386,
+     "yearly_return_pct": {
+      "2017": -0.54,
+      "2018": -23.15,
+      "2019": -3.91,
+      "2020": -0.25,
+      "2021": -7.55,
+      "2022": -13.76,
+      "2023": 7.07,
+      "2024": 1.85,
+      "2025": 7.02,
+      "2026": 9.86
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.57,
+       "spy_pct": -33.79,
+       "capture": 0.22
+      },
+      "covid_recovery": {
+       "book_pct": 9.61,
+       "spy_pct": 67.7,
+       "capture": 0.14
+      },
+      "bear_2022": {
+       "book_pct": -10.04,
+       "spy_pct": -24.93,
+       "capture": 0.4
+      },
+      "rebound_2022": {
+       "book_pct": 1.19,
+       "spy_pct": 28.39,
+       "capture": 0.04
+      }
+     }
+    },
+    "INS|development|10": {
+     "return_pct": -21.97703008588575,
+     "cagr_pct": -5.792726014747651,
+     "max_dd_pct": -34.36267940835977,
+     "profit_factor": 0.7748548325970477,
+     "trades": 289,
+     "expectancy_r": -0.043415155696837224,
+     "yearly_return_pct": {
+      "2017": -0.07,
+      "2018": -20.43,
+      "2019": -1.27,
+      "2020": 2.12,
+      "2021": -2.69
+     },
+     "worst_dd_trough": "2020-05-01",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.49,
+       "spy_pct": -33.79,
+       "capture": 0.22
+      },
+      "covid_recovery": {
+       "book_pct": 11.61,
+       "spy_pct": 67.7,
+       "capture": 0.17
+      }
+     }
+    },
+    "INS|development|25": {
+     "return_pct": -32.26173864690216,
+     "cagr_pct": -8.940905382181864,
+     "max_dd_pct": -39.423148947391006,
+     "profit_factor": 0.6878362673893169,
+     "trades": 289,
+     "expectancy_r": -0.09487387639238276,
+     "yearly_return_pct": {
+      "2017": -0.54,
+      "2018": -23.15,
+      "2019": -3.91,
+      "2020": -0.25,
+      "2021": -7.55
+     },
+     "worst_dd_trough": "2021-12-14",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -7.57,
+       "spy_pct": -33.79,
+       "capture": 0.22
+      },
+      "covid_recovery": {
+       "book_pct": 9.61,
+       "spy_pct": 67.7,
+       "capture": 0.14
+      }
+     }
+    },
+    "INS|holdout|10": {
+     "return_pct": 34.535437763787556,
+     "cagr_pct": 6.372345671790436,
+     "max_dd_pct": -18.846931168158733,
+     "profit_factor": 1.2373168320887102,
+     "trades": 303,
+     "expectancy_r": 0.12504849289848874,
+     "yearly_return_pct": {
+      "2022": -4.34,
+      "2023": 6.96,
+      "2024": 4.6,
+      "2025": 9.15,
+      "2026": 15.16
+     },
+     "worst_dd_trough": "2023-11-07",
+     "sessions_trough_to_new_high": 253,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -0.55,
+       "spy_pct": -24.93,
+       "capture": 0.02
+      },
+      "rebound_2022": {
+       "book_pct": 0.43,
+       "spy_pct": 28.39,
+       "capture": 0.02
+      }
+     }
+    },
+    "INS|holdout|25": {
+     "return_pct": 10.725004746704903,
+     "cagr_pct": 2.144185917070396,
+     "max_dd_pct": -21.933360301833172,
+     "profit_factor": 1.0750436683004145,
+     "trades": 303,
+     "expectancy_r": 0.05276674024099353,
+     "yearly_return_pct": {
+      "2022": -6.36,
+      "2023": 4.3,
+      "2024": -0.93,
+      "2025": 3.55,
+      "2026": 10.5
+     },
+     "worst_dd_trough": "2024-08-05",
+     "sessions_trough_to_new_high": 361,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -2.0,
+       "spy_pct": -24.93,
+       "capture": 0.08
+      },
+      "rebound_2022": {
+       "book_pct": -2.06,
+       "spy_pct": 28.39,
+       "capture": -0.07
+      }
+     }
+    },
+    "BR|full|10": {
+     "return_pct": 7.3150424913813294,
+     "cagr_pct": 0.7902291271568718,
+     "max_dd_pct": -46.36832390911889,
+     "profit_factor": 1.019509130322367,
+     "trades": 593,
+     "expectancy_r": 0.03036452303374263,
+     "yearly_return_pct": {
+      "2017": -2.81,
+      "2018": -11.08,
+      "2019": -1.29,
+      "2020": -4.73,
+      "2021": -8.35,
+      "2022": -20.9,
+      "2023": 15.13,
+      "2024": 14.49,
+      "2025": 14.22,
+      "2026": 21.0
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": 640,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -6.65,
+       "spy_pct": -33.79,
+       "capture": 0.2
+      },
+      "covid_recovery": {
+       "book_pct": 0.74,
+       "spy_pct": 67.7,
+       "capture": 0.01
+      },
+      "bear_2022": {
+       "book_pct": -11.24,
+       "spy_pct": -24.93,
+       "capture": 0.45
+      },
+      "rebound_2022": {
+       "book_pct": -5.53,
+       "spy_pct": 28.39,
+       "capture": -0.19
+      }
+     }
+    },
+    "BR|full|25": {
+     "return_pct": -17.04743335168254,
+     "cagr_pct": -2.062250433269064,
+     "max_dd_pct": -54.745667766441386,
+     "profit_factor": 0.9118721238235289,
+     "trades": 598,
+     "expectancy_r": -0.030828620359872286,
+     "yearly_return_pct": {
+      "2017": -3.27,
+      "2018": -14.06,
+      "2019": -5.22,
+      "2020": -6.04,
+      "2021": -12.52,
+      "2022": -21.67,
+      "2023": 14.25,
+      "2024": 10.63,
+      "2025": 11.88,
+      "2026": 15.64
+     },
+     "worst_dd_trough": "2023-09-27",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -8.08,
+       "spy_pct": -33.79,
+       "capture": 0.24
+      },
+      "covid_recovery": {
+       "book_pct": -0.19,
+       "spy_pct": 67.7,
+       "capture": -0.0
+      },
+      "bear_2022": {
+       "book_pct": -11.68,
+       "spy_pct": -24.93,
+       "capture": 0.47
+      },
+      "rebound_2022": {
+       "book_pct": -8.13,
+       "spy_pct": 28.39,
+       "capture": -0.29
+      }
+     }
+    },
+    "BR|development|10": {
+     "return_pct": -25.521618279256952,
+     "cagr_pct": -6.840075946732038,
+     "max_dd_pct": -34.47450679647247,
+     "profit_factor": 0.7670839373240378,
+     "trades": 289,
+     "expectancy_r": -0.09921621922224697,
+     "yearly_return_pct": {
+      "2017": -2.81,
+      "2018": -11.08,
+      "2019": -1.29,
+      "2020": -4.73,
+      "2021": -8.35
+     },
+     "worst_dd_trough": "2021-12-20",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -6.65,
+       "spy_pct": -33.79,
+       "capture": 0.2
+      },
+      "covid_recovery": {
+       "book_pct": 0.74,
+       "spy_pct": 67.7,
+       "capture": 0.01
+      }
+     }
+    },
+    "BR|development|25": {
+     "return_pct": -35.241330083051345,
+     "cagr_pct": -9.92053801133329,
+     "max_dd_pct": -42.333501534400334,
+     "profit_factor": 0.6885878163525923,
+     "trades": 288,
+     "expectancy_r": -0.1604828795545214,
+     "yearly_return_pct": {
+      "2017": -3.27,
+      "2018": -14.06,
+      "2019": -5.22,
+      "2020": -6.04,
+      "2021": -12.52
+     },
+     "worst_dd_trough": "2021-12-20",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -8.08,
+       "spy_pct": -33.79,
+       "capture": 0.24
+      },
+      "covid_recovery": {
+       "book_pct": -0.19,
+       "spy_pct": 67.7,
+       "capture": -0.0
+      }
+     }
+    },
+    "BR|holdout|10": {
+     "return_pct": 71.59851042518632,
+     "cagr_pct": 11.901188275616903,
+     "max_dd_pct": -18.334684100651057,
+     "profit_factor": 1.4095681504351052,
+     "trades": 303,
+     "expectancy_r": 0.21522147811047052,
+     "yearly_return_pct": {
+      "2022": -11.66,
+      "2023": 16.92,
+      "2024": 14.26,
+      "2025": 14.57,
+      "2026": 26.91
+     },
+     "worst_dd_trough": "2023-01-19",
+     "sessions_trough_to_new_high": 349,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -0.7,
+       "spy_pct": -24.93,
+       "capture": 0.03
+      },
+      "rebound_2022": {
+       "book_pct": -4.75,
+       "spy_pct": 28.39,
+       "capture": -0.17
+      }
+     }
+    },
+    "BR|holdout|25": {
+     "return_pct": 43.99472742379804,
+     "cagr_pct": 7.888170009973039,
+     "max_dd_pct": -20.06359565703152,
+     "profit_factor": 1.2519243062644545,
+     "trades": 304,
+     "expectancy_r": 0.1453832989294821,
+     "yearly_return_pct": {
+      "2022": -13.58,
+      "2023": 14.59,
+      "2024": 8.84,
+      "2025": 11.55,
+      "2026": 19.77
+     },
+     "worst_dd_trough": "2023-11-09",
+     "sessions_trough_to_new_high": 249,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -2.2,
+       "spy_pct": -24.93,
+       "capture": 0.09
+      },
+      "rebound_2022": {
+       "book_pct": -6.5,
+       "spy_pct": 28.39,
+       "capture": -0.23
+      }
+     }
+    },
+    "IR|full|10": {
+     "return_pct": 34.67377739490163,
+     "cagr_pct": 3.374664247341186,
+     "max_dd_pct": -27.322970719868966,
+     "profit_factor": 1.119823591885434,
+     "trades": 577,
+     "expectancy_r": 0.09061373952399482,
+     "yearly_return_pct": {
+      "2017": -2.81,
+      "2018": -9.15,
+      "2019": -1.2,
+      "2020": 14.55,
+      "2021": 1.69,
+      "2022": -21.12,
+      "2023": 17.92,
+      "2024": 16.17,
+      "2025": -0.48,
+      "2026": 23.24
+     },
+     "worst_dd_trough": "2023-09-27",
+     "sessions_trough_to_new_high": 282,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -5.49,
+       "spy_pct": -33.79,
+       "capture": 0.16
+      },
+      "covid_recovery": {
+       "book_pct": 16.22,
+       "spy_pct": 67.7,
+       "capture": 0.24
+      },
+      "bear_2022": {
+       "book_pct": -11.69,
+       "spy_pct": -24.93,
+       "capture": 0.47
+      },
+      "rebound_2022": {
+       "book_pct": -2.92,
+       "spy_pct": 28.39,
+       "capture": -0.1
+      }
+     }
+    },
+    "IR|full|25": {
+     "return_pct": 1.6517614523331892,
+     "cagr_pct": 0.18282182401705427,
+     "max_dd_pct": -36.98108224402263,
+     "profit_factor": 0.9961623111314092,
+     "trades": 579,
+     "expectancy_r": 0.028859945671108722,
+     "yearly_return_pct": {
+      "2017": -3.27,
+      "2018": -12.0,
+      "2019": -4.49,
+      "2020": 10.64,
+      "2021": -1.48,
+      "2022": -22.43,
+      "2023": 15.72,
+      "2024": 13.5,
+      "2025": -4.52,
+      "2026": 17.91
+     },
+     "worst_dd_trough": "2023-09-27",
+     "sessions_trough_to_new_high": 653,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -5.77,
+       "spy_pct": -33.79,
+       "capture": 0.17
+      },
+      "covid_recovery": {
+       "book_pct": 13.31,
+       "spy_pct": 67.7,
+       "capture": 0.2
+      },
+      "bear_2022": {
+       "book_pct": -12.66,
+       "spy_pct": -24.93,
+       "capture": 0.51
+      },
+      "rebound_2022": {
+       "book_pct": -4.91,
+       "spy_pct": 28.39,
+       "capture": -0.17
+      }
+     }
+    },
+    "IR|development|10": {
+     "return_pct": 1.6209391674700147,
+     "cagr_pct": 0.38738493507863847,
+     "max_dd_pct": -22.12752313806422,
+     "profit_factor": 0.9756125059573226,
+     "trades": 278,
+     "expectancy_r": 0.032053689872732,
+     "yearly_return_pct": {
+      "2017": -2.81,
+      "2018": -9.15,
+      "2019": -1.2,
+      "2020": 14.55,
+      "2021": 1.69
+     },
+     "worst_dd_trough": "2020-05-01",
+     "sessions_trough_to_new_high": 176,
+     "windows": {
+      "covid_crash": {
+       "book_pct": -5.49,
+       "spy_pct": -33.79,
+       "capture": 0.16
+      },
+      "covid_recovery": {
+       "book_pct": 16.22,
+       "spy_pct": 67.7,
+       "capture": 0.24
+      }
+     }
+    },
+    "IR|development|25": {
+     "return_pct": -11.382188873371291,
+     "cagr_pct": -2.8637784432559488,
+     "max_dd_pct": -27.701674579366433,
+     "profit_factor": 0.8738325763973467,
+     "trades": 278,
+     "expectancy_r": -0.025062187717638722,
+     "yearly_return_pct": {
+      "2017": -3.27,
+      "2018": -12.0,
+      "2019": -4.49,
+      "2020": 10.64,
+      "2021": -1.48
+     },
+     "worst_dd_trough": "2020-05-01",
+     "sessions_trough_to_new_high": "not recovered",
+     "windows": {
+      "covid_crash": {
+       "book_pct": -5.77,
+       "spy_pct": -33.79,
+       "capture": 0.17
+      },
+      "covid_recovery": {
+       "book_pct": 13.31,
+       "spy_pct": 67.7,
+       "capture": 0.2
+      }
+     }
+    },
+    "IR|holdout|10": {
+     "return_pct": 47.83144093224083,
+     "cagr_pct": 8.480568887497242,
+     "max_dd_pct": -18.256726138311397,
+     "profit_factor": 1.2733279294508417,
+     "trades": 303,
+     "expectancy_r": 0.1647214464802655,
+     "yearly_return_pct": {
+      "2022": -11.45,
+      "2023": 19.37,
+      "2024": 15.2,
+      "2025": -1.46,
+      "2026": 23.2
+     },
+     "worst_dd_trough": "2023-01-19",
+     "sessions_trough_to_new_high": 294,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -0.73,
+       "spy_pct": -24.93,
+       "capture": 0.03
+      },
+      "rebound_2022": {
+       "book_pct": -3.28,
+       "spy_pct": 28.39,
+       "capture": -0.12
+      }
+     }
+    },
+    "IR|holdout|25": {
+     "return_pct": 31.481895398032634,
+     "cagr_pct": 5.865010786694969,
+     "max_dd_pct": -19.766095773225455,
+     "profit_factor": 1.180238916845427,
+     "trades": 303,
+     "expectancy_r": 0.11455140577565219,
+     "yearly_return_pct": {
+      "2022": -13.37,
+      "2023": 16.47,
+      "2024": 12.02,
+      "2025": -3.45,
+      "2026": 20.48
+     },
+     "worst_dd_trough": "2023-09-27",
+     "sessions_trough_to_new_high": 181,
+     "windows": {
+      "bear_2022": {
+       "book_pct": -2.21,
+       "spy_pct": -24.93,
+       "capture": 0.09
+      },
+      "rebound_2022": {
+       "book_pct": -5.09,
+       "spy_pct": 28.39,
+       "capture": -0.18
+      }
+     }
+    }
+   },
+   "random": {
+    "development": {
+     "n": 200,
+     "p50": -11.748924987531357,
+     "p80": -1.9201515525104478,
+     "p95": 9.632073302972195
+    },
+    "holdout": {
+     "n": 200,
+     "p50": 24.323785887463778,
+     "p80": 42.1533014839633,
+     "p95": 60.8736255391689
+    }
+   },
+   "ic": {
+    "F1": {
+     "days": 267,
+     "mean_ic": 0.012392924019249308,
+     "ci90": [
+      -0.04995884780577375,
+      0.07101508182210355
+     ]
+    },
+    "F2": {
+     "days": 661,
+     "mean_ic": 0.024949032411548933,
+     "ci90": [
+      -0.01200315776398887,
+      0.06140243579824763
+     ]
+    },
+    "rs": {
+     "days": 659,
+     "mean_ic": 0.00413745004188674,
+     "ci90": [
+      -0.03053609674536822,
+      0.03859212710894093
+     ]
+    }
+   },
+   "decision": {
+    "INS": "not improved",
+    "BR": "not improved",
+    "IR": "not improved"
+   },
+   "undetermined_by_coverage": false
+  }
+ }
+}
