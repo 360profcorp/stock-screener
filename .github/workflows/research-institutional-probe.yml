@@ -1,0 +1,25 @@
+name: Research institutional AI — source probe (research branch only)
+
+on:
+  push:
+    branches: [research/institutional-ai-v1]
+    paths: ["research/institutional/probe_sources.py", ".github/workflows/research-institutional-probe.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/research/institutional-ai-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python research/institutional/probe_sources.py
