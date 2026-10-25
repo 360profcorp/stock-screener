@@ -1,0 +1,56 @@
+name: Research breakout causes (research branch only)
+
+# research/breakout_causes/PREREG_BREAKOUT_CAUSES.md. 10-year bars of dataset run 40152515701.
+# Exploratory replays only; never touches paper/, state/ or the bot.
+on:
+  push:
+    branches: [research/breakout-causes]
+    paths: ["research/breakout_causes/RUN"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-breakout-causes
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/breakout-causes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests matplotlib
+      - name: Tests
+        run: python -m unittest research.breakout_causes.test_breakout_causes research.crisis.test_crisis test_portfolio_bt test_task6_engine
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - name: 10-year bars
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Run
+        run: |
+          set +e
+          python -m research.breakout_causes.run --dataset "${{ runner.temp }}/ds" --workers 4 > r.log 2>&1; rc=$?
+          tail -40 r.log
+          [ $rc -eq 0 ] || python -c "t=open('r.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=breakout-causes::'+t)"
+          exit $rc
+      - name: Live state untouched
+        if: always()
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/breakout_causes || true
+          git diff --cached --quiet || git commit -m "Research breakout causes: run $(date -u +%F_%H%M)"
+          git pull --rebase -q && git push
