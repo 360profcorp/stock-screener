@@ -1,6 +1,6 @@
 # Institutional v2 vs PR #20 (old)
 
-Reproduction of PR #20 with the old tables: **DIFFERS: breakout.ic, retest.ic**
+Reproduction of PR #20 with the old tables: **exact** (breakout.ic equal to 1e-12 (last floating-point digits differ); retest.ic equal to 1e-12 (last floating-point digits differ))
 
 ## Breakout (research Breakout: next-open entry, not the bot)
 

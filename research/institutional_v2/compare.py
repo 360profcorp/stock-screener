@@ -18,16 +18,31 @@ def J(d):
     return json.loads((Path(d) / "results.json").read_text())
 
 
+def same(x, y, tol):
+    if isinstance(x, dict):
+        return isinstance(y, dict) and x.keys() == y.keys() and all(same(x[k], y[k], tol) for k in x)
+    if isinstance(x, (list, tuple)):
+        return isinstance(y, (list, tuple)) and len(x) == len(y) and all(same(a, b, tol) for a, b in zip(x, y))
+    if isinstance(x, float) and isinstance(y, (int, float)):
+        return abs(x - y) <= tol
+    return x == y
+
+
 def reproduction(a, b):
-    """Every number of PR #20 that depends on data and code (books, RND, decisions, coverage,
-    IC, PIT check) must be identical."""
-    diffs = []
+    """Every number of PR #20 that depends on data and code must be reproduced: books, RND,
+    decisions, coverage and PIT check exactly; the IC (a mean of daily rank correlations) is
+    compared to 1e-12 because floating-point summation order changes its last digits."""
+    diffs, notes = [], []
     for st in a["strategies"]:
         x, y = a["strategies"][st], b["strategies"][st]
-        for part in ("books", "random", "decision", "coverage", "ic", "pit_check", "undetermined_by_coverage"):
+        for part in ("books", "random", "decision", "coverage", "pit_check", "undetermined_by_coverage"):
             if json.dumps(x[part], sort_keys=True, default=str) != json.dumps(y[part], sort_keys=True, default=str):
                 diffs.append(f"{st}.{part}")
-    return diffs
+        if not same(x["ic"], y["ic"], 1e-12):
+            diffs.append(f"{st}.ic")
+        elif json.dumps(x["ic"], sort_keys=True) != json.dumps(y["ic"], sort_keys=True):
+            notes.append(f"{st}.ic equal to 1e-12 (last floating-point digits differ)")
+    return diffs, notes
 
 
 def day_orders(F, how):
@@ -71,11 +86,13 @@ def main(argv=None):
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     P, R, V, Sn = J(a.pr20), J(a.repro), J(a.v2), J(a.sens)
-    res = dict(reproduction_diffs=reproduction(P, R), strategies={})
+    d_, n_ = reproduction(P, R)
+    res = dict(reproduction_diffs=d_, reproduction_notes=n_, strategies={})
     SS = pd.read_csv(Path(a.build) / "security_sets.csv.gz", dtype=str)
     md = ["# Institutional v2 vs PR #20 (old)", "",
           f"Reproduction of PR #20 with the old tables: "
-          f"{'**exact**' if not res['reproduction_diffs'] else '**DIFFERS: ' + ', '.join(res['reproduction_diffs']) + '**'}", ""]
+          f"{'**exact**' if not res['reproduction_diffs'] else '**DIFFERS: ' + ', '.join(res['reproduction_diffs']) + '**'}"
+          + (f" ({'; '.join(n_)})" if n_ else ""), ""]
     for st in ("breakout", "retest"):
         o, n, s = P["strategies"][st], V["strategies"][st], Sn["strategies"][st]
         rows = []

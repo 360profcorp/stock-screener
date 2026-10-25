@@ -1,7 +1,8 @@
 {
- "reproduction_diffs": [
-  "breakout.ic",
-  "retest.ic"
+ "reproduction_diffs": [],
+ "reproduction_notes": [
+  "breakout.ic equal to 1e-12 (last floating-point digits differ)",
+  "retest.ic equal to 1e-12 (last floating-point digits differ)"
  ],
  "strategies": {
   "breakout": {
