@@ -1,0 +1,9 @@
+# Claude handoff — ten-year Long diagnosis
+
+1. Create an isolated research branch off `research/long-crisis-v1` (this branch contains the 10-year control code/data references). Keep PR #19 unchanged and draft; no merges or state changes. Commit `PLAN.md` FIRST before running any diagnostic script. This 10-year data was already reviewed; label results exploratory and do not call the period independent holdout.
+2. Run `research/long_diagnostic/run.py --dataset <unpacked-artifact-dir>` with the original GitHub Action artifact `shorts10y-dataset-40152515701`, reference `research/results/crisis/runs/2026-10-25T0255Z/results.json`. Reuse GitHub Actions actions/download-artifact by run ID and trigger workflow_dispatch for research only. No production workflow changes.
+3. If the baseline cannot be reproduced EXACTLY or some instrument histories are missing, STOP with an explicit reproducibility error and output. Do not invent numbers, repair data silently, adjust filters or fit new thresholds.
+4. Audit the program's output, especially zero-division, same-day stop sequence uncertainty, missing post-exit price windows, dividend/split adjustments, and P&L/curve reconciliation. Unit test independently on synthetic bar sequences (stop/gap/time/MFE/MAE), both 10/25bps replay baseline matches and no look-ahead. Add necessary tests before final findings.
+5. Provide actual 10-year results separately for Breakout and Retest, distinguishing candidate trades from executed trades, and rank major P&L losses by magnitude. Use tables and charts. Draft PR only; no merge, no shadow book, no parameter optimizations; `TRADING=dry` remains unchanged.
+
+The code provided is a starting implementation of a DIAGNOSTIC, not a substitute for verifying its output. Audit and improve it if needed without changing underlying trading rules.
