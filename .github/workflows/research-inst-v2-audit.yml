@@ -1,0 +1,52 @@
+name: Research institutional v2 — audit (research branch only)
+
+# CORRECTION_V2.md §5. Read-only SEC/EDGAR requests; no orders, no paper/state writes.
+on:
+  push:
+    branches: [research/institutional-v2]
+    paths: ["research/institutional_v2/RUN_AUDIT"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-inst-v2
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/research/institutional-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install "pandas>=2.0" numpy requests
+          which pdftotext || (sudo apt-get update -q && sudo apt-get install -y -q poppler-utils)
+      - id: ids
+        run: |
+          echo "build=$(sed -n 1p research/institutional_v2/RUN_AUDIT)" >> "$GITHUB_OUTPUT"
+          echo "accept=$(sed -n 2p research/institutional_v2/RUN_AUDIT)" >> "$GITHUB_OUTPUT"
+          echo "cmp=$(sed -n 3p research/institutional_v2/RUN_AUDIT)" >> "$GITHUB_OUTPUT"
+      - name: Independent re-derivation (verify_v2.py)
+        run: |
+          set +e
+          O=research/results/institutional_v2/audit/${{ github.run_id }}
+          python research/institutional_v2/verify_v2.py --build research/results/institutional_v2/build/${{ steps.ids.outputs.build }} --out $O > v.log 2>&1
+          tail -40 v.log
+      - name: Verdict
+        run: |
+          O=research/results/institutional_v2/audit/${{ github.run_id }}
+          python -m research.institutional_v2.audit_v2 --build research/results/institutional_v2/build/${{ steps.ids.outputs.build }} \
+            --accept research/results/institutional_v2/accept/${{ steps.ids.outputs.accept }} \
+            --comparison research/results/institutional_v2/comparison/${{ steps.ids.outputs.cmp }} --verify $O --out $O || true
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/institutional_v2 || true
+          git diff --cached --quiet || git commit -m "Institutional v2: audit ${{ github.run_id }}"
+          git pull --rebase -q && git push

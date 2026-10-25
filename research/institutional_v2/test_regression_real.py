@@ -79,7 +79,7 @@ class RealMapping(unittest.TestCase):
         ok = self.S[self.S["status"] == "ok"]
         self.assertTrue((ok["cusips"].map(lambda s: len({c[:6] for c in s.split(",")})) == 1).all())
         self.assertTrue((ok["ftd_evidence"].str.len() > 0).all())
-        for r in ok.sample(min(500, len(ok)), random_state=1).itertuples():
+        for r in ok.itertuples():
             ev = {e.split(" ")[0] for e in r.ftd_evidence.split("; ")}
             self.assertEqual(ev, set(r.cusips.split(",")))
 
