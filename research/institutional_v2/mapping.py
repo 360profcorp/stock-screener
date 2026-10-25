@@ -25,8 +25,14 @@ def name_tokens(s):
     return [t for t in s.split() if t not in STOPWORDS]
 
 
+GENERIC = {"BANK", "FIRST", "AMERICAN", "AMERICA", "GENERAL", "NATIONAL", "UNITED", "US", "U",
+           "GLOBAL", "PACIFIC", "WESTERN", "EASTERN", "SOUTHERN", "NORTHERN", "CAPITAL", "ENERGY",
+           "HEALTH", "DATA", "MUNICIPAL", "FEDERAL", "STANDARD", "ROYAL", "NEW"}
+
+
 def names_match(a, b):
-    """Same issuer name? Tolerates the 13(f) List's truncation and suffix noise."""
+    """Same issuer name? Tolerates the 13(f) List's truncation and suffix noise. A generic
+    first word (BANK, FIRST, ...) is not enough: the second word must agree too."""
     if not a or not b:
         return False
     ta, tb = name_tokens(a), name_tokens(b)
@@ -34,8 +40,13 @@ def names_match(a, b):
         ja = re.sub(r"[^A-Z0-9]", "", str(a).upper())
         jb = re.sub(r"[^A-Z0-9]", "", str(b).upper())
         return bool(ja) and ja == jb
-    if min(len(ta[0]), len(tb[0])) >= 3 and (ta[0].startswith(tb[0]) or tb[0].startswith(ta[0])):
-        return True
+    def pre(x, y):
+        return min(len(x), len(y)) >= 3 and (x.startswith(y) or y.startswith(x))
+    if pre(ta[0], tb[0]):
+        if ta[0] not in GENERIC and tb[0] not in GENERIC:
+            return True
+        if len(ta) >= 2 and len(tb) >= 2 and pre(ta[1], tb[1]):
+            return True
     jac = len(set(ta) & set(tb)) / len(set(ta) | set(tb))
     if jac >= 0.5:
         return True

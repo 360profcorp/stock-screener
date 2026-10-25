@@ -159,6 +159,9 @@ class Issuers(unittest.TestCase):
         self.assertTrue(M.names_match("BANK AMER CORP", "BANK OF AMERICA CORP /DE/"))
         self.assertFalse(M.names_match("BANK AMER CORP", "Invesco Advantage Municipal Income Trust II"))
         self.assertFalse(M.names_match("FIDELITY NATIONAL FINANCIAL", "CORPAY, INC."))
+        self.assertFalse(M.names_match("BANK NEW YORK MELLON CORP", "Bank of America Corp"))
+        self.assertFalse(M.names_match("FIRST SOLAR INC", "First Horizon Corp"))
+        self.assertTrue(M.names_match("FIRST SOLAR INC", "First Solar, Inc."))
 
 
 if __name__ == "__main__":

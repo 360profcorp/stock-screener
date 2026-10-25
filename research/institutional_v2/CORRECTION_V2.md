@@ -126,3 +126,9 @@ is adjusted.**
   - **Effect:** stricter. A genuine re-incorporation with a new issuer prefix now also goes to
     the registry and is not assigned automatically, as the owner required for disputed cases.
   - **Unchanged:** names are still used to confirm issuer CIKs (§2).
+- **2026-10-25**, before any v2 table existed (the acceptance download was running):
+  - **Change:** name matching (used only to confirm issuer CIKs, §2) no longer accepts a
+    generic first word (BANK, FIRST, NATIONAL, ...) on its own. The second word must agree
+    too.
+  - **Why:** otherwise "Bank of New York Mellon" would match "Bank of America".
+  - **Effect:** stricter.
