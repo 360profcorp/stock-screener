@@ -1,0 +1,9 @@
+test_every_ok_set_is_one_issuer_with_evidence (research.institutional_v2.test_regression_real.RealMapping.test_every_ok_set_is_one_issuer_with_evidence) ... ok
+test_first_audit_conflicts_are_gone (research.institutional_v2.test_regression_real.RealMapping.test_first_audit_conflicts_are_gone) ... ok
+test_named_cases_issuers (research.institutional_v2.test_regression_real.RealMapping.test_named_cases_issuers) ... ok
+test_named_cases_securities (research.institutional_v2.test_regression_real.RealMapping.test_named_cases_securities) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.193s
+
+OK
