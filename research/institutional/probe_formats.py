@@ -37,3 +37,4 @@ if L:
     n = z.namelist()[0]
     with z.open(n) as f:
         print("FTD", u, n, [f.readline().decode("latin-1").rstrip() for _ in range(3)])
+# rerun
