@@ -93,10 +93,12 @@ def main(argv=None):
                                accepted_on_or_after_usable_from=int(len(late)), used=int(fl["ok"].sum()),
                                edgar_filing_date_differs=int((fl["edgar_filing_date"].notna() &
                                                               (pd.to_datetime(fl["edgar_filing_date"]) != fl["filing_date"])).sum()))
-    late.head(2000)[["acc", "cik", "filing_date", "period", "accepted_et", "usable_from", "zip"]].to_csv(
+    late[["acc", "cik", "filing_date", "period", "accepted_et", "usable_from", "zip"]].to_csv(
         com / "acceptance_13f_excluded_late.csv", index=False)
-    fl[fl["accepted_et"].isna()].head(2000)[["acc", "cik", "filing_date", "period", "zip"]].to_csv(
-        com / "acceptance_13f_no_timestamp.csv", index=False)
+    fl[fl["accepted_et"].isna()][["acc", "cik", "filing_date", "period", "zip"]].to_csv(
+        com / "acceptance_13f_no_timestamp.csv.gz", index=False)
+    fl.sample(min(2000, len(fl)), random_state=20261026)[["acc", "cik", "filing_date", "period", "usable_from", "accepted_et",
+                                            "ok"]].to_csv(com / "f13_counted_sample.csv", index=False)
     fl = fl.sort_values("idx").reset_index(drop=True)
     acc_i, cus_i, cusips = h["acc"], h["cusip"], list(h["cusips"])
     cidx = {c: i for i, c in enumerate(cusips)}
