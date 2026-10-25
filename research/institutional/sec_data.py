@@ -294,9 +294,9 @@ def main(argv=None):
                 tickers_with_cusip=int(cmap["ticker"].nunique()),
                 form4_buy_rows=int(len(b)), form4_filing_days=int(len(f)),
                 f13_breadth_rows=int(len(H)), f13_periods=filers.to_dict("records"))
-    (out / "sources.json").write_text(json.dumps(dict(info=info, downloads=F.log), indent=1))
-    print(json.dumps(dict(info={k: v for k, v in info.items() if k != "periods"}, lags=lags),
-                     indent=1))
+    (out / "sources.json").write_text(json.dumps(dict(info=info, downloads=F.log), indent=1, default=str))
+    print(json.dumps(dict(info={k: v for k, v in info.items() if k != "f13_periods"}, lags=lags),
+                     indent=1, default=str))
     return 0
 
 
