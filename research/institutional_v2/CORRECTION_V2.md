@@ -39,7 +39,7 @@ trading symbol). Symbols are normalised as before (`.` and `/` become `-`).
 |---|---|---|
 | `ok` | S is not empty; one issuer; no CUSIP of S is new after Q−1 | computed |
 | `no_symbol_record` | S is empty | none (F2 missing → 0, as pre-registered) |
-| `several_issuers` | S contains CUSIPs whose 6-character issuer prefixes differ **and** whose Official 13(f) List names (nearest list to Q, else the FTD description) do not match | **registry**, none |
+| `several_issuers` | S contains CUSIPs with different 6-character issuer prefixes. Their names (Official 13(f) List, nearest to Q, else the FTD description) are kept as evidence but **cannot merge them** (see change log) | **registry**, none |
 | `new_cusip` | some CUSIP of S first appears (FTD under any symbol, or 13F holdings) after the end of Q−1, so at Q−1 the security had another identifier (renaming, merger, spin-off, CUSIP change) | **registry**, none |
 
 Cases in the registry are **never assigned automatically**. They stay excluded until a
@@ -112,3 +112,17 @@ The rule of PREREG §3 / AUDIT_PLAN B is applied as fixed, not changed:
 is adjusted.**
 
 `verify_v2.py` and its instructions are the package for Muse's independent re-check.
+
+## Change log
+- **2026-10-25**, before any v2 data was seen (the sources download was still running; no
+  v2 table existed):
+  - **Change:** `several_issuers` is now decided by the CUSIP issuer prefix alone.
+  - **Before:** different prefixes were accepted as one issuer when the names matched.
+  - **Why:** writing the regression cases showed that name matching would merge different
+    companies with similar names:
+    - Ingersoll-Rand plc (later Trane) and Ingersoll Rand Inc. (formerly Gardner Denver),
+      both under the symbol IR;
+    - Arconic Inc. (now Howmet) and Arconic Corp., both under ARNC.
+  - **Effect:** stricter. A genuine re-incorporation with a new issuer prefix now also goes to
+    the registry and is not assigned automatically, as the owner required for disputed cases.
+  - **Unchanged:** names are still used to confirm issuer CIKs (§2).
