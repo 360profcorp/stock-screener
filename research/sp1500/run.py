@@ -170,6 +170,9 @@ def main(argv=None):
     ap.add_argument("--cache", default=str(ROOT / ".cache/sp1500"))
     ap.add_argument("--max-tickers", type=int, default=0, help="smoke runs only")
     ap.add_argument("--probe", action="store_true", help="sources only: write diagnostics")
+    ap.add_argument("--shorts-only", action="store_true",
+                    help="detect only the short rules and stop after writing the dataset "
+                         "(long tables, long portfolios and the long equivalence are skipped)")
     a = ap.parse_args(argv)
     if a.probe:
         f = U.fetch_all()
@@ -277,7 +280,8 @@ def main(argv=None):
     cur500 = set(uni.loc[uni["group"] == "sp500", "ticker"])
     ref500 = sorted(cur500 & set(frames))
     sig, data = E.detect(frames, spy, meta, ref500, pit500=pit,
-                         pit_other={g: timelines[g] for g in ("sp400", "sp600")})
+                         pit_other={g: timelines[g] for g in ("sp400", "sp600")},
+                         strategies=SHORTS if a.shorts_only else None)
     say(f"detections: {len(sig)}")
     variants = {"primary": ("rs_ref500", "primary"), "off": ("rs_ref500", "off"),
                 "rs1500_primary": ("rs_1500", "primary"), "pit_primary": ("rs_pit500", "primary")}
@@ -297,6 +301,24 @@ def main(argv=None):
     say(f"outcomes: {len(lab)} rows")
     gz = gzip.compress(csv_bytes(lab), mtime=0)
     write_once(dsd / "signals.csv.gz", gz, dmanifest, dsd.parent)
+    if a.shorts_only:
+        root = Path(a.out)
+        for name, b in {"universe.csv": csv_bytes(uni), "coverage.csv": csv_bytes(cov),
+                        "download_report.csv": csv_bytes(rep),
+                        "missing_sessions.csv": csv_bytes(miss),
+                        "pit_membership_sanity.csv": csv_bytes(pit_sanity),
+                        "universe_meta.json": json.dumps(umeta, indent=2, default=str)}.items():
+            write_once(out / name, b, manifest, root)
+        info = dict(run_id=run_id, kind="shorts-only dataset", rules_version=R.RULES_VERSION,
+                    generated_at=generated, data_end=str(end.date()),
+                    first_session=str(cal[0].date()), period=a.period, prices_sha256=prices_sha,
+                    git=_git_rev(), rows=len(lab), blockers=blockers, log=log,
+                    dataset_files=dmanifest, pit_sp500=pit is not None, pit_sources=pit_src,
+                    removed_requested=len(removed),
+                    removed_with_data=int(sum(t in frames for t in removed)), files=manifest)
+        write_once(out / "manifest.json", json.dumps(info, indent=2, default=str), {}, root)
+        say(f"done (shorts only): {out}")
+        return 0
 
     # 4) statistics ------------------------------------------------------------------------------
     cur = lab[lab["group"].isin(GROUPS + ["ambiguous"])]

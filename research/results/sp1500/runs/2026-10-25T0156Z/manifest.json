@@ -1,0 +1,46 @@
+{
+  "run_id": "2026-10-25T0156Z",
+  "kind": "shorts-only dataset",
+  "rules_version": "sp1500-research/1.0",
+  "generated_at": "2026-10-25T02:26:56+00:00",
+  "data_end": "2026-10-23",
+  "first_session": "2016-10-24",
+  "period": "10y",
+  "prices_sha256": "b37b4fcc8dd64c1857d0873cac8e404eaddf20bda590c7065622546e7d752986",
+  "git": "e71d5d2ad8d4ee82906060adb7502e3460642216",
+  "rows": 463882,
+  "blockers": [],
+  "log": [
+    "    4.5s universe: 1503 tickers; sources {'sp500': 'wikipedia', 'sp400': 'wikipedia', 'sp600': 'wikipedia'}",
+    "  266.3s prices: 1721/2173 tickers, sessions 2016-10-24..2026-10-23",
+    "  513.1s detections: 463882",
+    " 1827.5s outcomes: 463882 rows"
+  ],
+  "dataset_files": {
+    "2026-10-25T0156Z/sources/sp500_ishares.csv": "a84d9f3e4060c5663d85be6a579f314a3a6714874447629e4d220dd22506c2cb",
+    "2026-10-25T0156Z/sources/sp500_wikipedia.html": "e6a8dcac702e8d45e123ebb0140ed6a35c88d9777ab5bd116efc7d822058dc18",
+    "2026-10-25T0156Z/sources/sp400_ishares.csv": "3c6d6236afe5fa7d46a1200ff5cf477d4718853847c04fdba31554465d48dcfe",
+    "2026-10-25T0156Z/sources/sp400_wikipedia.html": "05ba923d2fdc8f63f44299c41f85b6cc7dc82c1d8ad4c76d609c323bce533c13",
+    "2026-10-25T0156Z/sources/sp600_ishares.csv": "46551c28ed114b5f72389f95310bc652d8a5b991035a2b31d6567a4ad98b6ade",
+    "2026-10-25T0156Z/sources/sp600_wikipedia.html": "c1d66aa2bbabafc661bb1bda008e0b1063877921d820f89b57d1ad50d1cafa64",
+    "2026-10-25T0156Z/sources/sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54",
+    "2026-10-25T0156Z/bars.pkl.gz": "98a68ab735d3a2535bdec6aaa22b152a68e9d30f1d94d19cb83524e95b4650ab",
+    "2026-10-25T0156Z/signals.csv.gz": "1640e7f9e84785fff93bb6df5fc9ebbca5d60525563a279683ec85b711fe3745"
+  },
+  "pit_sp500": true,
+  "pit_sources": {
+    "sp500": "fja05680/sp500 snapshots 1996-01-02..2026-08-18",
+    "sp400": "wikipedia change table (best effort)",
+    "sp600": "wikipedia change table (best effort)"
+  },
+  "removed_requested": 670,
+  "removed_with_data": 219,
+  "files": {
+    "2026-10-25T0156Z/universe.csv": "248deb17fe8fe3c781fcafd6eb94c8468ca26af8cce33d4105e74e82aa82f7d2",
+    "2026-10-25T0156Z/coverage.csv": "827e442855dcc09b3b1bfaa15ecf5749d79feb02ef6d2e21b5e955b55fd0badc",
+    "2026-10-25T0156Z/download_report.csv": "c938443a42b3bf2663c52ba78143097e22325ddb6ecc4dcb04ac5f6b07054512",
+    "2026-10-25T0156Z/missing_sessions.csv": "2e0cbe63b4ca3f3d05d66197dd5796da6ede6d173bedf003a20ff4853e27a34b",
+    "2026-10-25T0156Z/pit_membership_sanity.csv": "88170e3b3ffb65a7b823d9d49be4ba9f325c88ef2aa3d09430b8c1bac9789269",
+    "2026-10-25T0156Z/universe_meta.json": "eb56e43137f1f035dbd0e55d719022aa235d6c050a984b8f9c0c73d5ac61124a"
+  }
+}

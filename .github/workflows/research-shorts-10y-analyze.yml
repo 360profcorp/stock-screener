@@ -1,0 +1,62 @@
+name: Research shorts 10y analysis (research branch only)
+
+# PREREG_SHORTS.md. Runs on the 10-year dataset artifact named in research/shorts/DATASET_RUN.
+# No Yahoo download, no schedule, never touches paper/, state/ or the bot.
+on:
+  push:
+    branches: [research/shorts-10y]
+    paths: ["research/shorts/**", ".github/workflows/research-shorts-10y-analyze.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-shorts-10y-analyze
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    if: github.ref == 'refs/heads/research/shorts-10y'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests
+      - name: Tests
+        run: python -m unittest research.shorts.test_shorts research.sp1500.test_sp1500
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - id: ds
+        run: |
+          if [ -f research/shorts/DATASET_RUN ]; then echo "run=$(cat research/shorts/DATASET_RUN)" >> "$GITHUB_OUTPUT"; fi
+      - name: 10-year dataset
+        if: steps.ds.outputs.run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-${{ steps.ds.outputs.run }}
+          run-id: ${{ steps.ds.outputs.run }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Analysis
+        if: steps.ds.outputs.run != ''
+        run: |
+          set +e
+          python -m research.shorts.analyze --dataset "${{ runner.temp }}/ds" > an.log 2>&1; rc=$?
+          tail -50 an.log
+          [ $rc -eq 0 ] || python -c "t=open('an.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=analysis::'+t)"
+          exit $rc
+      - name: Live state untouched
+        run: |
+          git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/shorts || true
+          git diff --cached --quiet || git commit -m "Research shorts 10y: analysis $(date -u +%F_%H%M)"
+          git pull --rebase && git push
