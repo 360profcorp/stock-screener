@@ -1,0 +1,121 @@
+PAGE https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets 54
+   /files/datastandardsinnovation/data/form-13f-data-sets/01jun2026-31aug2026_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/01dec2024-28feb2025_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/01dec2025-28feb2026_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/01jan2024-29feb2024_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/01jun2024-31aug2024_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/01jun2025-31aug2025_form13f.zip
+   ...
+   /files/structureddata/data/form-13f-data-sets/2022q3_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/2022q4_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/2023q1_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/2023q2_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/2023q3_form13f.zip
+   /files/structureddata/data/form-13f-data-sets/2023q4_form13f.zip
+PAGE https://www.sec.gov/data-research/sec-markets-data/insider-transactions-data-sets 83
+   /files/datastandardsinnovation/data/insider-transactions-data-sets/2026q2_form345.zip
+   /files/datastandardsinnovation/data/insider-transactions-data-sets/2026q3_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2006q1_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2006q2_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2006q3_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2006q4_form345.zip
+   ...
+   /files/structureddata/data/insider-transactions-data-sets/2024q4_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2025q1_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2025q2_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2025q3_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2025q4_form345.zip
+   /files/structureddata/data/insider-transactions-data-sets/2026q1_form345.zip
+PAGE https://www.sec.gov/data-research/sec-markets-data/fails-deliver-data 436
+   /files/data/fails-deliver-data/cnsfails201706b.zip
+   /files/data/fails-deliver-data/cnsfails201707a.zip
+   /files/data/fails-deliver-data/cnsfails201707b.zip
+   /files/data/fails-deliver-data/cnsfails201708a.zip
+   /files/data/fails-deliver-data/cnsfails201708b.zip
+   /files/data/fails-deliver-data/cnsfails201709a.zip
+   ...
+   /files/node/add/data_distribution/cnsfails202002a.zip
+   /files/node/add/data_distribution/cnsfails202002b.zip
+   /files/node/add/data_distribution/cnsfails202003a.zip
+   /files/node/add/data_distribution/cnsfails202003b.zip
+   /files/node/add/data_distribution/cnsfails202004a.zip
+   /files/node/add/data_distribution/cnsfails202004b.zip
+ZIP https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/2016q1_form345.zip
+   DERIV_HOLDING.tsv 3242064
+     | ACCESSION_NUMBER	DERIV_HOLDING_SK	SECURITY_TITLE	SECURITY_TITLE_FN	CONV_EXERCISE_PRICE	CONV_EXERCISE_PRICE_FN	TRANS_FORM_TYPE	TRANS_FORM_TYPE_FN	EXERCISE_DATE	EXERCISE_DATE_FN	EXPIRATION_DATE	EXPIRATION_DATE_FN	UNDLYNG_SEC_TITLE	UNDLYNG_SEC_TITLE_FN	UNDLYNG_SEC_SHARES	UNDLYNG_SEC_SHARES_FN	UNDLYNG_S
+     | 0001583934-16-000010	393959	Employee Stock Option (Right to Buy)		32.43					F5	15-OCT-2025		Common Stock		26622.0				26622.0				D
+     | 0001583934-16-000010	393957	Employee Stock Option (Right to Buy)		1.8					F3	11-MAR-2021		Common Stock		173371.0				173371.0				D
+   DERIV_TRANS.tsv 6601913
+     | ACCESSION_NUMBER	DERIV_TRANS_SK	SECURITY_TITLE	SECURITY_TITLE_FN	CONV_EXERCISE_PRICE	CONV_EXERCISE_PRICE_FN	TRANS_DATE	TRANS_DATE_FN	DEEMED_EXECUTION_DATE	DEEMED_EXECUTION_DATE_FN	TRANS_FORM_TYPE	TRANS_CODE	EQUITY_SWAP_INVOLVED	EQUITY_SWAP_TRANS_CD_FN	TRANS_TIMELINESS	TRANS_TIMELINESS_FN	TRANS_SHARE
+     | 0001127602-16-047987	671307	Class B Common Stock		0.0		30-MAR-2016				4	C	0				16666.0				0.0		D			F21		F22	Class A Common Stock		16666.0				20472308.0				D
+     | 0001493152-16-008588	651613	Convertible Promissory Note		0.12		29-MAR-2016				4	A	0				41660.0		10000.0		10000.0	F1	A		29-MAR-2016		29-MAR-2018		Common Stock		83333.0				583333.0				D
+   FOOTNOTES.tsv 37506543
+     | ACCESSION_NUMBER	FOOTNOTE_ID	FOOTNOTE_TXT
+     | 0001209191-16-111304	F3	"Represents a pro-rata in-kind distribution of Class A Common Stock of the Issuer by Foundry Group Select Fund, L.P. (""Foundry Select"") without consideration to its limited partners."
+     | 0001209191-16-111304	F2	The shares are held by Foundry 2007. The general partner of Foundry 2007 is Foundry 2007 GP, which has voting and dispositive power over these shares. Brad Feld, Seth Levine, Ryan McIntyre and Jason Mendelson are the managing members of Foundry 2007 GP and share voting and di
+   insider_transactions_metadata.json 37339
+     | {
+     | 	"@context": "http://www.w3.org/ns/csvw",
+     | 	"dialect": {
+   insider_transactions_readme.htm 745509
+     | <html xmlns:v="urn:schemas-microsoft-com:vml"
+     | xmlns:o="urn:schemas-microsoft-com:office:office"
+     | xmlns:w="urn:schemas-microsoft-com:office:word"
+   NONDERIV_HOLDING.tsv 3127024
+     | ACCESSION_NUMBER	NONDERIV_HOLDING_SK	SECURITY_TITLE	SECURITY_TITLE_FN	TRANS_FORM_TYPE	TRANS_FORM_TYPE_FN	SHRS_OWND_FOLWNG_TRANS	SHRS_OWND_FOLWNG_TRANS_FN	VALU_OWND_FOLWNG_TRANS	VALU_OWND_FOLWNG_TRANS_FN	DIRECT_INDIRECT_OWNERSHIP	DIRECT_INDIRECT_OWNERSHIP_FN	NATURE_OF_OWNERSHIP	NATURE_OF_OWNERSHIP_FN
+     | 0001583934-16-000010	598510	Common Stock				127500.0				I	F2
+     | 0001583934-16-000010	598509	Common Stock				43626.0				D		Charles V. Ghoorah Irrevocable Trust (2013)
+   NONDERIV_TRANS.tsv 10843479
+     | ACCESSION_NUMBER	NONDERIV_TRANS_SK	SECURITY_TITLE	SECURITY_TITLE_FN	TRANS_DATE	TRANS_DATE_FN	DEEMED_EXECUTION_DATE	DEEMED_EXECUTION_DATE_FN	TRANS_FORM_TYPE	TRANS_CODE	EQUITY_SWAP_INVOLVED	EQUITY_SWAP_TRANS_CD_FN	TRANS_TIMELINESS	TRANS_TIMELINESS_FN	TRANS_SHARES	TRANS_SHARES_FN	TRANS_PRICEPERSHARE	TR
+     | 0001144204-16-092077	1728327	Common stock		30-MAR-2016				4	P	0				4000.0		1.06		A		99667.0				D
+     | 0001144204-16-092077	1728328	Common stock		29-MAR-2016				4	P	0				1000.0		1.07		A		95667.0				D
+   OWNER_SIGNATURE.tsv 5651903
+     | ACCESSION_NUMBER	OWNERSIGNATURENAME	OWNERSIGNATUREDATE
+     | 0001144204-16-092077	/s/Amritpal Deol Attorney-in-Fact	31-MAR-2016
+     | 0001209191-16-111304	/s/ Brad Feld, Managing Director of Foundry Select Fund GP, LLC, the General Partner of Foundry Group Select Fund, L.P.	31-MAR-2016
+   REPORTINGOWNER.tsv 10341325
+     | ACCESSION_NUMBER	RPTOWNERCIK	RPTOWNERNAME	RPTOWNER_RELATIONSHIP	RPTOWNER_TITLE	RPTOWNER_TXT	RPTOWNER_STREET1	RPTOWNER_STREET2	RPTOWNER_CITY	RPTOWNER_STATE	RPTOWNER_ZIPCODE	RPTOWNER_STATE_DESC	FILE_NUMBER
+     | 0001144204-16-092077	0001610976	KORN BILL	Officer	Chief Financial Officer		61 DARREN DRIVE		BASKING RIDGE	NJ	07920		001-36529
+     | 0001209191-16-111304	0001248148	MCINTYRE RYAN A	TenPercentOwner			1050 WALNUT STREET, SUITE 210		BOULDER	CO	80302		001-37444
+   SUBMISSION.tsv 7161666
+     | ACCESSION_NUMBER	FILING_DATE	PERIOD_OF_REPORT	DATE_OF_ORIG_SUB	NO_SECURITIES_OWNED	NOT_SUBJECT_SEC16	FORM3_HOLDINGS_REPORTED	FORM4_TRANS_REPORTED	DOCUMENT_TYPE	ISSUERCIK	ISSUERNAME	ISSUERTRADINGSYMBOL	REMARKS
+     | 0001638599-16-000775	31-MAR-2016	30-MAR-2016			0			4	0000079661	PORTSMOUTH SQUARE INC	PRSI
+     | 0000899243-16-017283	31-MAR-2016	23-MAR-2016		0				3	0001424929	FOX FACTORY HOLDING CORP	FOXF	(a) Mr. Wittenschlaeger is the Vice Pesident and General Manager, Powered Vehicles Group.
+ZIP https://www.sec.gov/files/structureddata/data/form-13f-data-sets/2016q1_form13f.zip
+   COVERPAGE.tsv 1130155
+     | ACCESSION_NUMBER	REPORTCALENDARORQUARTER	ISAMENDMENT	AMENDMENTNO	AMENDMENTTYPE	CONFDENIEDEXPIRED	DATEDENIEDEXPIRED	DATEREPORTED	REASONFORNONCONFIDENTIALITY	FILINGMANAGER_NAME	FILINGMANAGER_STREET1	FILINGMANAGER_STREET2	FILINGMANAGER_CITY	FILINGMANAGER_STATEORCOUNTRY	FILINGMANAGER_ZIPCODE	REPORTTYPE	
+     | 0001140361-16-059676	31-MAR-2016								SAB CAPITAL MANAGEMENT LP	767 FIFTH AVENUE	45TH FLOOR	NEW YORK	NY	10153	13F HOLDINGS REPORT	028-11911			N
+     | 0001399794-16-000017	31-DEC-2015	Y	1	RESTATEMENT					Choate Investment Advisors	TWO INTERNATIONAL PLACE		BOSTON	MA	02110	13F HOLDINGS REPORT	028-12523			N
+   INFOTABLE.tsv 169037418
+     | ACCESSION_NUMBER	INFOTABLE_SK	NAMEOFISSUER	TITLEOFCLASS	CUSIP	FIGI	VALUE	SSHPRNAMT	SSHPRNAMTTYPE	PUTCALL	INVESTMENTDISCRETION	OTHERMANAGER	VOTING_AUTH_SOLE	VOTING_AUTH_SHARED	VOTING_AUTH_NONE
+     | 0001140361-16-059676	60154337	0	0	0        		0	0	SH		OTR		0	0	0
+     | 0001399794-16-000017	52587432	ALLIANCEBERNSTEIN GL HI INC	COM	01879R106		690561	55556	SH		SOLE		0	0	0
+   OTHERMANAGER.tsv 275107
+     | ACCESSION_NUMBER	OTHERMANAGER_SK	CIK	FORM13FFILENUMBER	CRDNUMBER	SECFILENUMBER	NAME
+     | 0001080628-16-000015	121789	0001541743	028-14668			Copeland Capital Management, LLC
+     | 0001123570-16-000021	122386		028-01190			Frank Russell Company
+   OTHERMANAGER2.tsv 202062
+     | ACCESSION_NUMBER	SEQUENCENUMBER	CIK	FORM13FFILENUMBER	CRDNUMBER	SECFILENUMBER	NAME
+     | 0000919574-16-012134	1	0001542728	028-14914			GRT Value Fund, a series of Advisors Inner Circle Fund II
+     | 0001140361-16-058837	1	0000704051	028-01700			LEGG MASON, INC.
+   SIGNATURE.tsv 699839
+     | ACCESSION_NUMBER	NAME	TITLE	PHONE	SIGNATURE	CITY	STATEORCOUNTRY	SIGNATUREDATE
+     | 0001140361-16-059676	Brian Jackelow	Chief Financial Officer	212-457-8010	/s/ Brian Jackelow	New York	NY	31-MAR-2016
+     | 0001399794-16-000017	Todd M. Millay	Managing Director	617-248-4770	Todd M. Millay	Boston	MA	30-MAR-2016
+   SUBMISSION.tsv 383140
+     | ACCESSION_NUMBER	FILING_DATE	SUBMISSIONTYPE	CIK	PERIODOFREPORT
+     | 0001140361-16-059676	31-MAR-2016	13F-HR	0001359894	31-MAR-2016
+     | 0001658535-16-000004	30-MAR-2016	13F-HR	0001658535	31-DEC-2015
+   SUMMARYPAGE.tsv 160966
+     | ACCESSION_NUMBER	OTHERINCLUDEDMANAGERSCOUNT	TABLEENTRYTOTAL	TABLEVALUETOTAL	ISCONFIDENTIALOMITTED
+     | 0001140361-16-059676	0	0	0	N
+     | 0001399794-16-000017	0	266	1374225	N
+   FORM13F_metadata.json 17199
+     | {
+     | 	"@context": "http://www.w3.org/ns/csvw",
+     | 	"dialect": {
+   FORM13F_readme.htm 447226
+     | <html xmlns:v="urn:schemas-microsoft-com:vml"
+     | xmlns:o="urn:schemas-microsoft-com:office:office"
+     | xmlns:w="urn:schemas-microsoft-com:office:word"
+FTD https://www.sec.gov/files/node/add/data_distribution/cnsfails202004b.zip cnsfails202004b.txt ['SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE', '20200415|B38564108|EURN|172729|EURONAV NV ANTWERPEN (BELGIUM)|10.31', '20200415|D18190898|DB|1340|DEUTSCHE BANK AG NAMEN AKT (DE|6.85']
