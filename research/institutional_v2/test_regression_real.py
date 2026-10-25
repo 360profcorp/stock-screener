@@ -25,11 +25,12 @@ def build_dir():
 D = build_dir()
 
 # expected issuer while the ticker was an index member (EDGAR names / CIKs from the first audit)
-NAMED = {"TT": ("Trane Technologies", "1466258"), "HWM": ("Howmet Aerospace", "4281"),
-         "TFC": ("Truist Financial", "92230"), "BBT": ("BB&T Corp", "92230"),
-         "CPAY": ("Corpay", "1175454"), "DASH": ("DoorDash", "1792789"),
-         "BAC": ("Bank of America", "70858"), "BNY": ("Bank of New York Mellon", "1390777"),
-         "BK": ("Bank of New York Mellon", "1390777")}
+NAMED = {"TT": (("Trane Technologies",), "1466258"), "HWM": (("Howmet Aerospace",), "4281"),
+         "TFC": (("Truist Financial",), "92230"), "BBT": (("BB&T Corp",), "92230"),
+         "CPAY": (("Corpay",), "1175454"), "DASH": (("DoorDash",), "1792789"),
+         "BAC": (("Bank of America", "BK OF AMERICA CORP"), "70858"),    # the 13(f) List abbreviates
+         "BNY": (("Bank of New York Mellon",), "1390777"),
+         "BK": (("Bank of New York Mellon",), "1390777")}
 NEVER = {"TT": {"45687V106", "G47791101"}, "HWM": {"013872106"}, "TFC": {"084680107"},
          "BBT": {"084680107"}, "CPAY": {"31620R303"}, "DASH": {"G3323L100"}, "BAC": {"46132E103"}}
 
@@ -57,15 +58,15 @@ class RealMapping(unittest.TestCase):
         self.assertEqual(bad, [])
 
     def test_named_cases_securities(self):
-        for t, (nm, _) in NAMED.items():
+        bad = []
+        for t, (nms, _) in NAMED.items():
             rows = self.ok(t)
             self.assertGreater(len(rows), 0, t)
             for r in rows.itertuples():
-                for c in r.cusips.split(","):
-                    self.assertNotIn(c, NEVER.get(t, set()), (t, r.period))
+                bad += [(t, r.period, c) for c in r.cusips.split(",") if c in NEVER.get(t, set())]
                 listed = [x.split("=", 1)[1].split(" [")[0] for x in r.names.split("; ") if "[13(f) list" in x]
-                for n in listed:
-                    self.assertTrue(M.names_match(n, nm), (t, r.period, n, nm))
+                bad += [(t, r.period, n) for n in listed if not any(M.names_match(n, nm) for nm in nms)]
+        self.assertEqual(bad, [])
 
     def test_named_cases_issuers(self):
         for t, (_, cik) in NAMED.items():
