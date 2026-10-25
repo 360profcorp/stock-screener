@@ -1,0 +1,60 @@
+name: Research shadow books — pre-activation checks (research branch only)
+
+# PREREG_SHADOW.md §6. Tests, real-data equivalence of both books with the replay engine,
+# 13F seed (data set) and EDGAR-vs-data-set validation. No orders, no paper/state writes.
+on:
+  push:
+    branches: [research/shadow-br-v1]
+    paths: ["research/shadow/CHECK", ".github/workflows/research-shadow-check.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-shadow
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/research/shadow-br-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Tests
+        run: python -m unittest research.shadow.test_shadow test_compare test_paper test_portfolio_bt
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - name: Seed the 2026-06-30 quarter from the SEC data set
+        run: python -m research.shadow.f13 seed --period 2026-06-30
+      - name: EDGAR path vs data set (2026-06-30)
+        run: |
+          set +e
+          python -m research.shadow.f13 validate --period 2026-06-30 > v.log 2>&1; rc=$?
+          tail -60 v.log
+          [ $rc -eq 0 ] || echo "::error title=validate::EDGAR path differs from the data set (rc $rc)"
+          echo "validate_rc=$rc" >> "$GITHUB_ENV"
+      - name: Real-data equivalence with the replay engine (250 sessions)
+        run: |
+          set +e
+          python -m research.shadow.run verify > q.log 2>&1; rc=$?
+          tail -60 q.log
+          [ $rc -eq 0 ] || echo "::error title=verify::book vs replay mismatch (rc $rc)"
+          echo "verify_rc=$rc" >> "$GITHUB_ENV"
+      - name: Live state untouched
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit check outputs
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/shadow/f13 research/shadow/verify || true
+          git diff --cached --quiet || git commit -m "Shadow books: pre-activation checks ${{ github.run_id }}"
+          git pull --rebase -q && git push
+      - name: Result
+        run: |
+          echo "validate rc=${validate_rc} verify rc=${verify_rc}"
+          [ "${validate_rc}" = "0" ] && [ "${verify_rc}" = "0" ]

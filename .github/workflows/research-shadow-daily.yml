@@ -1,0 +1,55 @@
+name: Research shadow books — daily (Breakout RS-first vs Breakout BR)
+
+# PREREG_SHADOW.md. Paper only, no broker, no orders. Runs when research/shadow/TICK is
+# pushed (a scheduled task does this after each US close). Writes research/shadow/ only.
+on:
+  push:
+    branches: [research/shadow-br-v1]
+    paths: ["research/shadow/TICK"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-shadow
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    if: github.ref == 'refs/heads/research/shadow-br-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Live state and other books - hash before
+        run: find paper state -type f | sort | xargs sha256sum > "$RUNNER_TEMP/before.txt"
+      - name: Run both shadow books
+        run: |
+          set +e
+          python -m research.shadow.run daily > d.log 2>&1; rc=$?
+          tail -40 d.log
+          [ $rc -eq 0 ] || python -c "t=open('d.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=shadow::'+t)"
+          exit $rc
+      - name: Live state and other books untouched
+        run: |
+          find paper state -type f | sort | xargs sha256sum > "$RUNNER_TEMP/after.txt"
+          diff "$RUNNER_TEMP/before.txt" "$RUNNER_TEMP/after.txt"
+          git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Back up the books (90 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shadow-books-${{ github.run_id }}
+          path: research/shadow
+          retention-days: 90
+      - name: Persist
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          scripts/persist_state.sh "Shadow books $(date -u +%F_%H%M)" research/shadow/books research/shadow/f13
+      - name: Summary
+        if: always()
+        run: test -f research/shadow/books/REPORT.md && cat research/shadow/books/REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
