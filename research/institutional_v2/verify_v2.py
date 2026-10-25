@@ -109,8 +109,16 @@ def index_page(G, cik, acc):
     h = b.decode("utf-8", "replace")
     a = re.search(r'Accepted\s*</div>\s*<div class="info">\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', h)
     f = re.search(r'Filing Date\s*</div>\s*<div class="info">\s*(\d{4}-\d{2}-\d{2})', h)
-    i = re.search(r'companyName">[^<]*\(Issuer\).*?CIK=(\d+)', h, re.S)
-    return url, a and a.group(1), f and f.group(1), i and str(int(i.group(1)))
+    issuer = None
+    for blk in re.findall(r'class="companyName"(.*?)</span>', h, re.S | re.I):
+        if "issuer" in blk.lower():
+            m = re.search(r"CIK=?\D{0,8}(\d{4,10})", blk, re.I)
+            if m:
+                issuer = str(int(m.group(1)))
+    if issuer is None and "Issuer" in h:
+        k = h.find("Issuer")
+        Path("/tmp/verify_v2_debug.html").write_text(h[max(0, k - 1500):k + 1500])
+    return url, a and a.group(1), f and f.group(1), issuer
 
 
 def main(argv=None):

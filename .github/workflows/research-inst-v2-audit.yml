@@ -37,6 +37,7 @@ jobs:
           O=research/results/institutional_v2/audit/${{ github.run_id }}
           python research/institutional_v2/verify_v2.py --build research/results/institutional_v2/build/${{ steps.ids.outputs.build }} --out $O > v.log 2>&1
           tail -40 v.log
+          cp /tmp/verify_v2_debug.html $O/ 2>/dev/null || true
       - name: Verdict
         run: |
           O=research/results/institutional_v2/audit/${{ github.run_id }}
