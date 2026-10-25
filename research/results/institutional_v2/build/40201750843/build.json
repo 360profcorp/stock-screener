@@ -1,0 +1,49 @@
+{
+ "acceptance_13f": {
+  "counted_filings": 236450,
+  "with_timestamp": 236430,
+  "without_timestamp": 20,
+  "accepted_on_or_after_usable_from": 23,
+  "used": 236407,
+  "edgar_filing_date_differs": 20
+ },
+ "f2_rows": {
+  "rows": 26472,
+  "sets_by_status": {
+   "ok": 26496,
+   "new_cusip": 289,
+   "several_issuers": 160
+  },
+  "member_sets_by_status": {
+   "ok": 21061,
+   "new_cusip": 146,
+   "several_issuers": 101
+  }
+ },
+ "cik_map": {
+  "rows": 29178,
+  "by_status": {
+   "ok": 27809,
+   "no_security_name": 956,
+   "no_confirmed_issuer": 229,
+   "several_confirmed_issuers": 184
+  },
+  "member_by_status": {
+   "ok": 22377,
+   "no_security_name": 506,
+   "no_confirmed_issuer": 213,
+   "several_confirmed_issuers": 132
+  }
+ },
+ "form4_acceptance": {
+  "used_purchase_filings": 1102,
+  "fetched": 1102,
+  "unverifiable_rows_excluded": 0,
+  "accepted_after_filing_date": 0
+ },
+ "sensitivity_added": {
+  "f2_rows": 326,
+  "form4_rows": 710
+ },
+ "runtime_sec": 289
+}

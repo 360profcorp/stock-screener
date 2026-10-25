@@ -1,0 +1,77 @@
+name: Research institutional v2 — re-run and comparison (research branch only)
+
+# CORRECTION_V2.md §4. Same PREREG_INSTITUTIONAL.md test; no orders, no paper/state writes.
+on:
+  push:
+    branches: [research/institutional-v2]
+    paths: ["research/institutional_v2/RUN_TEST"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-inst-v2
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/institutional-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy requests "yfinance>=0.2.40" lxml
+      - name: Tests
+        run: python -m unittest research.institutional.test_run research.institutional_v2.test_mapping test_portfolio_bt
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - id: ids
+        run: echo "build=$(sed -n 1p research/institutional_v2/RUN_TEST)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - uses: actions/download-artifact@v4
+        with:
+          name: sec-inst-40160303607
+          run-id: 40160303607
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/old
+      - uses: actions/download-artifact@v4
+        with:
+          name: v2tables-${{ steps.ids.outputs.build }}
+          run-id: ${{ steps.ids.outputs.build }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/v2t
+      - name: Re-run (old tables = reproduction, v2, sensitivity)
+        run: |
+          set +e
+          R=research/results/institutional_v2/runs
+          for k in repro v2 sens; do
+            case $k in repro) S="${{ runner.temp }}/old";; v2) S="${{ runner.temp }}/v2t/v2";; sens) S="${{ runner.temp }}/v2t/sens";; esac
+            python -m research.institutional.run --dataset "${{ runner.temp }}/ds" --sec "$S" --out $R/$k --trades > r_$k.log 2>&1; rc=$?
+            tail -15 r_$k.log
+            if [ $rc -ne 0 ]; then python -c "t=open('r_$k.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=run $k::'+t)"; exit $rc; fi
+          done
+      - name: Compare
+        run: |
+          R=research/results/institutional_v2/runs
+          python -m research.institutional_v2.compare --pr20 research/results/institutional/runs/2026-10-25T0406Z \
+            --repro $(ls -d $R/repro/*/ | tail -1) --v2 $(ls -d $R/v2/*/ | tail -1) --sens $(ls -d $R/sens/*/ | tail -1) \
+            --build research/results/institutional_v2/build/${{ steps.ids.outputs.build }} --out research/results/institutional_v2/comparison/${{ github.run_id }}
+      - name: Live state untouched
+        if: always()
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/institutional_v2 || true
+          git diff --cached --quiet || git commit -m "Institutional v2: re-run and comparison ${{ github.run_id }}"
+          git pull --rebase -q && git push

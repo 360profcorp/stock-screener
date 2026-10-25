@@ -1,0 +1,17 @@
+test_every_ok_set_is_one_issuer_with_evidence (research.institutional_v2.test_regression_real.RealMapping.test_every_ok_set_is_one_issuer_with_evidence) ... ok
+test_first_audit_conflicts_are_gone (research.institutional_v2.test_regression_real.RealMapping.test_first_audit_conflicts_are_gone) ... ok
+test_named_cases_issuers (research.institutional_v2.test_regression_real.RealMapping.test_named_cases_issuers) ... ok
+test_named_cases_securities (research.institutional_v2.test_regression_real.RealMapping.test_named_cases_securities) ... FAIL
+
+======================================================================
+FAIL: test_named_cases_securities (research.institutional_v2.test_regression_real.RealMapping.test_named_cases_securities)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/stock-screener/stock-screener/research/institutional_v2/test_regression_real.py", line 68, in test_named_cases_securities
+    self.assertTrue(M.names_match(n, nm), (t, r.period, n, nm))
+AssertionError: False is not true : ('BAC', '2020-03-31', 'BK OF AMERICA CORP', 'Bank of America')
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.202s
+
+FAILED (failures=1)

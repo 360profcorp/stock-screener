@@ -1,0 +1,18 @@
+{
+ "filings": 236450,
+ "ciks": 12590,
+ "with_timestamp": 236430,
+ "without_timestamp": 20,
+ "cik_errors": 0,
+ "calibration": {
+  "n": 200,
+  "fetched": 200,
+  "agree_label": 0,
+  "agree_utc": 200,
+  "mode": "utc",
+  "filing_date_agree": 200
+ },
+ "failed_requests": 0,
+ "runtime_sec": 2736,
+ "cik_error_examples": {}
+}

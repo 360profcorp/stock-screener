@@ -1,0 +1,62 @@
+name: Research institutional v2 — SEC sources (research branch only)
+
+# CORRECTION_V2.md. Official SEC files only; no orders, no paper/state writes.
+on:
+  push:
+    branches: [research/institutional-v2]
+    paths: ["research/institutional_v2/RUN_SOURCES"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-inst-v2
+  cancel-in-progress: false
+
+jobs:
+  sources:
+    if: github.ref == 'refs/heads/research/institutional-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install "pandas>=2.0" numpy requests lxml
+          which pdftotext || (sudo apt-get update -q && sudo apt-get install -y -q poppler-utils)
+      - name: PIT membership file
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Sources
+        run: |
+          set +e
+          PIT=$(find "${{ runner.temp }}/ds" -name sp500_pit_fja05680.csv | head -1)
+          cp "$PIT" dist_pit.csv
+          python -m research.institutional_v2.sources --pit "$PIT" --out dist/v2src --cache "${{ runner.temp }}/cache" > s.log 2>&1; rc=$?
+          tail -50 s.log
+          [ $rc -eq 0 ] || python -c "t=open('s.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=sources::'+t)"
+          cp dist_pit.csv dist/v2src/sp500_pit.csv
+          exit $rc
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2src-${{ github.run_id }}
+          path: dist/v2src
+          retention-days: 90
+      - name: Commit summary
+        if: always()
+        run: |
+          d=research/results/institutional_v2/sources/${{ github.run_id }}
+          mkdir -p $d; cp dist/v2src/sources.json dist/v2src/study_symbols.json $d/ 2>/dev/null || true
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/institutional_v2 || true
+          git diff --cached --quiet || git commit -m "Institutional v2: sources ${{ github.run_id }}"
+          git pull --rebase -q && git push

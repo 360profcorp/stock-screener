@@ -95,9 +95,11 @@ def order(tr, how, seed=None):
     return t.drop(columns=[c for c in t.columns if c.startswith("_k")])
 
 
-def book(t, data, s0, s1, bps, spy):
+def book(t, data, s0, s1, bps, spy, trades=None):
     curve, ex, m = pf.replay(t, data, start=s0, end=s1, open_at_end="mark", cost_bps=bps,
                              **CR.CFG)
+    if trades is not None:                      # v2: keep the trade list (output only)
+        trades.append(ex)
     return CR.metrics(curve, ex, m, spy), curve
 
 
@@ -146,6 +148,7 @@ def main(argv=None):
     ap.add_argument("--dataset", required=True)
     ap.add_argument("--sec", required=True)
     ap.add_argument("--out", default=str(ROOT / "research/results/institutional/runs"))
+    ap.add_argument("--trades", action="store_true", help="also write full-period trade lists")
     a = ap.parse_args(argv)
     root, sec = Path(a.out), Path(a.sec)
     out = root / datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%MZ")
@@ -176,10 +179,13 @@ def main(argv=None):
             t = order(tr, how)
             for w, (s0, s1) in windows.items():
                 for bps in (10., 25.):
-                    m, curve = book(t, data, s0, s1, bps, spy)
+                    keep = [] if (w == "full" and bps == 10.) else None
+                    m, curve = book(t, data, s0, s1, bps, spy, keep)
                     r["books"][f"{how}|{w}|{int(bps)}"] = m
                     if w == "full" and bps == 10.:
                         W(f"equity_{st}_{how}.csv", RUN.csv_bytes(curve[["date", "equity"]]))
+                        if a.trades and len(keep[0]):
+                            W(f"trades_{st}_{how}.csv", RUN.csv_bytes(keep[0]))
         for w in ("development", "holdout"):
             s0, s1 = windows[w]
             rets = []

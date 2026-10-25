@@ -1,0 +1,24 @@
+{
+ "files": {
+  "2026-10-25T1543Z/equity_breakout_RS.csv": "1ae7ad88d9c3c14daaebb62b4357389c70b2a614e6b58b9e2d04def6dc425c80",
+  "2026-10-25T1543Z/trades_breakout_RS.csv": "d72754bcd11f6fc0bd9086fc7d829c17a7903344b4919c6df28402cc000e4db0",
+  "2026-10-25T1543Z/equity_breakout_INS.csv": "f9d9b4184df6da574a01c6fcebae5111149219e5600ab0aae2db32eeb253b5e1",
+  "2026-10-25T1543Z/trades_breakout_INS.csv": "d49c10bad4a86f6da065fb03e2043f18ca5fe75729ce265fae19875f34a72021",
+  "2026-10-25T1543Z/equity_breakout_BR.csv": "749e756a723fe37637f6c96baef4be9ff6e819cf50b91b4fceae66b25be19ce9",
+  "2026-10-25T1543Z/trades_breakout_BR.csv": "0623081ce79129a567bf7a450af59b2b9af62a8c05ccac0348b7ad01d58493f9",
+  "2026-10-25T1543Z/equity_breakout_IR.csv": "92368f664b231dbd7d8e589bf8fc1010c3b87de32ee663f8a12f0a1c9770b039",
+  "2026-10-25T1543Z/trades_breakout_IR.csv": "5d741854c50e680bf6ea855f72ec066ffd5fe47cead426e45e66fd6829762d17",
+  "2026-10-25T1543Z/features_breakout.csv": "485476fe18066f91491eff6fb865882196b741f769d064cb1cfdd4b5ac529bf6",
+  "2026-10-25T1543Z/equity_retest_RS.csv": "5b26a313aa0a7d8d7ba1a0b0c3b470dd4a3467e8ad207dcce775e6afb1a19a61",
+  "2026-10-25T1543Z/trades_retest_RS.csv": "22fc308d3a940d1161da0f544a4a9ef5ab7e7d5cf9d96b44e376ceced8b75f1a",
+  "2026-10-25T1543Z/equity_retest_INS.csv": "3c6f9f422b133468f3395b8bc8d94906bf26dbf2490ad39d9790967421c901c6",
+  "2026-10-25T1543Z/trades_retest_INS.csv": "514e73de7f190705f64c6694707b7fb2caf3891d1c35d9bbef747687f442d329",
+  "2026-10-25T1543Z/equity_retest_BR.csv": "417daad00f2415b500525e600bb5bf42bfa3d6087a6d98daeca3b0cad040cb5a",
+  "2026-10-25T1543Z/trades_retest_BR.csv": "c7e565a70e284eced8a8b31f001322a5b8e5820a537a77e8295660af66082fe8",
+  "2026-10-25T1543Z/equity_retest_IR.csv": "88579911b6fec5a94bcdabad2bb50d3ffc8f5f94a5dafaf7dafb18d8f4ee9349",
+  "2026-10-25T1543Z/trades_retest_IR.csv": "727e01ec6f05f2fd57d80ec3c49014dff3d1edff8259088a3c409f06bc18cb79",
+  "2026-10-25T1543Z/features_retest.csv": "3abac44fd6018e098534abc8f43f78e946fe0934a1f237f5c9243b85bebeeb39",
+  "2026-10-25T1543Z/results.json": "1114eadd8ccaa2724b6c7f6e84d96aa5df105e34b7f68055329dc7b69e9d0757",
+  "2026-10-25T1543Z/books.csv": "dd1565571f096f331fe217e8c3e704fdadf8b9f69fe325dce3851240ad2c7e81"
+ }
+}
