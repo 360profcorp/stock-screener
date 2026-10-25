@@ -106,3 +106,9 @@ crashes and prolonged bear markets, after costs, borrow and dividends, and does 
    with it.
 6. Real coverage dates (first and last bar, sessions per year) and the signal count per year,
    so the presence of 2020 and 2022 signals is shown, not assumed.
+
+## Change log
+- 2026-10-25, before any 10-year result: the first 10-year run of the full engine (long and
+  short rules) was killed by the runner after about 65 minutes, with no output. The dataset is
+  now built with `--shorts-only`: the same engine and the same short rules, without the long
+  detections, long tables and long portfolios. No rule, filter or parameter changed.
