@@ -1,0 +1,79 @@
+name: Research institutional v2 — PIT mapping and tables (research branch only)
+
+# CORRECTION_V2.md §1-§3. No orders, no paper/state writes.
+on:
+  push:
+    branches: [research/institutional-v2]
+    paths: ["research/institutional_v2/RUN_BUILD"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-inst-v2
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/research/institutional-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy requests lxml
+      - name: Unit tests
+        run: python -m unittest research.institutional_v2.test_mapping
+      - id: ids
+        run: |
+          echo "src=$(sed -n 1p research/institutional_v2/RUN_BUILD)" >> "$GITHUB_OUTPUT"
+          echo "acc=$(sed -n 2p research/institutional_v2/RUN_BUILD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: v2src-${{ steps.ids.outputs.src }}
+          run-id: ${{ steps.ids.outputs.src }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/src
+      - uses: actions/download-artifact@v4
+        with:
+          name: v2acc-${{ steps.ids.outputs.acc }}
+          run-id: ${{ steps.ids.outputs.acc }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/acc
+      - uses: actions/download-artifact@v4
+        with:
+          name: sec-inst-40160303607
+          run-id: 40160303607
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/old
+      - name: Build
+        run: |
+          set +e
+          D=research/results/institutional_v2/build/${{ github.run_id }}
+          python -m research.institutional_v2.build --src "${{ runner.temp }}/src" --acc "${{ runner.temp }}/acc" \
+            --old "${{ runner.temp }}/old" --features research/results/institutional/runs/2026-10-25T0406Z \
+            --out dist/v2tables --commit $D > b.log 2>&1; rc=$?
+          tail -60 b.log
+          [ $rc -eq 0 ] || python -c "t=open('b.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=build::'+t)"
+          exit $rc
+      - name: Regression tests on the real v2 mapping
+        run: V2_BUILD=research/results/institutional_v2/build/${{ github.run_id }} python -m unittest -v research.institutional_v2.test_regression_real 2>&1 | tee research/results/institutional_v2/build/${{ github.run_id }}/regression_tests.txt
+      - name: Upload tables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2tables-${{ github.run_id }}
+          path: dist/v2tables
+          retention-days: 90
+      - name: Live state untouched
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/institutional_v2 || true
+          git diff --cached --quiet || git commit -m "Institutional v2: mapping build ${{ github.run_id }}"
+          git pull --rebase -q && git push
