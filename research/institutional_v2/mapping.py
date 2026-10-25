@@ -171,7 +171,7 @@ def cik_names(cik, edgar, f4names, p):
     q = pd.Timestamp(p).to_period("Q")
     for qq in (q - 1, q, q + 1):
         out |= f4names.get((str(cik), qq), set())
-    return {n for n in out if n}
+    return {n for n in out if isinstance(n, str) and n}
 
 
 def assign_cik(sym, k, cand, recs, names, edgar, f4names):

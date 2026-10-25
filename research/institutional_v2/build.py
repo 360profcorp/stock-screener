@@ -169,7 +169,7 @@ def main(argv=None):
     for (s_, q_, c_), n in sub.groupby(["sym", "q", "issuer_cik"]).size().items():
         cand.setdefault((s_, q_), {})[c_] = int(n)
     f4names = {}
-    for c_, q_, n_ in sub[["issuer_cik", "q", "issuer_name"]].drop_duplicates().itertuples(index=False):
+    for c_, q_, n_ in sub[["issuer_cik", "q", "issuer_name"]].dropna().drop_duplicates().itertuples(index=False):
         f4names.setdefault((c_, q_), set()).add(n_)
     quarters = pd.period_range("2015Q3", "2026Q4", freq="Q")
     cmap, regc = [], []
