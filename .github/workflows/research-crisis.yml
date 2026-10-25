@@ -1,0 +1,56 @@
+name: Research long crisis protection (research branch only)
+
+# PREREG_CRISIS.md. Uses the 10-year bars of dataset run 40152515701 (no new download).
+# Never touches paper/, state/ or the bot.
+on:
+  push:
+    branches: [research/long-crisis-v1]
+    paths: ["research/crisis/**", ".github/workflows/research-crisis.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-crisis
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/long-crisis-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests
+      - name: Tests (breaker + unchanged production engines)
+        run: python -m unittest research.crisis.test_crisis test_portfolio_bt test_task6_engine
+      - name: Live strategy fingerprint unchanged
+        run: python -c "from paper import store; fp=store.code_fingerprint()['combined']; print(fp); assert fp=='17454c61f631'"
+      - name: 10-year bars
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Run
+        run: |
+          set +e
+          python -m research.crisis.run --dataset "${{ runner.temp }}/ds" > r.log 2>&1; rc=$?
+          tail -40 r.log
+          [ $rc -eq 0 ] || python -c "t=open('r.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=crisis::'+t)"
+          exit $rc
+      - name: Live state untouched
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"
+          git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/crisis || true
+          git diff --cached --quiet || git commit -m "Research long crisis protection: run $(date -u +%F_%H%M)"
+          git pull --rebase && git push
