@@ -235,7 +235,7 @@ The plan is approved with these binding conditions.
   of them were still members at the end of U, many still trading today (EA, BK, EQR, IPG, …).
 - So this is a download fault (empty frames from Yahoo in 100-ticker chunks), not missing
   history.
-- **Fix:** empty tickers are retried one by one, up to 3 rounds. Nothing else changes: same
+- **Fix:** empty tickers are retried one by one, in 2 rounds of one retry each (the first version, with 3 rounds of 4 back-off retries, would have exceeded the job's time limit and was cancelled). Nothing else changes: same
   tickers, dates, cleaning and coverage definition.
 - The first run's files are kept.
 - The gate stays at 85 %. If coverage is still below it, the verdict is INCONCLUSIVE.
