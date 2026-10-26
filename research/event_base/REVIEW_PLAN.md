@@ -141,3 +141,65 @@ coverage pass, run E against the controls. Sequence fixed now:
    - then `run.py --events` builds E (`confirmed_raise`) and S-covered (all known statuses),
      with the unchanged execution model, costs, windows and criteria of PLAN.md §7.
    - Otherwise E stays INSUFFICIENT_DATA, and the failing condition is reported.
+
+## 7. Addendum (2026-10-25 23:10 ET): extractor v3, before any v3 code or third-sample packet
+The owner approved v3 after v2 failed the §6 gate (VALIDATION_RESULTS.md). The E signal rule,
+the selection of events, the success criteria of PLAN.md §7, the 80 % coverage requirement and
+the 20 % drawdown target are unchanged.
+
+**7.1 Classification rule made explicit** (the literal §3 definition; applies to v3 and to the
+third-sample labels):
+- The status is decided for the **fiscal year in progress on the signal date**.
+- If that fiscal year has no full-year USD revenue range in the filed record, the status is
+  `confirmed_no_suitable_guidance`, also when an older, completed fiscal year had one
+  (subtype `prior_fy_range_only`).
+- `confirmed_no_raise` needs a current-FY range in force: initial, reaffirmed, lowered,
+  narrowed, raised too late or too early, or cancelled.
+- A missing document makes the case `unknown` only if no complete Item 2.02 release follows it
+  before the signal. A later complete release supersedes the guidance.
+- The pilot and validation labels are re-stated under 7.1 in `manual_labels_r2.py`: five cases,
+  all non-events. The originals are kept.
+
+**7.2 Development.**
+- v3 (`extract_v3.py`) is developed on the pilot (80) and the validation sample (80), both now
+  development data.
+- The fixes target the v2 failure causes: product-revenue phrasing, millions tables with
+  Low/High End headers and "Previously / Unchanged" columns, ranges assembled from reported
+  actuals ("Revenue was $A and $B"), stated raises that refer to EPS only, and
+  identical/comparable-sales % guidance.
+- v3 and these rules are **frozen (committed with a hash) before the third sample's packets
+  are fetched**.
+
+**7.3 Third sample.**
+- 80 S candidates, 10 per year 2018–2025, seed **20261027**, drawn the same way as §6.
+- It excludes every pilot and validation case (`validation/sample_seed20261027.csv`).
+- Packets are built with the same `review.py` code.
+- Manual labels (`manual_labels_test.py`) are committed **before** v3 is run on it.
+
+**7.4 Acceptance (all required):**
+1. Status agreement ≥ 95 % (≥ 76 of 80) over the four statuses.
+2. 0 false `confirmed_raise`, i.e. v3 says raise and the manual label does not.
+3. **Recall of real E events:**
+   - recall = v3 raises ∩ manual raises / manual raises, reported with a 95 % Wilson interval;
+   - required ≥ 80 %, i.e. missed raises ≤ floor(0.2 × manual raises);
+   - with fewer than 5 manual raises, that means no raise may be missed.
+   - Precision = true / all v3 raises, reported.
+   - Recall on the development sets is reported separately and is not evidence.
+4. No look-ahead, checked mechanically on every case:
+   - every filing v3 reads was accepted before the signal day;
+   - every v3 raise was accepted on a calendar day before `base_start` and is ≤ 60 sessions old
+     at the signal;
+   - v3 reads only packet text, acceptance times and case dates (no prices or returns).
+   - Any violation fails the gate.
+5. Manual coverage of the third sample ≥ 80 % in every year 2018–2025.
+
+**Reported:** the confusion matrix, the number of real E events, precision, recall and coverage
+by year.
+
+**7.5 If v3 fails:**
+- development stops;
+- the causes are analysed and reported;
+- no v4 is started.
+
+**7.6 If v3 passes:** the full collection and the E backtest wait for the owner's separate
+permission.
