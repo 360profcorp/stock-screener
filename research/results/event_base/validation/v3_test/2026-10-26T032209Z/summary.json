@@ -1,0 +1,106 @@
+{
+ "version": "extract-v3/1.0",
+ "cases": 79,
+ "agree": 74,
+ "agree_pct": 93.7,
+ "confusion_manual_rows_v3_cols": {
+  "confirmed_raise": {
+   "confirmed_raise": 2,
+   "confirmed_no_raise": 0,
+   "confirmed_no_suitable_guidance": 0,
+   "unknown": 0
+  },
+  "confirmed_no_raise": {
+   "confirmed_raise": 0,
+   "confirmed_no_raise": 14,
+   "confirmed_no_suitable_guidance": 2,
+   "unknown": 0
+  },
+  "confirmed_no_suitable_guidance": {
+   "confirmed_raise": 0,
+   "confirmed_no_raise": 1,
+   "confirmed_no_suitable_guidance": 55,
+   "unknown": 2
+  },
+  "unknown": {
+   "confirmed_raise": 0,
+   "confirmed_no_raise": 0,
+   "confirmed_no_suitable_guidance": 0,
+   "unknown": 3
+  }
+ },
+ "real_E_events_manual": 2,
+ "v3_raises": 2,
+ "true_raises": 2,
+ "false_raises": 0,
+ "missed_raises": 0,
+ "precision": 1.0,
+ "precision_ci95": [
+  0.342,
+  1.0
+ ],
+ "recall": 1.0,
+ "recall_ci95": [
+  0.342,
+  1.0
+ ],
+ "recall_allowed_missed": 0,
+ "lookahead": {
+  "truncated_rerun_identical": true,
+  "raise_timing_violations": []
+ },
+ "manual_coverage_by_year": {
+  "2018": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0
+  },
+  "2019": {
+   "cases": 10,
+   "known": 9,
+   "coverage_pct": 90.0
+  },
+  "2020": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0
+  },
+  "2021": {
+   "cases": 10,
+   "known": 9,
+   "coverage_pct": 90.0
+  },
+  "2022": {
+   "cases": 9,
+   "known": 9,
+   "coverage_pct": 100.0
+  },
+  "2023": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0
+  },
+  "2024": {
+   "cases": 10,
+   "known": 9,
+   "coverage_pct": 90.0
+  },
+  "2025": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0
+  }
+ },
+ "gate": {
+  "agreement_ge_76": false,
+  "zero_false_raise": true,
+  "recall_ok": true,
+  "no_lookahead": true,
+  "coverage_ge_80_every_year": true
+ },
+ "passed": false,
+ "packets": "research/results/event_base/validation/packets_test/2026-10-26T031212Z",
+ "labels": "research.event_base.manual_labels_test",
+ "git": "eb9648053bca4714baab43577d649a171d22af81",
+ "extract_v3_sha256": "7dbfade85c697c1d282ca3f67e122531e7fc3dae38a5d40e7ec45527e2126b0b"
+}
