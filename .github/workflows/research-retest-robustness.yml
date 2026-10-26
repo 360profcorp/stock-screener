@@ -6,7 +6,7 @@ on:
   push:
     branches: [research/retest-robustness-v1]
     paths: ["research/retest_robustness/RUN_REPRO", "research/retest_robustness/RUN_DATA",
-            "research/retest_robustness/RUN_ANALYZE"]
+            "research/retest_robustness/RUN_ANALYZE", "research/retest_robustness/RUN_PROBE"]
 
 permissions:
   contents: write
@@ -33,7 +33,8 @@ jobs:
         id: stage
         run: |
           ch=$(git diff --name-only HEAD~1 HEAD)
-          if echo "$ch" | grep -q "RUN_ANALYZE"; then echo "s=analyze" >> $GITHUB_OUTPUT
+          if echo "$ch" | grep -q "RUN_PROBE"; then echo "s=probe" >> $GITHUB_OUTPUT
+          elif echo "$ch" | grep -q "RUN_ANALYZE"; then echo "s=analyze" >> $GITHUB_OUTPUT
           elif echo "$ch" | grep -q "RUN_DATA"; then echo "s=data" >> $GITHUB_OUTPUT
           else echo "s=repro" >> $GITHUB_OUTPUT; fi
           echo "rid=$(head -1 research/retest_robustness/RUN_ANALYZE 2>/dev/null)" >> $GITHUB_OUTPUT
@@ -55,6 +56,9 @@ jobs:
       - name: Download 2006-2016 and coverage
         if: steps.stage.outputs.s == 'data'
         run: python -m research.retest_robustness.run data --dist dist/retest_robustness
+      - name: Yahoo probe
+        if: steps.stage.outputs.s == 'probe'
+        run: python -m research.retest_robustness.run probe
       - name: Upload dataset
         if: steps.stage.outputs.s == 'data'
         uses: actions/upload-artifact@v4

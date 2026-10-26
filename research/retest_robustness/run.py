@@ -420,15 +420,51 @@ def verdict(res, cov):
     return c, v
 
 
+def probe():
+    """Diagnostic for the empty Yahoo tickers: several request forms, shapes and errors recorded."""
+    import yfinance as yf
+    out, man, W = _writer("probe")
+    res = dict(yfinance=yf.__version__, tests=[])
+    for t in ("EA", "BK", "EQR", "IPG", "K", "AAPL"):
+        for name, fn in (
+            ("download_single", lambda: yf.download(t, start=DOWNLOAD_START, end=DOWNLOAD_END, auto_adjust=False,
+                                                    actions=True, progress=False)),
+            ("download_multi2", lambda: yf.download([t, "SPY"], start=DOWNLOAD_START, end=DOWNLOAD_END,
+                                                    group_by="ticker", auto_adjust=False, actions=True,
+                                                    threads=True, progress=False)),
+            ("history", lambda: yf.Ticker(t).history(start=DOWNLOAD_START, end=DOWNLOAD_END, auto_adjust=False,
+                                                     actions=True)),
+            ("history_period_max", lambda: yf.Ticker(t).history(period="max", auto_adjust=False))):
+            try:
+                df = fn()
+                errs = dict(getattr(getattr(yf, "shared", None), "_ERRORS", {}) or {})
+                cols = [str(c) for c in df.columns][:14]
+                close = df[t]["Close"] if isinstance(df.columns, pd.MultiIndex) and t in df.columns.get_level_values(0) \
+                    else (df["Close"] if "Close" in df else None)
+                if isinstance(close, pd.DataFrame):
+                    close = close.iloc[:, 0]
+                res["tests"].append(dict(ticker=t, method=name, rows=int(len(df)), cols=cols,
+                                         close_nonnull=int(close.notna().sum()) if close is not None else None,
+                                         first=str(df.index[0]) if len(df) else None,
+                                         last=str(df.index[-1]) if len(df) else None, errors=str(errs)[:400]))
+            except Exception as e:
+                res["tests"].append(dict(ticker=t, method=name, error=f"{type(e).__name__}: {str(e)[:300]}"))
+    W("probe.json", json.dumps(res, indent=1, default=str))
+    print(json.dumps(res, indent=1, default=str)[:4000])
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=("repro", "data", "analyze"))
+    ap.add_argument("stage", choices=("repro", "data", "analyze", "probe"))
     ap.add_argument("--dataset")
     ap.add_argument("--dist", default=str(ROOT / "dist/retest_robustness"))
     ap.add_argument("--coverage")
     a = ap.parse_args(argv)
     if a.stage == "repro":
         return repro(a.dataset)
+    if a.stage == "probe":
+        return probe()
     if a.stage == "data":
         return data_stage(a.dist)
     cov = a.coverage or str(sorted((OUT / "data").glob("*/coverage.json"))[-1])
