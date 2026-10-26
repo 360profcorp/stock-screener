@@ -104,13 +104,17 @@ def main(argv=None):
             packets.append(case)
             continue
         f = sub["filings"]
-        f = f[f["form"].isin(["8-K", "8-K/A"]) & f["items"].fillna("").str.contains(r"2\.02|7\.01|8\.01")].copy()
+        f = f[f["form"].isin(["8-K", "8-K/A"])].copy()
+        f["items"] = f["items"].fillna("")
+        f = f[f["items"].str.contains(r"2\.02|7\.01|8\.01") | (f["items"].str.strip() == "")]   # blank items: kept, checked
         f["accepted"] = pd.to_datetime(f["acceptanceDateTime"], utc=True).dt.tz_convert("America/New_York").dt.tz_localize(None)
         f = f[(f["accepted"] >= c["base_start"] - pd.Timedelta(days=LOOK_DAYS)) & (f["accepted"] < c["signal_date"])]
         for r in f.sort_values("accepted").to_dict("records"):
             acc = r["accessionNumber"]
             fl = dict(accession=acc, form=r["form"], items=r["items"], accepted_et=str(r["accepted"]), documents=[])
             saved = reg[reg["accession"] == acc]
+            if not str(r["items"]).strip():
+                fl["items"] = "(blank in EDGAR index)"
             if len(saved):
                 targets = [(u, t, s) for u, t, s in zip(saved["url"], saved["exhibit_type"], saved["sha256"])]
             else:
@@ -120,7 +124,7 @@ def main(argv=None):
                     case["filings"].append(fl)
                     continue
                 ex = [(u, t, None) for u, t in idx if t.upper().startswith("EX-99")]
-                if not ex and "2.02" in str(r["items"]):
+                if not ex and ("2.02" in str(r["items"]) or not str(r["items"]).strip()):
                     ex = [(u, t, None) for u, t in idx if t.upper() in ("8-K", "8-K/A") and u.lower().endswith((".htm", ".html", ".txt"))]
                     fl["note"] = "no EX-99 exhibit; primary 8-K document used"
                 fl["index_types"] = sorted({t for _, t in idx})
