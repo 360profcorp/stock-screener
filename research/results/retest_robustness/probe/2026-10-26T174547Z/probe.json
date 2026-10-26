@@ -1,0 +1,471 @@
+{
+ "yfinance": "1.7.0",
+ "tests": [
+  {
+   "ticker": "EA",
+   "method": "download_single",
+   "rows": 0,
+   "cols": [
+    "('Adj Close', 'EA')",
+    "('Close', 'EA')",
+    "('High', 'EA')",
+    "('Low', 'EA')",
+    "('Open', 'EA')",
+    "('Volume', 'EA')"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "EA",
+   "method": "download_multi2",
+   "rows": 2743,
+   "cols": [
+    "('EA', 'Open')",
+    "('EA', 'High')",
+    "('EA', 'Low')",
+    "('EA', 'Close')",
+    "('EA', 'Adj Close')",
+    "('EA', 'Volume')",
+    "('SPY', 'Open')",
+    "('SPY', 'High')",
+    "('SPY', 'Low')",
+    "('SPY', 'Close')",
+    "('SPY', 'Adj Close')",
+    "('SPY', 'Volume')",
+    "('SPY', 'Dividends')",
+    "('SPY', 'Stock Splits')"
+   ],
+   "close_nonnull": 0,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "EA",
+   "method": "history",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "EA",
+   "method": "history_period_max",
+   "rows": 1,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume",
+    "Dividends",
+    "Stock Splits"
+   ],
+   "close_nonnull": 1,
+   "first": "2026-08-04 00:00:00-04:00",
+   "last": "2026-08-04 00:00:00-04:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "BK",
+   "method": "download_single",
+   "rows": 0,
+   "cols": [
+    "('Adj Close', 'BK')",
+    "('Close', 'BK')",
+    "('High', 'BK')",
+    "('Low', 'BK')",
+    "('Open', 'BK')",
+    "('Volume', 'BK')"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "BK",
+   "method": "download_multi2",
+   "rows": 2743,
+   "cols": [
+    "('SPY', 'Open')",
+    "('SPY', 'High')",
+    "('SPY', 'Low')",
+    "('SPY', 'Close')",
+    "('SPY', 'Adj Close')",
+    "('SPY', 'Volume')",
+    "('SPY', 'Dividends')",
+    "('SPY', 'Stock Splits')",
+    "('SPY', 'Capital Gains')",
+    "('BK', 'Open')",
+    "('BK', 'High')",
+    "('BK', 'Low')",
+    "('BK', 'Close')",
+    "('BK', 'Adj Close')"
+   ],
+   "close_nonnull": 0,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "BK",
+   "method": "history",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "BK",
+   "method": "history_period_max",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "EQR",
+   "method": "download_single",
+   "rows": 0,
+   "cols": [
+    "('Adj Close', 'EQR')",
+    "('Close', 'EQR')",
+    "('High', 'EQR')",
+    "('Low', 'EQR')",
+    "('Open', 'EQR')",
+    "('Volume', 'EQR')"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "EQR",
+   "method": "download_multi2",
+   "rows": 2743,
+   "cols": [
+    "('EQR', 'Open')",
+    "('EQR', 'High')",
+    "('EQR', 'Low')",
+    "('EQR', 'Close')",
+    "('EQR', 'Adj Close')",
+    "('EQR', 'Volume')",
+    "('SPY', 'Open')",
+    "('SPY', 'High')",
+    "('SPY', 'Low')",
+    "('SPY', 'Close')",
+    "('SPY', 'Adj Close')",
+    "('SPY', 'Volume')",
+    "('SPY', 'Dividends')",
+    "('SPY', 'Stock Splits')"
+   ],
+   "close_nonnull": 0,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "EQR",
+   "method": "history",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "EQR",
+   "method": "history_period_max",
+   "rows": 1,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume",
+    "Dividends",
+    "Stock Splits"
+   ],
+   "close_nonnull": 1,
+   "first": "2026-08-17 00:00:00-04:00",
+   "last": "2026-08-17 00:00:00-04:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "IPG",
+   "method": "download_single",
+   "rows": 0,
+   "cols": [
+    "('Adj Close', 'IPG')",
+    "('Close', 'IPG')",
+    "('High', 'IPG')",
+    "('Low', 'IPG')",
+    "('Open', 'IPG')",
+    "('Volume', 'IPG')"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "IPG",
+   "method": "download_multi2",
+   "rows": 2743,
+   "cols": [
+    "('IPG', 'Open')",
+    "('IPG', 'High')",
+    "('IPG', 'Low')",
+    "('IPG', 'Close')",
+    "('IPG', 'Adj Close')",
+    "('IPG', 'Volume')",
+    "('SPY', 'Open')",
+    "('SPY', 'High')",
+    "('SPY', 'Low')",
+    "('SPY', 'Close')",
+    "('SPY', 'Adj Close')",
+    "('SPY', 'Volume')",
+    "('SPY', 'Dividends')",
+    "('SPY', 'Stock Splits')"
+   ],
+   "close_nonnull": 0,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "IPG",
+   "method": "history",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "IPG",
+   "method": "history_period_max",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "K",
+   "method": "download_single",
+   "rows": 0,
+   "cols": [
+    "('Adj Close', 'K')",
+    "('Close', 'K')",
+    "('High', 'K')",
+    "('Low', 'K')",
+    "('Open', 'K')",
+    "('Volume', 'K')"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "K",
+   "method": "download_multi2",
+   "rows": 2743,
+   "cols": [
+    "('K', 'Open')",
+    "('K', 'High')",
+    "('K', 'Low')",
+    "('K', 'Close')",
+    "('K', 'Adj Close')",
+    "('K', 'Volume')",
+    "('SPY', 'Open')",
+    "('SPY', 'High')",
+    "('SPY', 'Low')",
+    "('SPY', 'Close')",
+    "('SPY', 'Adj Close')",
+    "('SPY', 'Volume')",
+    "('SPY', 'Dividends')",
+    "('SPY', 'Stock Splits')"
+   ],
+   "close_nonnull": 0,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "K",
+   "method": "history",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "K",
+   "method": "history_period_max",
+   "rows": 0,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume"
+   ],
+   "close_nonnull": 0,
+   "first": null,
+   "last": null,
+   "errors": "{}"
+  },
+  {
+   "ticker": "AAPL",
+   "method": "download_single",
+   "rows": 2743,
+   "cols": [
+    "('Adj Close', 'AAPL')",
+    "('Close', 'AAPL')",
+    "('Dividends', 'AAPL')",
+    "('High', 'AAPL')",
+    "('Low', 'AAPL')",
+    "('Open', 'AAPL')",
+    "('Stock Splits', 'AAPL')",
+    "('Volume', 'AAPL')"
+   ],
+   "close_nonnull": 2743,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "AAPL",
+   "method": "download_multi2",
+   "rows": 2743,
+   "cols": [
+    "('AAPL', 'Open')",
+    "('AAPL', 'High')",
+    "('AAPL', 'Low')",
+    "('AAPL', 'Close')",
+    "('AAPL', 'Adj Close')",
+    "('AAPL', 'Volume')",
+    "('AAPL', 'Dividends')",
+    "('AAPL', 'Stock Splits')",
+    "('SPY', 'Open')",
+    "('SPY', 'High')",
+    "('SPY', 'Low')",
+    "('SPY', 'Close')",
+    "('SPY', 'Adj Close')",
+    "('SPY', 'Volume')"
+   ],
+   "close_nonnull": 2743,
+   "first": "2005-12-01 00:00:00",
+   "last": "2016-10-24 00:00:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "AAPL",
+   "method": "history",
+   "rows": 2743,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume",
+    "Dividends",
+    "Stock Splits"
+   ],
+   "close_nonnull": 2743,
+   "first": "2005-12-01 00:00:00-05:00",
+   "last": "2016-10-24 00:00:00-04:00",
+   "errors": "{}"
+  },
+  {
+   "ticker": "AAPL",
+   "method": "history_period_max",
+   "rows": 11560,
+   "cols": [
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Adj Close",
+    "Volume",
+    "Dividends",
+    "Stock Splits"
+   ],
+   "close_nonnull": 11560,
+   "first": "1980-12-12 00:00:00-05:00",
+   "last": "2026-10-26 00:00:00-04:00",
+   "errors": "{}"
+  }
+ ]
+}
