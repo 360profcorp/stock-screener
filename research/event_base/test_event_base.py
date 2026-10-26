@@ -299,3 +299,45 @@ class Decision(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BenchmarkDividendsV2(unittest.TestCase):
+    """REVIEW_PLAN.md §5: entitlement at the prior close, accrual, pay date, balance reinvest."""
+
+    def setUp(self):
+        from research.event_base import benchmarks as BM
+        self.BM = BM
+        self.days = pd.bdate_range("2023-03-01", periods=60)
+        self.spy = pd.DataFrame({"Open": 100., "Close": 100., "Dividends": 0.}, index=self.days)
+
+    def test_bought_on_exdate_not_entitled(self):
+        s = self.spy.copy()
+        s.loc[self.days[0], "Dividends"] = 1.0             # ex-date = first session (buy at its open)
+        b = self.BM.etf_book_v2({"SPY": s}, list(self.days), lambda k, d, st: {"SPY": 1.0} if k == -1 else None,
+                                cost_bps=0., full_cal=self.days, sweep_all=True)
+        self.assertEqual(b["totals"]["distributions"], 0.0)
+        v1 = self.BM.etf_book({"SPY": s}, list(self.days), lambda k, d, st: {"SPY": 1.0} if k == -1 else None, cost_bps=0.)
+        self.assertGreater(v1["totals"]["distributions"], 0.0)   # the v1 fault
+
+    def test_accrual_pay_date_and_balance(self):
+        s = self.spy.copy()
+        s.loc[self.days[10], "Dividends"] = 0.5            # 100 shares -> $50 accrued
+        b = self.BM.etf_book_v2({"SPY": s}, list(self.days), lambda k, d, st: {"SPY": 1.0} if k == -1 else None,
+                                cost_bps=0., full_cal=self.days, sweep_all=True)
+        c = b["curve"].set_index("date")
+        self.assertAlmostEqual(c.loc[self.days[10], "receivable"], 50.0)
+        self.assertAlmostEqual(c.loc[self.days[10], "equity"], 10050.0)
+        pay = self.BM.pay_dates([self.days[10]], "SPY", self.days)[self.days[10]]
+        self.assertEqual(pay.month, 4)                     # last session of the following month
+        self.assertAlmostEqual(c.loc[pay, "cash"], 50.0)
+        self.assertAlmostEqual(c.loc[pay, "receivable"], 0.0)
+        nxt = self.days[self.days.get_loc(pay) + 1]
+        self.assertAlmostEqual(c.loc[nxt, "cash"], 50.0)   # $50 < one share: stays as balance
+        self.assertAlmostEqual(c["equity"].iloc[-1], 10050.0)
+
+    def test_sold_on_exdate_still_entitled(self):
+        s = self.spy.copy()
+        s.loc[self.days[5], "Dividends"] = 1.0
+        rule = lambda k, d, st: {"SPY": 1.0} if k == -1 else ({"SPY": 0.0} if d == self.days[4] else None)  # noqa: E731
+        b = self.BM.etf_book_v2({"SPY": s}, list(self.days), rule, cost_bps=0., full_cal=self.days)
+        self.assertAlmostEqual(b["totals"]["distributions"], 100.0)
