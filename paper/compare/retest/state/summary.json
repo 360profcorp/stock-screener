@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-23T22:29:23+00:00",
+ "updated": "2026-10-26T22:32:58+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 4,
- "processed_through": "2026-10-23",
+ "revision": 5,
+ "processed_through": "2026-10-26",
  "cash": 5140.1728875631725,
  "open_positions": 3,
  "pending_orders": 0,
@@ -13,32 +13,32 @@
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-10-23",
+   "genuine_through": "2026-10-26",
    "reason": null,
    "metrics": {
-    "days": 4,
-    "final_equity": 9762.752721547547,
-    "return_pct": -2.3724727845245264,
+    "days": 5,
+    "final_equity": 9759.312993764344,
+    "return_pct": -2.4068700623565586,
     "cagr_pct": NaN,
-    "max_drawdown_pct": -2.3724727845245264,
-    "current_drawdown_pct": -2.3724727845245264,
-    "exposure_pct": 75.0,
-    "spy_price_return_pct": -1.1806797001455926,
-    "excess_vs_spy_price_pct": -1.1917930843789337
+    "max_drawdown_pct": -2.4068700623565586,
+    "current_drawdown_pct": -2.4068700623565586,
+    "exposure_pct": 80.0,
+    "spy_price_return_pct": -0.4785115056489486,
+    "excess_vs_spy_price_pct": -1.92835855670761
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 4,
-    "final_equity": 9762.752721547547,
-    "return_pct": -2.3724727845245264,
+    "days": 5,
+    "final_equity": 9759.312993764344,
+    "return_pct": -2.4068700623565586,
     "cagr_pct": NaN,
-    "max_drawdown_pct": -2.3724727845245264,
-    "current_drawdown_pct": -2.3724727845245264,
-    "exposure_pct": 75.0,
-    "spy_price_return_pct": -1.1806797001455926,
-    "excess_vs_spy_price_pct": -1.1917930843789337
+    "max_drawdown_pct": -2.4068700623565586,
+    "current_drawdown_pct": -2.4068700623565586,
+    "exposure_pct": 80.0,
+    "spy_price_return_pct": -0.4785115056489486,
+    "excess_vs_spy_price_pct": -1.92835855670761
    }
   },
   "timely": {
