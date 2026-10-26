@@ -341,3 +341,37 @@ class BenchmarkDividendsV2(unittest.TestCase):
         rule = lambda k, d, st: {"SPY": 1.0} if k == -1 else ({"SPY": 0.0} if d == self.days[4] else None)  # noqa: E731
         b = self.BM.etf_book_v2({"SPY": s}, list(self.days), rule, cost_bps=0., full_cal=self.days)
         self.assertAlmostEqual(b["totals"]["distributions"], 100.0)
+
+
+class ExtractV2(unittest.TestCase):
+    """Extractor v2 period / range rules (Cadence regression included)."""
+
+    def test_quarterly_vs_full_year(self):
+        from research.event_base import extract_v2 as V
+        w = ("Business Outlook For the third quarter of 2020, the company expects total revenue in the range of "
+             "$630 million to $650 million. For 2020, the company expects total revenue in the range of $2.585 billion "
+             "to $2.615 billion.")
+        its = V.parse_window(w)
+        self.assertIn("quarterly", [i["kind"] for i in its])
+        rng = [i for i in its if i["kind"] == "range"]
+        self.assertEqual([(r["year"], round(r["low"], 3), round(r["high"], 3)) for r in rng], [(2020, 2.585, 2.615)])
+        self.assertEqual([i["kind"] for i in V.parse_window("Third Quarter of Fiscal Year 2021 Financial Outlook: Net revenues "
+                                                            "are expected to be in the range of: $1.34 billion to $1.49 billion")],
+                         ["quarterly"])
+
+    def test_from_to_and_prior(self):
+        from research.event_base import extract_v2 as V
+        w = ("We are increasing our fiscal 2020 financial guidance. We are raising our annual revenue expectations from a range "
+             "of $7.28 billion to $7.32 billion to a range of $7.29 billion to $7.33 billion")
+        r = [i for i in V.parse_window(w) if i["kind"] == "range"][0]
+        self.assertEqual((r["year"], r["low"], r["high"], r["old"]), (2020, 7.29, 7.33, (7.28, 7.32)))
+        w2 = "Full Year 2021 Guidance: Revenue $5.05-$5.20 billion, versus prior $5.05-$5.25 billion"
+        r2 = [i for i in V.parse_window(w2) if i["kind"] == "range"][0]
+        self.assertEqual((r2["low"], r2["high"], r2["old"]), (5.05, 5.20, (5.05, 5.25)))
+        self.assertFalse(V.is_raise(r2["old"], r2["low"], r2["high"]))
+
+    def test_excluded_metrics(self):
+        from research.event_base import extract_v2 as V
+        self.assertEqual([i for i in V.parse_window("FY'24 Guidance Closed sales $280M - $320M") if i["kind"] == "range"], [])
+        self.assertEqual([i for i in V.parse_window("For fiscal 2024, operating profit of $5.3 billion - $5.7 billion; "
+                                                    "revenue growth of 5%") if i["kind"] == "range"], [])
