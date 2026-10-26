@@ -203,3 +203,9 @@ by year.
 
 **7.6 If v3 passes:** the full collection and the E backtest wait for the owner's separate
 permission.
+
+**7.3 note (2026-10-25, written when the sample was drawn, before any of its packets):**
+- 2022 has only 29 S candidates; the pilot and the validation sample took 10 each. The draw
+  therefore takes all 9 that are left, and the third sample has **79 cases**.
+- The agreement threshold stays at **≥ 76** cases: 76 / 79 = 96.2 %, which is also ≥ 95 %.
+- The 2022 coverage is computed over 9 cases.
