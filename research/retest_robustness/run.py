@@ -156,6 +156,18 @@ def data_stage(dist):
     tickers = sorted(ever) + ["SPY", "BIL"]
     frames, rep = D.download(tickers, period=f"{DOWNLOAD_START}_{DOWNLOAD_END}", downloader=dl,
                              cache_dir=str(ROOT / ".cache/retest_robustness"), asof=DOWNLOAD_END)
+    # §10 addendum (2026-10-26, before any backtest): tickers that came back empty in a 100-ticker
+    # chunk are retried one by one (Yahoo returns empty frames under load); still-empty = missing.
+    for rnd in range(3):
+        miss = rep.loc[rep["status"] != "ok", "ticker"].tolist()
+        if not miss:
+            break
+        f2, r2 = D.download(miss, period=f"{DOWNLOAD_START}_{DOWNLOAD_END}_single{rnd}", downloader=dl, chunk=1,
+                            pause=1.5 + rnd, cache_dir=str(ROOT / ".cache/retest_robustness"), asof=DOWNLOAD_END)
+        frames.update(f2)
+        rep = pd.concat([rep[~rep["ticker"].isin(r2.loc[r2["status"] == "ok", "ticker"])],
+                         r2[r2["status"] == "ok"].assign(retry_round=rnd + 1)], ignore_index=True)
+        print(f"retry round {rnd + 1}: {len(f2)} of {len(miss)} recovered")
     spy, bil = frames.pop("SPY"), frames.pop("BIL")
     cal = pd.DatetimeIndex(spy.index)
     blob = gzip.compress(pickle.dumps(dict(frames=frames, spy=spy, bil=bil)))

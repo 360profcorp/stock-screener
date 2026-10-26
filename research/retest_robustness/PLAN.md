@@ -229,3 +229,15 @@ The plan is approved with these binding conditions.
    - **INCONCLUSIVE** = the reproduction gate fails, the coverage gate fails, or §7 4 fails.
 10. **No optimisation.** Nothing is tuned to results.
 11. **Unchanged:** Production, Paper, `TRADING=dry` and `main`. PR #26 stays Draft.
+
+### 10.12 Addendum (2026-10-26, after the first data run, before any backtest or return)
+- The first download run (coverage 59–76 % a year) reported 308 tickers as "no valid bars". 112
+  of them were still members at the end of U, many still trading today (EA, BK, EQR, IPG, …).
+- So this is a download fault (empty frames from Yahoo in 100-ticker chunks), not missing
+  history.
+- **Fix:** empty tickers are retried one by one, up to 3 rounds. Nothing else changes: same
+  tickers, dates, cleaning and coverage definition.
+- The first run's files are kept.
+- The gate stays at 85 %. If coverage is still below it, the verdict is INCONCLUSIVE.
+- Renamed tickers (the old symbol is no longer on Yahoo) are **not** remapped by hand. They count
+  as missing.
