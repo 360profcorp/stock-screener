@@ -5,7 +5,7 @@ name: Research Event & First-Base Breakout v1 (research branch only)
 on:
   push:
     branches: [research/event-base-v1]
-    paths: ["research/event_base/RUN", "research/event_base/RUN_EVENTS", "research/event_base/RUN_REVIEW"]
+    paths: ["research/event_base/RUN", "research/event_base/RUN_EVENTS", "research/event_base/RUN_REVIEW", "research/event_base/RUN_PACKETS"]
 
 permissions:
   contents: write
@@ -32,7 +32,8 @@ jobs:
         id: stage
         run: |
           ch=$(git diff --name-only HEAD~1 HEAD)
-          if echo "$ch" | grep -q "research/event_base/RUN_REVIEW"; then echo "s=review" >> $GITHUB_OUTPUT
+          if echo "$ch" | grep -q "research/event_base/RUN_PACKETS"; then echo "s=packets" >> $GITHUB_OUTPUT
+          elif echo "$ch" | grep -q "research/event_base/RUN_REVIEW"; then echo "s=review" >> $GITHUB_OUTPUT
           elif echo "$ch" | grep -q "research/event_base/RUN_EVENTS"; then echo "s=events" >> $GITHUB_OUTPUT
           else echo "s=books" >> $GITHUB_OUTPUT; fi
       - name: Tests
@@ -56,7 +57,7 @@ jobs:
           [ $rc -eq 0 ] || python -c "t=open('r.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=event-base::'+t)"
           exit $rc
       - name: SEC Forms 3/4/5 symbols (identity source)
-        if: steps.stage.outputs.s == 'events'
+        if: steps.stage.outputs.s == 'events' || steps.stage.outputs.s == 'packets'
         uses: actions/download-artifact@v4
         with:
           name: v2src-40196473096
@@ -88,8 +89,15 @@ jobs:
           python -m research.event_base.review --events research/results/event_base/events/2026-10-26T012220Z --docs "${{ runner.temp }}/docs" --out research/results/event_base/review > v.log 2>&1 || { tail -40 v.log; exit 1; }
           tail -5 v.log
           if [ ! -d research/results/event_base/benchmarks_v2 ]; then python -m research.event_base.rebench --dataset "${{ runner.temp }}/ds" --run research/results/event_base/runs/2026-10-26T011603Z; fi
+      - name: Packets for a sample (text only; CIK via Forms 3/4/5)
+        if: steps.stage.outputs.s == 'packets'
+        run: |
+          set -e
+          read SAMPLE OUT < research/event_base/RUN_PACKETS
+          python -m research.event_base.review --sample "$SAMPLE" --f345 "${{ runner.temp }}/f345" --docs "${{ runner.temp }}/docs" --out "$OUT" > p.log 2>&1 || { tail -40 p.log; exit 1; }
+          tail -3 p.log
       - name: Upload source documents
-        if: always() && (steps.stage.outputs.s == 'events' || steps.stage.outputs.s == 'review')
+        if: always() && (steps.stage.outputs.s == 'events' || steps.stage.outputs.s == 'review' || steps.stage.outputs.s == 'packets')
         uses: actions/upload-artifact@v4
         with:
           name: event-docs-${{ github.run_id }}

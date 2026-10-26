@@ -115,3 +115,29 @@ criteria 4 and 5 for C and S, using the unchanged book metrics of run 2026-10-26
 
 **Not changed:** the trading books credit a dividend as cash on its ex-date. That is a smaller
 version of fault 2: about $280 of dividends over the full C book at 10 bps.
+
+## 6. Addendum (2026-10-25, before any validation label or extractor-v2 output)
+Owner's instruction: continue with extractor v2 and the new validation sample; if accuracy and
+coverage pass, run E against the controls. Sequence fixed now:
+
+1. **Validation sample:** `research/results/event_base/validation/sample_seed20261026.csv`.
+   - 80 S candidates, 10 per year 2018–2025, seed 20261026, pilot cases excluded.
+   - Committed before its packets are fetched.
+2. **Packets** for that sample are built with the same text-window code, plus one fix: when an
+   Item 2.02 8-K has no EX-99, the first listed `.htm` document is used as the primary.
+3. **Manual labels** of the validation sample are committed (`manual_labels_val.py`) **before**
+   extractor v2 is run on that sample.
+4. **Extractor v2** (`extract_v2.py`):
+   - deterministic rules applied to the same packet text windows;
+   - developed only on the 80 pilot cases;
+   - frozen (committed) before it sees the validation packets.
+5. **Acceptance:**
+   - status agreement ≥ 95 % (≥ 76 of 80) over the four statuses;
+   - 0 cases where v2 says `confirmed_raise` and the manual label does not;
+   - validation manual coverage ≥ 80 % in every year 2018–2025.
+6. **If accepted:**
+   - packets for all S candidates of the full window, then v2 on them;
+   - S-candidate coverage ≥ 80 % in every full year 2018–2025;
+   - then `run.py --events` builds E (`confirmed_raise`) and S-covered (all known statuses),
+     with the unchanged execution model, costs, windows and criteria of PLAN.md §7.
+   - Otherwise E stays INSUFFICIENT_DATA, and the failing condition is reported.

@@ -54,13 +54,26 @@ def index_docs(ed, cik, acc):
 def main(argv=None):
     from research.sp1500 import run as RUN
     ap = argparse.ArgumentParser()
-    ap.add_argument("--events", required=True)
+    ap.add_argument("--events", default=None)
+    ap.add_argument("--sample", default=None, help="CSV ticker,signal_date,base_start (CIK resolved via --f345)")
+    ap.add_argument("--f345", default=None)
     ap.add_argument("--docs", required=True)
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
-    ev = Path(a.events)
-    st = pd.read_csv(ev / "event_status.csv", parse_dates=["signal_date", "base_start"])
-    reg = pd.read_csv(ev / "source_registry.csv")
+    if a.sample:
+        st = pd.read_csv(a.sample, parse_dates=["signal_date", "base_start"])
+        f345p = next(Path(a.f345).rglob("f345_sub.csv.gz"))
+        f345 = pd.read_csv(f345p, usecols=["issuer_cik", "sym", "filing_date"], parse_dates=["filing_date"])
+        f345["sym"] = f345["sym"].map(EV.nsym)
+        ids = [EV.resolve_cik(t, d, f345) for t, d in zip(st["ticker"], st["signal_date"])]
+        st["cik"] = [c for c, _ in ids]
+        st["identity"] = [w for _, w in ids]
+        st["status"], st["reason"] = "n/a", "n/a"
+        reg = pd.DataFrame(columns=["accession", "url", "exhibit_type", "sha256"])
+    else:
+        ev = Path(a.events)
+        st = pd.read_csv(ev / "event_status.csv", parse_dates=["signal_date", "base_start"])
+        reg = pd.read_csv(ev / "source_registry.csv")
     docs = Path(a.docs)
     docs.mkdir(parents=True, exist_ok=True)
     have = {p.stem for p in docs.rglob("*.htm")}
@@ -91,7 +104,7 @@ def main(argv=None):
         cik = int(c["cik"]) if pd.notna(c["cik"]) else None
         case = dict(case=n, ticker=c["ticker"], issuer=c.get("issuer_name"), cik=cik,
                     base_start=str(c["base_start"].date()), signal_date=str(c["signal_date"].date()),
-                    fiscal_year_end=c.get("fiscal_year_end"), auto_status=c["status"], auto_reason=c["reason"],
+                    fiscal_year_end=c.get("fiscal_year_end"), identity=c.get("identity"), auto_status=c["status"], auto_reason=c["reason"],
                     filings=[])
         if cik is None:
             packets.append(case)
@@ -103,6 +116,11 @@ def main(argv=None):
             case["error"] = "submissions_not_retrieved"
             packets.append(case)
             continue
+        meta = sub.get("meta") or {}
+        if not case.get("issuer") or case["issuer"] != case["issuer"]:
+            case["issuer"] = meta.get("name")
+        if not case.get("fiscal_year_end") or case["fiscal_year_end"] != case["fiscal_year_end"]:
+            case["fiscal_year_end"] = meta.get("fiscalYearEnd")
         f = sub["filings"]
         f = f[f["form"].isin(["8-K", "8-K/A"])].copy()
         f["items"] = f["items"].fillna("")
@@ -126,6 +144,10 @@ def main(argv=None):
                 ex = [(u, t, None) for u, t in idx if t.upper().startswith("EX-99")]
                 if not ex and ("2.02" in str(r["items"]) or not str(r["items"]).strip()):
                     ex = [(u, t, None) for u, t in idx if t.upper() in ("8-K", "8-K/A") and u.lower().endswith((".htm", ".html", ".txt"))]
+                    if not ex:                                  # type cell not labelled: first listed .htm is the primary
+                        prim = [(u, t) for u, t in idx if u.lower().endswith((".htm", ".html", ".txt"))
+                                and not t.upper().startswith(("EX-", "GRAPHIC", "XML", "ZIP"))]
+                        ex = [(prim[0][0], "8-K (primary)", None)] if prim else []
                     fl["note"] = "no EX-99 exhibit; primary 8-K document used"
                 fl["index_types"] = sorted({t for _, t in idx})
                 targets = ex
