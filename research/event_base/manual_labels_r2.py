@@ -1,7 +1,7 @@
 """Convention-normalised labels for the two development sets of extractor v3 (REVIEW_PLAN.md §7).
 
 The original files manual_labels_v1.py (pilot) and manual_labels_val.py (validation) are kept
-unchanged. This file re-states five labels under the one rule fixed in §7.1 (the literal §3
+unchanged. This file re-states labels (five, then two more, see below) under the one rule fixed in §7.1 (the literal §3
 definition): the status is decided for the fiscal year in progress on the signal date. When the
 only full-year revenue range in the record is for a fiscal year that already ended before the
 signal, and the current fiscal year has no range, the status is confirmed_no_suitable_guidance
@@ -21,6 +21,15 @@ PILOT_OVERRIDES = {
     39: "TSCO FY2021 ended 2021-12-25, signal 2021-12-31",
     68: "TDG FY2024 ended 2024-09-28, signal 2024-10-01",
 }
+# Added after the first v3 development run, under the §7.1 missing-document rule (a later complete
+# Item 2.02 release supersedes a missing one). Both banks/energy issuers give no revenue range in
+# the retrieved releases; the originals were "unknown / incomplete_history".
+PILOT_OVERRIDES_MISSING_DOC = {
+    63: "BAC: the 2024-01-08 Item 2.02 without EX-99 is followed by complete releases 2024-01-12 and 2024-04-16",
+    64: "FANG: the last Item 2.02 without EX-99 (2024-04-10) is followed by the complete release 2024-04-30",
+}
+_WHY_DOC = "§7.1 missing-document rule: a later complete Item 2.02 release supersedes the missing one; no revenue range in the record"
+
 VAL_OVERRIDES = {
     5: "CTAS FY2018 ended 2018-05-31, signal 2018-06-01",
 }
@@ -35,5 +44,10 @@ def _apply(labels, ov):
     return out
 
 
-LABELS_PILOT = _apply(PILOT, PILOT_OVERRIDES)
+def _apply_doc(labels, ov):
+    return [(l[0], G, "none_after_superseded_missing_doc", l[3], l[4], l[5], l[6], f"{_WHY_DOC} ({ov[l[0]]}); originally {l[1]}: {l[7]}", l[8])
+            if l[0] in ov else l for l in labels]
+
+
+LABELS_PILOT = _apply_doc(_apply(PILOT, PILOT_OVERRIDES), PILOT_OVERRIDES_MISSING_DOC)
 LABELS_VAL = _apply(VAL, VAL_OVERRIDES)

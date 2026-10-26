@@ -297,6 +297,45 @@ class Decision(unittest.TestCase):
         self.assertEqual(R.decide(books, bench, "S", ref="C")["verdict"], "INSUFFICIENT_DATA")
 
 
+class ExtractV3(unittest.TestCase):
+    """Extractor v3 fixes (REVIEW_PLAN.md §7.2)."""
+
+    def test_v2_cases_still_hold(self):
+        from research.event_base import extract_v3 as V
+        w = ("Business Outlook For the third quarter of 2020, the company expects total revenue in the range of "
+             "$630 million to $650 million. For 2020, the company expects total revenue in the range of $2.585 billion "
+             "to $2.615 billion.")
+        rng = [i for i in V.parse_window(w) if i["kind"] == "range"]
+        self.assertEqual([(r["year"], round(r["low"], 3), round(r["high"], 3)) for r in rng], [(2020, 2.585, 2.615)])
+
+    def test_reported_actuals_are_not_a_range(self):
+        from research.event_base import extract_v3 as V
+        w = ("Revenue was $32.17 billion and $116.61 billion, a decrease of 4% and 1% year-over-year for the fourth "
+             "quarter and full year 2022, respectively.")
+        self.assertEqual([i for i in V.parse_window(w) if i["kind"] == "range"], [])
+
+    def test_millions_table_with_previously(self):
+        from research.event_base import extract_v3 as V
+        w = ("For the full-year 2024, Gilead expects: (in millions, except per share amounts) November 6, 2024 Guidance "
+             "Low End High End Comparison to August 8, 2024 Guidance Product sales $ 27,800 $ 28,100 Previously $27,100 to "
+             "$27,500 Product sales, excluding Veklury $ 26,000 $ 26,300")
+        r = [i for i in V.parse_window(w) if i["kind"] == "range"][0]
+        self.assertEqual((r["year"], r["low"], r["high"], r["old"]), (2024, 27.8, 28.1, (27.1, 27.5)))
+
+    def test_product_revenue_company_vs_brand(self):
+        from research.event_base import extract_v3 as V
+        r = [i for i in V.parse_window("Company provides full year 2022 product revenue guidance of $8.4 to $8.6 billion")
+             if i["kind"] == "range"]
+        self.assertEqual([(x["year"], x["low"], x["high"]) for x in r], [(2022, 8.4, 8.6)])
+        self.assertEqual([i for i in V.parse_window("2022 guidance: Jakafi net product revenues $2.38 - $2.40 billion")
+                          if i["kind"] == "range"], [])
+
+    def test_eps_only_raise_is_not_a_revenue_raise(self):
+        from research.event_base import extract_v3 as V
+        self.assertFalse(V.stated_raise("Full-year adjusted EPS outlook raised by $0.10"))
+        self.assertTrue(V.stated_raise("The company raises its full-year outlook"))
+
+
 if __name__ == "__main__":
     unittest.main()
 
