@@ -1,0 +1,85 @@
+name: Research Retest M robustness (research branch only)
+
+# research/retest_robustness/PLAN.md §10. Research only: never touches paper/, state/, orders or
+# the bot. No schedule. The stage is chosen by the trigger file changed in the pushed commit.
+on:
+  push:
+    branches: [research/retest-robustness-v1]
+    paths: ["research/retest_robustness/RUN_REPRO", "research/retest_robustness/RUN_DATA",
+            "research/retest_robustness/RUN_ANALYZE"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-retest-robustness
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/retest-robustness-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.2" numpy "yfinance>=0.2.40" lxml requests
+      - name: Which stage
+        id: stage
+        run: |
+          ch=$(git diff --name-only HEAD~1 HEAD)
+          if echo "$ch" | grep -q "RUN_ANALYZE"; then echo "s=analyze" >> $GITHUB_OUTPUT
+          elif echo "$ch" | grep -q "RUN_DATA"; then echo "s=data" >> $GITHUB_OUTPUT
+          else echo "s=repro" >> $GITHUB_OUTPUT; fi
+          echo "rid=$(head -1 research/retest_robustness/RUN_ANALYZE 2>/dev/null)" >> $GITHUB_OUTPUT
+      - name: Tests
+        run: python -m unittest research.retest_robustness.test_robustness research.crisis.test_crisis test_portfolio_bt test_task6_engine
+      - name: Production code identical to pinned main f0c784d
+        run: git diff --exit-code f0c784d HEAD -- trader.py core.py portfolio_bt.py backtest.py paper_run.py daily_scan.py schwab_api.py vault.py $(git ls-files 'paper/*.py')
+      - name: 10-year dataset (reproduction)
+        if: steps.stage.outputs.s == 'repro'
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Reproduction gate
+        if: steps.stage.outputs.s == 'repro'
+        run: python -m research.retest_robustness.run repro --dataset "${{ runner.temp }}/ds"
+      - name: Download 2006-2016 and coverage
+        if: steps.stage.outputs.s == 'data'
+        run: python -m research.retest_robustness.run data --dist dist/retest_robustness
+      - name: Upload dataset
+        if: steps.stage.outputs.s == 'data'
+        uses: actions/upload-artifact@v4
+        with:
+          name: retest-u-dataset-${{ github.run_id }}
+          path: dist/retest_robustness
+          retention-days: 90
+      - name: Dataset for analysis
+        if: steps.stage.outputs.s == 'analyze'
+        uses: actions/download-artifact@v4
+        with:
+          name: retest-u-dataset-${{ steps.stage.outputs.rid }}
+          run-id: ${{ steps.stage.outputs.rid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/u
+      - name: Analysis
+        if: steps.stage.outputs.s == 'analyze'
+        run: python -m research.retest_robustness.run analyze --dataset "${{ runner.temp }}/u"
+      - name: Live state untouched
+        if: always()
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/retest_robustness || true
+          git diff --cached --quiet || git commit -m "Research retest robustness: ${{ steps.stage.outputs.s }} run $(date -u +%F_%H%M)"
+          git pull --rebase -q && git push
