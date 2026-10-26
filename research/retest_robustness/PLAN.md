@@ -181,3 +181,51 @@ condition 2 is a hard test.
 - (a) confirm the strategy of §0;
 - (b) approve or change the window U and the sub-periods;
 - (c) approve or change the thresholds of §7, in particular −20 % and 85 % coverage.
+
+## 10. Owner's approval and decisions (2026-10-26 09:49 ET), before any data or run
+The plan is approved with these binding conditions.
+
+1. **Object of study: the historical strategy M = Retest + SPY > MA200.** This is the PR #19
+   variant M (`research/crisis/PREREG_CRISIS.md` §4): all rules of §0 plus SPY close > SMA200 on
+   the signal day, both computed from bars up to the signal day. Nothing else changes.
+2. **Reproduction gate (§3 replaced).** The exact PR #19 code path
+   (`research/crisis/run.py` at `research/long-crisis-v1`), run on dataset 40152515701, must
+   reproduce `research/results/crisis/runs/2026-10-25T0255Z/results.json` for
+   `retest|M|{full,development,holdout}|{10,25}bps`, to ≤ 1e-6 in return and max DD and with
+   equal trade counts. Reference values:
+
+   | Window | Costs | Return | Max DD | Trades |
+   |---|---|---:|---:|---:|
+   | full | 10 bps | −4.3995 % | −45.3443 % | 557 |
+   | full | 25 bps | −33.8579 % | −53.7683 % | 559 |
+   | development | 10 bps | −24.2689 % | −30.8500 % | 283 |
+   | development | 25 bps | −34.1337 % | −39.4539 % | 283 |
+   | holdout | 10 bps | +49.6964 % | −22.0521 % | 276 |
+   | holdout | 25 bps | +31.0048 % | −24.3969 % | 276 |
+
+   The Retest control C is reproduced as well, as an extra check of the engine.
+   **If the gate fails, the study stops: INCONCLUSIVE.**
+3. **Independent period** U = 2007-06-01 → 2016-10-21, with sub-period books U1 2007-06-01 →
+   2011-12-30 and U2 2012-01-03 → 2016-10-21. Each book starts with $10,000.
+4. **Costs:** 10, 25 and 50 bps a side.
+5. **Max drawdown −20.00 %.** Not to be changed.
+6. **Coverage ≥ 85 % in every year of U.**
+   - Coverage = PIT S&P 500 member-days with a usable Yahoo bar ÷ PIT member-days.
+   - **Separate survivorship assessment**, reported:
+     - coverage of members later removed versus members that stayed;
+     - the removed members without data, with their membership spans;
+     - members whose bars end before their membership ends;
+     - a sensitivity book restricted to tickers that were still members at the end of U (the
+       direction and size of the bias).
+   - **If coverage < 85 % in any year, the study stops before the backtest: INCONCLUSIVE.**
+7. **The other criteria of §7 stay:** CAGR, profit factor, trade counts (≥ 100 closed on U and
+   ≥ 30 in each sub-period), and the comparison with 50 % SPY / 50 % BIL.
+   - The benchmarks use the corrected dividend logic: `etf_book_v2` of PR #25, copied
+     unchanged.
+8. **If the gates pass, the research backtest is run without any parameter change.**
+9. **Verdict names:**
+   - **PASS** = all of §7 1–5 hold (= "ROBUST").
+   - **FAIL** = any of §7 1–3 fails while 4 and 5 hold.
+   - **INCONCLUSIVE** = the reproduction gate fails, the coverage gate fails, or §7 4 fails.
+10. **No optimisation.** Nothing is tuned to results.
+11. **Unchanged:** Production, Paper, `TRADING=dry` and `main`. PR #26 stays Draft.
