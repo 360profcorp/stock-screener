@@ -45,7 +45,7 @@ def scan(x, sess, start_i=260):
         hi, lo = float(H[a:t + 1].max()), float(L[a:t + 1].min())
         width = hi / lo - 1
         first, last = float(np.mean(tr[a:a + FIRST_N])), float(np.mean(tr[t - LAST_N + 1:t + 1]))
-        if not (width <= MAX_WIDTH and last <= RATIO * first):
+        if not (first > 0 and width <= MAX_WIDTH and last <= RATIO * first):   # zero-range bars: no contraction measurable
             t += 1
             continue
         rec = dict(i_start=a, i_end=t, base_start=pd.Timestamp(dates[a]), base_end=pd.Timestamp(dates[t]),

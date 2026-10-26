@@ -92,6 +92,9 @@ the run asserts it equals **2017-11-03**. The last session is **2026-10-23**.
 - **Width:** `max(H[t-19..t]) / min(L[t-19..t]) - 1 <= 0.12`.
 - **Compression:** `mean(TR[t-4..t]) <= 0.75 * mean(TR[t-19..t-10])`. Bars `t-9..t-5` are not
   used.
+- **Degenerate bars** (added 2026-10-25 after a crash on the first run, before any S result existed):
+  if `mean(TR[t-19..t-10]) = 0` (stale bars with H = L = C), no contraction can be measured
+  and the window is not a base.
 - **Fixed on detection:** `base_high = max H`, `base_low = min L`, `base_start = date(t-19)`,
   `base_end = date(t)`. They never move.
 - **Watch** sessions `t+1..t+10`: the next 10 ticker bars, each on the next consecutive SPY
