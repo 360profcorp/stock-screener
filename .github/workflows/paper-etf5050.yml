@@ -1,0 +1,58 @@
+name: Paper 50/50 SPY/BIL
+
+# Paper only: no broker, no orders, TRADING=dry untouched. A separate book in paper/etf5050/.
+# The other paper books (paper/state, paper/data, paper/compare) are hashed before and after
+# and must be unchanged.
+on:
+  schedule:
+    - cron: "20 22 * * 1-5"      # 22:20 UTC: 6:20 PM New York in summer, 5:20 PM in winter
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["paper/etf5050/ACTIVATE"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-etf5050
+  cancel-in-progress: false
+
+jobs:
+  book:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "yfinance>=0.2.40" "pandas>=2.0" numpy lxml requests
+      - name: Tests
+        run: python -m unittest test_etf5050 -v
+      - name: Other paper books - hash before
+        run: find paper/state paper/data paper/compare -type f | sort | xargs sha256sum > "$RUNNER_TEMP/before.txt"
+      - name: Run the 50/50 book
+        run: python etf5050_run.py daily
+      - name: Other paper books untouched
+        run: |
+          find paper/state paper/data paper/compare -type f | sort | xargs sha256sum > "$RUNNER_TEMP/after.txt"
+          diff "$RUNNER_TEMP/before.txt" "$RUNNER_TEMP/after.txt"
+          git diff --exit-code HEAD -- paper/state paper/data paper/compare trader.py
+      - name: Back up the book (kept 90 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-etf5050-${{ github.run_id }}
+          path: paper/etf5050
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Persist (retries, fails loudly on conflict)
+        run: |
+          git config user.name "visar-paper"
+          git config user.email "visar-paper@users.noreply.github.com"
+          scripts/persist_state.sh "Paper 50/50 SPY/BIL $(date -u +%F_%H%M)" paper/etf5050
+      - name: Summary
+        if: always()
+        run: test -f paper/etf5050/summary.json && { echo '```json'; cat paper/etf5050/summary.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY" || true
