@@ -1,1 +1,2 @@
-
+decided_on,executed_on,reason,late,basis_prev_close,SPY_before,BIL_before,SPY_after,BIL_after,w_SPY_after_at_open,w_BIL_after_at_open,cash_after,fills
+2026-10-26,2026-10-27,initial,True,10000.0,0,0,6,54,0.4605,0.495,444.95,2

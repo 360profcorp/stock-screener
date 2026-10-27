@@ -16,22 +16,14 @@
  "experiment": "etf5050-20261027",
  "created_at": "2026-10-27T02:47:54+00:00",
  "activation_session": "2026-10-26",
- "processed_through": "2026-10-26",
- "cash": 10000.0,
+ "processed_through": "2026-10-27",
+ "cash": 444.94912842101985,
  "shares": {
-  "SPY": 0,
-  "BIL": 0
+  "SPY": 6,
+  "BIL": 54
  },
  "receivables": [],
- "pending": [
-  {
-   "scheduled_for": "2026-10-27",
-   "reason": "initial",
-   "decided_on": "2026-10-26",
-   "generated_at": "2026-10-27T02:47:54+00:00",
-   "late": false
-  }
- ],
+ "pending": [],
  "equity": [
   {
    "date": "2026-10-26",
@@ -45,23 +37,73 @@
    "drawdown_pct": 0.0,
    "SPY_close": 765.3699951171875,
    "BIL_close": 91.63999938964844
+  },
+  {
+   "date": "2026-10-27",
+   "equity": 10012.5492,
+   "cash": 444.9491,
+   "SPY_value": 4617.9598,
+   "BIL_value": 4949.6402,
+   "receivable": 0,
+   "w_SPY": 0.4612,
+   "w_BIL": 0.4943,
+   "drawdown_pct": 0.0,
+   "SPY_close": 769.6599731445312,
+   "BIL_close": 91.66000366210938
   }
  ],
- "fills": [],
- "rebalances": [],
+ "fills": [
+  {
+   "date": "2026-10-27",
+   "symbol": "SPY",
+   "side": "BUY",
+   "qty": 6,
+   "price": 767.3400268554688,
+   "fee": 0.9208080322265625,
+   "reason": "initial",
+   "late": true
+  },
+  {
+   "date": "2026-10-27",
+   "symbol": "BIL",
+   "side": "BUY",
+   "qty": 54,
+   "price": 91.6500015258789,
+   "fee": 0.9898200164794922,
+   "reason": "initial",
+   "late": true
+  }
+ ],
+ "rebalances": [
+  {
+   "decided_on": "2026-10-26",
+   "executed_on": "2026-10-27",
+   "reason": "initial",
+   "late": true,
+   "basis_prev_close": 10000.0,
+   "SPY_before": 0,
+   "BIL_before": 0,
+   "SPY_after": 6,
+   "BIL_after": 54,
+   "w_SPY_after_at_open": 0.4605,
+   "w_BIL_after_at_open": 0.495,
+   "cash_after": 444.95,
+   "fills": 2
+  }
+ ],
  "dividends": [],
- "fees_total": 0.0,
+ "fees_total": 1.9106280487060547,
  "dividends_received": 0.0,
  "last_close": {
-  "SPY": 765.3699951171875,
-  "BIL": 91.63999938964844
+  "SPY": 769.6599731445312,
+  "BIL": 91.66000366210938
  },
- "revision": 1,
+ "revision": 2,
  "problems": [],
  "held_prev_close": {
   "SPY": 0,
   "BIL": 0
  },
- "updated_at": "2026-10-27T02:47:54+00:00",
- "data_date": "2026-10-26"
+ "updated_at": "2026-10-27T22:46:36+00:00",
+ "data_date": "2026-10-27"
 }
