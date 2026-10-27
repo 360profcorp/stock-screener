@@ -313,3 +313,28 @@ The repository is public, so its Actions artifacts and logs are public too.
   metrics, and trade counts / R statistics without prices.
 - The license key is read only from a repository secret (`QUANTROCKET_LICENSE_KEY`), which the
   owner adds. It is never printed.
+
+### 11.7 Owner's clarification and implementation details (2026-10-26 22:03 ET, before any data access)
+**BIL.** BIL started trading on 2007-05-25 (first Yahoo bar 2007-05-30). It is needed only on
+the trading window T, which begins 2008-01-15. No price before its launch is required, and its
+absence before then never stops the study. §11.2.4 is to be read this way.
+
+**Implementation, fixed before any data is seen:**
+- **SPY and BIL from Yahoo** (`auto_adjust=False`, dividends as amounts). Both are survivors, so
+  Yahoo has them in full.
+  - They serve the market regime and the benchmarks.
+  - SPY is restricted to the bundle's sessions. The run asserts that its calendar equals the
+    bundle calendar.
+- **Stock prices from the bundle**, exported inside the QuantRocket zipline container:
+  - unadjusted daily bars, the `splits` table (zipline ratios) and `dividend_payouts`;
+  - converted to split-only adjusted OHLC (volume divided by the same factor);
+  - dividends kept as amounts and not used by the trading book (unchanged engine rule).
+- **Universe keyed by Sid:**
+  - each fja05680 snapshot's tickers are mapped to Sids by symbol history as of the snapshot date
+    (at the earliest the first bundle session);
+  - unmapped or ambiguous tickers stay as placeholders, so they count as missing in coverage;
+  - RS is ranked among the members that have data, as before.
+- **Basis check (§11.2.3):** AAPL, MSFT, XOM, JNJ, PG, KO, WMT, IBM against Yahoo
+  `auto_adjust=False` closes. At most one of the eight may fail the ≥ 99 % within 0.5 % test.
+- **Outputs committed:** only the aggregates listed in §11.6, plus the 10 bps equity curve
+  (account values only, no prices).

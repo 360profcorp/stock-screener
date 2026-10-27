@@ -6,7 +6,8 @@ on:
   push:
     branches: [research/retest-robustness-v1]
     paths: ["research/retest_robustness/RUN_REPRO", "research/retest_robustness/RUN_DATA",
-            "research/retest_robustness/RUN_ANALYZE", "research/retest_robustness/RUN_PROBE"]
+            "research/retest_robustness/RUN_ANALYZE", "research/retest_robustness/RUN_PROBE",
+            "research/retest_robustness/RUN_LEARN"]
 
 permissions:
   contents: write
@@ -33,7 +34,8 @@ jobs:
         id: stage
         run: |
           ch=$(git diff --name-only HEAD~1 HEAD)
-          if echo "$ch" | grep -q "RUN_PROBE"; then echo "s=probe" >> $GITHUB_OUTPUT
+          if echo "$ch" | grep -q "RUN_LEARN"; then echo "s=learn" >> $GITHUB_OUTPUT
+          elif echo "$ch" | grep -q "RUN_PROBE"; then echo "s=probe" >> $GITHUB_OUTPUT
           elif echo "$ch" | grep -q "RUN_ANALYZE"; then echo "s=analyze" >> $GITHUB_OUTPUT
           elif echo "$ch" | grep -q "RUN_DATA"; then echo "s=data" >> $GITHUB_OUTPUT
           else echo "s=repro" >> $GITHUB_OUTPUT; fi
@@ -77,6 +79,60 @@ jobs:
       - name: Analysis
         if: steps.stage.outputs.s == 'analyze'
         run: python -m research.retest_robustness.run analyze --dataset "${{ runner.temp }}/u"
+      # ---------------- §11 test L: QuantRocket learning bundle (licensed data: nothing uploaded)
+      - name: PIT snapshots (from the 2006-2016 data run; bars not used)
+        if: steps.stage.outputs.s == 'learn'
+        uses: actions/download-artifact@v4
+        with:
+          name: retest-u-dataset-40355486269
+          run-id: 40355486269
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/pit
+      - name: QuantRocket deployment, license, learning bundle export
+        if: steps.stage.outputs.s == 'learn'
+        env:
+          QR_KEY: ${{ secrets.QUANTROCKET_LICENSE_KEY }}
+        run: |
+          set -e
+          if [ -z "$QR_KEY" ]; then echo "::error title=learn::QUANTROCKET_LICENSE_KEY secret is not set"; exit 4; fi
+          T="${{ runner.temp }}"; mkdir -p $T/qr && cd $T/qr
+          curl -sSf 'https://www.quantrocket.com/composefiles/latest/local/docker-compose.yml' -o docker-compose.yml
+          docker compose -p quantrocket up -d > up.log 2>&1 || { tail -20 up.log; exit 1; }
+          docker compose -p quantrocket ps --services
+          for i in $(seq 1 60); do docker compose -p quantrocket exec -T jupyter quantrocket houston ping >/dev/null 2>&1 && break; sleep 10; done
+          docker compose -p quantrocket exec -T -e QR_KEY jupyter python -c "
+          import os; from quantrocket.license import set_license
+          set_license(os.environ['QR_KEY']); print('license set')"
+          docker compose -p quantrocket exec -T jupyter python -c "
+          import time
+          from quantrocket.zipline import create_usstock_bundle, ingest_bundle, list_bundles
+          try:
+              create_usstock_bundle('usstock-learn-1d', learn=True)
+          except Exception as e:
+              print('create:', type(e).__name__, str(e)[:200])
+          ingest_bundle('usstock-learn-1d')
+          for i in range(120):
+              b = list_bundles()
+              if b.get('usstock-learn-1d'):
+                  print('ingested'); break
+              time.sleep(15)
+          else:
+              raise SystemExit('ingestion did not finish')"
+          cd $GITHUB_WORKSPACE
+          PIT=$(find $T/pit -name 'sp500_pit_fja05680.csv' | head -1)
+          python -m research.retest_robustness.learn symbols --pit "$PIT" --out $T/qr/symbols.txt
+          ZC=$(docker compose -p quantrocket ps -q zipline)
+          docker cp research/retest_robustness/qr_export.py $ZC:/tmp/qr_export.py
+          docker cp $T/qr/symbols.txt $ZC:/tmp/symbols.txt
+          docker exec $ZC python /tmp/qr_export.py usstock-learn-1d /tmp/symbols.txt /tmp/qr_export.pkl.gz /tmp/qr_diag.json || echo "export failed"
+          docker cp $ZC:/tmp/qr_diag.json $T/qr/qr_diag.json || true
+          docker cp $ZC:/tmp/qr_export.pkl.gz $T/qr/qr_export.pkl.gz || true
+          ls -la $T/qr | grep -v symbols
+      - name: Test L (aggregates only)
+        if: steps.stage.outputs.s == 'learn'
+        run: |
+          T="${{ runner.temp }}"; PIT=$(find $T/pit -name 'sp500_pit_fja05680.csv' | head -1)
+          python -m research.retest_robustness.learn run --export $T/qr/qr_export.pkl.gz --pit "$PIT" --diag $T/qr/qr_diag.json
       - name: Live state untouched
         if: always()
         run: git diff --exit-code HEAD -- paper state trader.py core.py

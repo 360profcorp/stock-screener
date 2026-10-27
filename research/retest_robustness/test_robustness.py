@@ -48,3 +48,34 @@ class Bootstrap(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LearnConversion(unittest.TestCase):
+    def _blob(self):
+        sess = pd.bdate_range("2007-01-03", periods=6)
+        close = np.array([[100, 50], [102, 51], [51, 52], [52, 53], [53, 54], [54, 55]], dtype=np.float32)
+        arr = {c: close.copy() for c in ("open", "high", "low", "close")}
+        arr["volume"] = np.full_like(close, 1000)
+        splits = pd.DataFrame(dict(sid=[1], effective_date=[sess[2]], ratio=[0.5]))
+        divs = pd.DataFrame(dict(sid=[2], ex_date=[sess[3]], amount=[0.25]))
+        maps = pd.DataFrame(dict(sid=[1, 2, 3], symbol=["AAA", "WB", "WB"],
+                                 start_date=[sess[0], sess[0], sess[4]], end_date=[sess[-1], sess[3], sess[-1]]))
+        return dict(sessions=sess, sids=[1, 2], arrays=arr, splits=splits, divs=divs, maps=maps), sess
+
+    def test_split_only_basis(self):
+        from research.retest_robustness import learn as L
+        blob, sess = self._blob()
+        fr, _ = L.split_adjusted_frames(blob)
+        self.assertEqual(list(fr[1]["Close"].round(2)), [50.0, 51.0, 51.0, 52.0, 53.0, 54.0])  # 2:1 split
+        self.assertEqual(float(fr[1]["Volume"].iloc[0]), 2000.0)
+        self.assertEqual(float(fr[2]["Dividends"].loc[sess[3]]), 0.25)
+        self.assertEqual(float(fr[2]["Close"].iloc[0]), 50.0)                                 # no div adj
+
+    def test_ticker_reuse_resolved_by_date(self):
+        from research.retest_robustness import learn as L
+        blob, sess = self._blob()
+        m = blob["maps"].copy()
+        m["key"] = m["symbol"].map(L.norm)
+        self.assertEqual(L.sid_on(m, "WB", sess[1]), 2)
+        self.assertEqual(L.sid_on(m, "WB", sess[5]), 3)
+        self.assertIsNone(L.sid_on(m, "ZZZ", sess[1]))
