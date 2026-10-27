@@ -1,0 +1,35 @@
+{
+ "version": "etf5050-monthly/1.0",
+ "experiment": "etf5050-20261027",
+ "activation_session": "2026-10-26",
+ "processed_through": "2026-10-26",
+ "data_date": "2026-10-26",
+ "updated_at": "2026-10-27T02:47:54+00:00",
+ "revision": 1,
+ "cash": 10000.0,
+ "shares": {
+  "SPY": 0,
+  "BIL": 0
+ },
+ "pending": [
+  {
+   "scheduled_for": "2026-10-27",
+   "reason": "initial",
+   "decided_on": "2026-10-26",
+   "generated_at": "2026-10-27T02:47:54+00:00",
+   "late": false
+  }
+ ],
+ "fees_total": 0.0,
+ "dividends_received": 0.0,
+ "receivables": 0,
+ "late_fills": 0,
+ "problems": [],
+ "equity": 10000.0,
+ "return_pct": 0.0,
+ "max_drawdown_pct": 0.0,
+ "current_drawdown_pct": 0.0,
+ "w_SPY": 0.0,
+ "w_BIL": 0.0,
+ "cagr_pct": null
+}

@@ -1,0 +1,67 @@
+{
+ "kind": "forward",
+ "version": "etf5050-monthly/1.0",
+ "config": {
+  "initial_cash": 10000.0,
+  "weights": {
+   "SPY": 0.5,
+   "BIL": 0.5
+  },
+  "cost_bps": 2.0,
+  "rebalance": "monthly_last_session_close_next_open",
+  "bil_pay_lag_sessions": 5,
+  "risk_reference_dd_pct": -20.0
+ },
+ "config_hash": "214200d54930",
+ "experiment": "etf5050-20261027",
+ "created_at": "2026-10-27T02:47:54+00:00",
+ "activation_session": "2026-10-26",
+ "processed_through": "2026-10-26",
+ "cash": 10000.0,
+ "shares": {
+  "SPY": 0,
+  "BIL": 0
+ },
+ "receivables": [],
+ "pending": [
+  {
+   "scheduled_for": "2026-10-27",
+   "reason": "initial",
+   "decided_on": "2026-10-26",
+   "generated_at": "2026-10-27T02:47:54+00:00",
+   "late": false
+  }
+ ],
+ "equity": [
+  {
+   "date": "2026-10-26",
+   "equity": 10000.0,
+   "cash": 10000.0,
+   "SPY_value": 0.0,
+   "BIL_value": 0.0,
+   "receivable": 0,
+   "w_SPY": 0.0,
+   "w_BIL": 0.0,
+   "drawdown_pct": 0.0,
+   "SPY_close": 765.3699951171875,
+   "BIL_close": 91.63999938964844
+  }
+ ],
+ "fills": [],
+ "rebalances": [],
+ "dividends": [],
+ "fees_total": 0.0,
+ "dividends_received": 0.0,
+ "last_close": {
+  "SPY": 765.3699951171875,
+  "BIL": 91.63999938964844
+ },
+ "revision": 1,
+ "problems": [],
+ "held_prev_close": {
+  "SPY": 0,
+  "BIL": 0
+ },
+ "updated_at": "2026-10-27T02:47:54+00:00",
+ "data_date": "2026-10-26"
+}
