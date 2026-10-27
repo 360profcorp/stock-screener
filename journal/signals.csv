@@ -1,4 +1,25 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-27,breakout,LITE,98,Information Technology,866.18,840.47,815.26,5.88
+2026-10-27,breakout,MU,98,Information Technology,928.76,915.75,888.28,4.36
+2026-10-27,breakout,MRVL,98,Information Technology,243.57,238.58,231.42,4.99
+2026-10-27,breakout,HPE,98,Information Technology,60.84,59.4,57.62,5.3
+2026-10-27,breakout,CRWD,97,Information Technology,268.02,264.39,256.46,4.31
+2026-10-27,breakout,P,97,Information Technology,138.73,134.75,130.71,5.78
+2026-10-27,breakout,NTAP,97,Information Technology,227.58,224.6,217.86,4.27
+2026-10-27,breakout,PANW,96,Information Technology,401.7,394.7,382.86,4.69
+2026-10-27,breakout,WDC,93,Information Technology,380.88,367.34,356.32,6.45
+2026-10-27,breakout,TXN,92,Information Technology,308.91,298.95,289.98,6.13
+2026-10-27,breakout,KEYS,92,Information Technology,336.1,332.42,322.44,4.06
+2026-10-27,breakout,ADI,91,Information Technology,425.35,410.34,398.03,6.42
+2026-10-27,breakout,CSCO,87,Information Technology,111.38,111.01,107.68,3.32
+2026-10-27,breakout,CIEN,87,Information Technology,351.15,346.29,335.9,4.34
+2026-10-27,retest,NUE,92,Materials,270.79,254.3,243.22,10.18
+2026-10-27,retest,VTRS,91,Health Care,18.72,17.82,17.29,7.66
+2026-10-27,retest,BBY,90,Consumer Discretionary,98.5,94.75,91.91,6.69
+2026-10-27,retest,TMO,87,Health Care,693.02,666.38,642.62,7.27
+2026-10-27,vcp,DDOG,95,Information Technology,280.82,284.75,259.01,7.77
+2026-10-27,vcp,HPQ,93,Information Technology,33.58,34.27,32.05,4.56
+2026-10-27,vcp,BBY,90,Consumer Discretionary,98.5,100.58,93.59,4.99
 2026-10-21,breakout,DELL,99,Information Technology,485.88,473.5,459.29,5.47
 2026-10-21,breakout,ILMN,97,Health Care,282.86,272.01,263.85,6.72
 2026-10-21,breakout,DDOG,95,Information Technology,273.09,269.1,261.03,4.42
