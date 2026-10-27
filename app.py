@@ -21,6 +21,7 @@ import backtest as bt
 import portfolio_bt
 import brand
 import core
+import etf5050_tab
 import paper_tab
 import trade_tab
 from core import MODES, NY
@@ -968,9 +969,9 @@ def main():
     st.title(T["title"])
     st.caption(T["subtitle"])
 
-    tab_scan, tab_journal, tab_bt, tab_paper, tab_trade = st.tabs(
+    tab_scan, tab_journal, tab_bt, tab_paper, tab_etf, tab_trade = st.tabs(
         [T["tab_scan"], T["tab_journal"], T["tab_bt"], paper_tab.TX[lang]["tab"],
-         trade_tab.TX[lang]["tab"]])
+         etf5050_tab.TX[lang]["tab"], trade_tab.TX[lang]["tab"]])
     with tab_scan:
         scan_tab(T, lang)
     with tab_journal:
@@ -979,6 +980,8 @@ def main():
         backtest_tab(T)
     with tab_paper:
         paper_tab.render(lang)
+    with tab_etf:
+        etf5050_tab.render(lang)
     with tab_trade:
         trade_tab.render(T, lang, get_prices)
 

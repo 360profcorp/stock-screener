@@ -10,7 +10,8 @@ on:
   pull_request:
     branches: [main]
     paths: ["app.py", "trade_tab.py", "paper_tab.py", "bot_status.py", "trader.py", "vault.py",
-            "paper_run.py", "compare_run.py", "paper/**.py", "scripts/**", "test_*.py", ".github/workflows/**"]
+            "paper_run.py", "compare_run.py", "paper/**.py", "scripts/**", "test_*.py", ".github/workflows/**",
+            "paper_etf.py", "etf5050_tab.py", "etf5050_run.py"]
 
 permissions:
   contents: read
@@ -46,6 +47,10 @@ jobs:
         run: python -m unittest test_trader_equivalence -v
       - name: Per-strategy trading metrics (math + boundary cases)
         run: python -m unittest test_trade_metrics -v
+      - name: 50/50 SPY/BIL paper book (engine + tab)
+        env:
+          REQUIRE_UI_TESTS: "1"
+        run: python -m unittest test_etf5050 test_etf5050_ui -v
       - name: Existing test suites
         run: python -m unittest test_paper test_task6_engine test_portfolio_bt test_compare
       - name: Strategy fingerprint unchanged (forward experiment can continue)
