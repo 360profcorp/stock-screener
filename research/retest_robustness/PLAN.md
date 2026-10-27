@@ -241,3 +241,75 @@ The plan is approved with these binding conditions.
 - The gate stays at 85 %. If coverage is still below it, the verdict is INCONCLUSIVE.
 - Renamed tickers (the old symbol is no longer on Yahoo) are **not** remapped by hand. They count
   as missing.
+
+## 11. Separate test L on the QuantRocket learning bundle (owner's instruction, 2026-10-26 21:56 ET)
+Written before any QuantRocket data was accessed. No price of the bundle has been seen.
+
+**Status:** test L is a separate check. It does **not** replace the 2007–2016 test U, which stays
+INCONCLUSIVE.
+
+### 11.1 Source, as published by QuantRocket (not yet verified on the data)
+- **Bundle:** `usstock-learn-1d`, from the free "Learning and Evaluation" tier (no credit card).
+- **Contents:** daily prices for all US stocks, 2007–2011, described as survivorship-bias-free
+  (it includes stocks that later delisted).
+- **Identifiers:** QuantRocket Sids, with symbol history.
+- **Terms of use:** data for internal use only; no redistribution of the data or of anything it
+  could be rebuilt from.
+
+**Access requirements:**
+- a QuantRocket account and its license key, which the owner creates;
+- the QuantRocket Docker deployment. It cannot be reached from this session, but GitHub Actions
+  runners can.
+
+### 11.2 Checks before any return (each failure → INCONCLUSIVE, no backtest)
+1. **License and ingestion.** The bundle ingests with the free license. Its calendar starts on
+   2007-01-03 and ends on 2011-12-30.
+2. **Identifiers.** Every fja05680 PIT S&P 500 ticker on a given day maps to exactly one Sid via
+   the symbol as of that day.
+   - Ambiguous or unmapped tickers count as missing.
+   - Ticker reuse is resolved by the as-of date, never by today's symbol.
+3. **Price basis compatible with the engine.**
+   - Our engine uses split-adjusted OHLC that is **not** dividend-adjusted (Yahoo
+     `auto_adjust=False`), with dividends kept separately.
+   - Bundle prices are converted to exactly that basis: raw prices with split adjustments only.
+   - Check: on the overlap with surviving tickers that Yahoo still serves (e.g. AAPL, MSFT, SPY),
+     the converted closes must match Yahoo `auto_adjust=False` within 0.5 % on ≥ 99 % of
+     sessions. Otherwise the basis is not compatible.
+4. **SPY and BIL** are present for the whole window (BIL from 2007-05-30).
+5. **Coverage ≥ 85 % in every year 2007–2011**, with the §10.6 definition. The survivorship split
+   (stayed vs removed members) is reported.
+
+### 11.3 Window, fixed now
+- **T = bundle calendar session index 260 → 2011-12-30.** Index 260 is the first session after the
+  engine's 260-bar warm-up (`bt.WARMUP`); that warm-up also covers SPY's SMA200 and the 252-day
+  RS look-back.
+- For a bundle starting on 2007-01-03 this session is **2008-01-15**. The run asserts it.
+- One $10,000 book. No sub-periods: the window is about 4 years, like U1.
+
+### 11.4 Strategy and engine
+M exactly as in §10.1, through the same PR #19 code path. Nothing changes:
+- detection, RS, filters;
+- `trades_for`, `portfolio_bt.replay`, `CFG`;
+- costs of 10, 25 and 50 bps;
+- benchmarks `etf_book_v2` (SPY, 50/50 SPY/BIL, 50/50 SPY/cash), the same regimes, the named
+  windows that fall inside T, and the same bootstrap.
+
+### 11.5 Verdict for L (thresholds unchanged)
+**PASS** only if all hold:
+1. CAGR > 0 and profit factor > 1 at 10 **and** 25 bps.
+2. Max DD ≥ −20.00 % at 10 bps.
+3. CAGR ≥ that of 50/50 SPY/BIL and max DD no deeper, at 10 and 25 bps.
+4. ≥ 30 closed trades (the sub-period threshold, since T has about the length of U1).
+5. Every check of §11.2 passes.
+
+**Outcomes:**
+- **FAIL** if any of 1–3 fails while 4 and 5 hold.
+- **INCONCLUSIVE** otherwise.
+
+### 11.6 Handling of the licensed data in this public repository
+The repository is public, so its Actions artifacts and logs are public too.
+- No bars, bundle files or per-session prices are uploaded, committed or printed.
+- Only aggregates are committed: coverage counts, mapping counts, basis-check statistics, book
+  metrics, and trade counts / R statistics without prices.
+- The license key is read only from a repository secret (`QUANTROCKET_LICENSE_KEY`), which the
+  owner adds. It is never printed.
