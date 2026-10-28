@@ -1,34 +1,25 @@
 date,mode,ticker,rs,sector,close,pivot,trigger,limit,stop,risk_pct,dist_pct
-2026-10-27,vcp,DDOG,95,Information Technology,280.82,284.75,285.03,287.88,259.01,9.13,1.5
-2026-10-27,vcp,HPQ,93,Information Technology,33.58,34.27,34.3,34.64,32.05,6.56,2.14
-2026-10-27,vcp,BBY,90,Consumer Discretionary,98.5,100.58,100.68,101.69,93.59,7.04,2.21
-2026-10-27,breakout,DELL,99,Information Technology,501.96,507.39,507.89,512.97,492.16,3.1,1.18
-2026-10-27,breakout,MRNA,99,Health Care,207.97,208.87,209.08,211.17,202.6,3.1,0.53
-2026-10-27,breakout,HPE,98,Information Technology,60.84,61.27,61.33,61.94,59.43,3.1,0.81
-2026-10-27,breakout,MRVL,98,Information Technology,243.57,245.81,246.06,248.52,238.44,3.1,1.02
-2026-10-27,breakout,MU,98,Information Technology,928.76,935.87,936.81,946.18,907.79,3.1,0.87
-2026-10-27,breakout,CRWD,97,Information Technology,268.02,271.03,271.3,274.01,262.9,3.1,1.22
-2026-10-27,breakout,P,97,Information Technology,138.73,139.54,139.68,141.08,135.35,3.1,0.68
-2026-10-27,breakout,NTAP,97,Information Technology,227.58,231.56,231.79,234.11,224.61,3.1,1.85
-2026-10-27,breakout,CRL,96,Health Care,358.84,359.85,360.2,363.8,349.05,3.1,0.38
-2026-10-27,breakout,PANW,96,Information Technology,401.7,404.77,405.17,409.22,392.63,3.09,0.86
-2026-10-27,breakout,TRGP,93,Energy,302.61,307.87,308.18,311.26,298.63,3.1,1.84
-2026-10-27,breakout,WDC,93,Information Technology,380.88,388.08,388.47,392.35,376.44,3.1,1.99
-2026-10-27,breakout,KEYS,92,Information Technology,336.1,336.47,336.81,340.18,326.38,3.1,0.21
-2026-10-27,breakout,NUE,92,Materials,270.79,275.9,276.18,278.94,267.62,3.1,1.99
-2026-10-27,breakout,TXN,92,Information Technology,308.91,309.47,309.78,312.88,300.19,3.1,0.28
-2026-10-27,breakout,ADI,91,Information Technology,425.35,427.27,427.7,431.98,414.45,3.1,0.55
-2026-10-27,breakout,VTRS,91,Health Care,18.72,18.83,18.85,19.04,18.27,3.08,0.69
-2026-10-27,breakout,A,90,Health Care,177.49,179.1,179.28,181.07,173.73,3.1,1.01
-2026-10-27,breakout,HAS,90,Consumer Discretionary,118.33,119.32,119.44,120.63,115.74,3.1,0.94
-2026-10-27,breakout,PTC,90,Information Technology,194.62,194.68,194.87,196.82,188.84,3.09,0.13
-2026-10-27,breakout,CIEN,87,Information Technology,351.15,353.1,353.45,356.98,342.5,3.1,0.65
-2026-10-27,breakout,CSCO,87,Information Technology,111.38,112.69,112.81,113.94,109.31,3.1,1.28
-2026-10-27,breakout,DVN,87,Energy,51.23,51.97,52.02,52.54,50.41,3.09,1.54
-2026-10-27,breakout,TMO,87,Health Care,693.02,700.99,701.69,708.71,679.96,3.1,1.25
-2026-10-27,breakout,ABBV,86,Health Care,286.39,289.59,289.88,292.78,280.9,3.1,1.22
-2026-10-27,breakout,MTD,86,Health Care,1685.32,1692.98,1694.68,1711.63,1642.2,3.1,0.56
-2026-10-27,breakout,GILD,85,Health Care,159.08,159.69,159.85,161.45,154.9,3.1,0.48
-2026-10-27,breakout,HST,85,Real Estate,25.22,25.3,25.33,25.58,24.54,3.12,0.44
-2026-10-27,breakout,MSFT,85,Information Technology,531.33,534.7,535.23,540.58,518.66,3.1,0.73
-2026-10-27,breakout,STLD,85,Materials,246.8,248.31,248.56,251.05,240.86,3.1,0.71
+2026-10-28,vcp,BBY,90,Consumer Discretionary,96.96,100.58,100.68,101.69,93.43,7.2,3.84
+2026-10-28,breakout,MRNA,99,Health Care,214.16,218.16,218.38,220.56,211.62,3.1,1.97
+2026-10-28,breakout,LITE,98,Information Technology,913.95,921.0,921.92,931.14,893.37,3.1,0.87
+2026-10-28,breakout,MRVL,98,Information Technology,251.65,253.66,253.91,256.45,246.05,3.1,0.9
+2026-10-28,breakout,MU,98,Information Technology,983.23,990.0,990.99,1000.9,960.3,3.1,0.79
+2026-10-28,breakout,STX,94,Information Technology,697.97,698.94,699.64,706.64,677.97,3.1,0.24
+2026-10-28,breakout,TRGP,94,Energy,305.9,308.46,308.77,311.86,299.21,3.1,0.94
+2026-10-28,breakout,WDC,93,Information Technology,396.42,397.33,397.73,401.71,385.41,3.1,0.33
+2026-10-28,breakout,A,92,Health Care,181.48,182.93,183.11,184.94,177.44,3.1,0.9
+2026-10-28,breakout,COP,92,Energy,149.06,152.0,152.15,153.67,147.44,3.1,2.07
+2026-10-28,breakout,KEYS,92,Information Technology,335.5,340.43,340.77,344.18,330.22,3.1,1.57
+2026-10-28,breakout,NUE,92,Materials,271.79,275.9,276.18,278.94,267.62,3.1,1.62
+2026-10-28,breakout,HAS,91,Consumer Discretionary,118.68,121.03,121.15,122.36,117.4,3.1,2.08
+2026-10-28,breakout,IQV,91,Health Care,279.04,284.5,284.78,287.63,275.96,3.1,2.06
+2026-10-28,breakout,TXN,91,Information Technology,309.83,310.0,310.31,313.41,300.7,3.1,0.15
+2026-10-28,breakout,VTRS,91,Health Care,18.77,18.93,18.95,19.14,18.36,3.11,0.96
+2026-10-28,breakout,ADI,90,Information Technology,428.27,429.64,430.07,434.37,416.75,3.1,0.42
+2026-10-28,breakout,BE,89,Industrials,228.08,231.67,231.9,234.22,224.72,3.1,1.67
+2026-10-28,breakout,BDX,88,Health Care,195.16,198.9,199.1,201.09,192.93,3.1,2.02
+2026-10-28,breakout,TMO,88,Health Care,704.15,710.84,711.55,718.67,689.51,3.1,1.05
+2026-10-28,breakout,MTD,87,Health Care,1698.47,1722.74,1724.46,1741.7,1671.06,3.1,1.53
+2026-10-28,breakout,DVN,86,Energy,51.27,52.01,52.06,52.58,50.45,3.09,1.54
+2026-10-28,breakout,CIEN,85,Information Technology,363.21,368.24,368.61,372.3,357.19,3.1,1.49
+2026-10-28,breakout,STLD,85,Materials,249.99,250.13,250.38,252.88,242.63,3.1,0.16

@@ -1,4 +1,12 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-28,breakout,STX,94,Information Technology,697.97,687.05,666.44,4.52
+2026-10-28,breakout,BE,89,Industrials,228.08,224.17,217.44,4.66
+2026-10-28,breakout,TMO,88,Health Care,704.15,700.99,679.96,3.44
+2026-10-28,breakout,MTD,87,Health Care,1698.47,1692.99,1642.2,3.31
+2026-10-28,breakout,STLD,85,Materials,249.99,248.31,240.86,3.65
+2026-10-28,retest,COP,92,Energy,149.06,147.55,143.05,4.03
+2026-10-28,retest,IQV,91,Health Care,279.04,272.98,261.07,6.44
+2026-10-28,retest,OXY,86,Energy,62.86,62.51,60.63,3.54
 2026-10-27,breakout,LITE,98,Information Technology,866.18,840.47,815.26,5.88
 2026-10-27,breakout,MU,98,Information Technology,928.76,915.75,888.28,4.36
 2026-10-27,breakout,MRVL,98,Information Technology,243.57,238.58,231.42,4.99
