@@ -4,7 +4,7 @@
  "first_entry_session": "2026-10-21",
  "common_period": {
   "start": "2026-10-20",
-  "through": "2026-10-27"
+  "through": "2026-10-28"
  },
  "books": {
   "breakout": {
@@ -12,22 +12,22 @@
    "strategy_id": "breakout-rs-first/1.0+cfg.644e0eb26cdb",
    "experiment": "cmp-2026-10-20-breakout",
    "start": "2026-10-20",
-   "processed_through": "2026-10-27",
-   "equity": 10136.095395880737,
-   "cash": 6074.705350714721,
-   "return_pct": 1.360953958807376,
+   "processed_through": "2026-10-28",
+   "equity": 10215.373089716948,
+   "cash": 2758.872891352691,
+   "return_pct": 2.1537308971694813,
    "max_drawdown_pct": -1.5779885693821605,
    "closed_trades": 3,
-   "open_positions": 2,
-   "pending_orders": 27,
-   "costs_paid_usd": 15.239344719848631,
-   "capital_invested_mean_pct": 36.38152125060126,
-   "sessions_with_position_pct": 83.33333333333334,
+   "open_positions": 5,
+   "pending_orders": 26,
+   "costs_paid_usd": 18.55186465927124,
+   "capital_invested_mean_pct": 41.611722598055096,
+   "sessions_with_position_pct": 85.71428571428571,
    "order_outcomes": {
-    "positions": 17,
+    "positions": 40,
     "daily_entries": 12,
-    "entered": 5,
-    "ticker_open": 2
+    "entered": 8,
+    "ticker_open": 3
    },
    "positions": [
     {
@@ -43,251 +43,263 @@
      "entry": 386.1400146484375,
      "stop": 369.23049407958985,
      "entry_date": "2026-10-21"
+    },
+    {
+     "ticker": "DELL",
+     "qty": 2,
+     "entry": 504.0799865722656,
+     "stop": 461.1186047363281,
+     "entry_date": "2026-10-28"
+    },
+    {
+     "ticker": "HPE",
+     "qty": 23,
+     "entry": 62.0099983215332,
+     "stop": 57.618001480102535,
+     "entry_date": "2026-10-28"
+    },
+    {
+     "ticker": "LITE",
+     "qty": 1,
+     "entry": 878.1300048828125,
+     "stop": 815.2558715820312,
+     "entry_date": "2026-10-28"
     }
    ],
    "pending": [
     {
-     "ticker": "DELL",
-     "signal_date": "2026-10-27",
+     "ticker": "MRNA",
+     "signal_date": "2026-10-28",
      "rs": 99.0,
      "rank": 1,
-     "stop": 461.1186047363281,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 202.60389526367186,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "HPE",
-     "signal_date": "2026-10-27",
-     "rs": 98.0,
+     "ticker": "SNDK",
+     "signal_date": "2026-10-28",
+     "rs": 99.0,
      "rank": 2,
-     "stop": 57.618001480102535,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 1276.4986865234375,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "ILMN",
+     "signal_date": "2026-10-28",
+     "rs": 98.0,
+     "rank": 3,
+     "stop": 273.7145928955078,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "LITE",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
      "rs": 98.0,
-     "rank": 3,
-     "stop": 815.2558715820312,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "rank": 4,
+     "stop": 866.2002905273438,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "MRVL",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
      "rs": 98.0,
-     "rank": 4,
-     "stop": 231.42260177612303,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "rank": 5,
+     "stop": 238.49389526367187,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "MU",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
      "rs": 98.0,
-     "rank": 5,
-     "stop": 888.2775,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "CRWD",
-     "signal_date": "2026-10-27",
-     "rs": 97.0,
      "rank": 6,
-     "stop": 256.45831420898435,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "FTNT",
-     "signal_date": "2026-10-27",
-     "rs": 97.0,
-     "rank": 7,
-     "stop": 179.21719467163086,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "NTAP",
-     "signal_date": "2026-10-27",
-     "rs": 97.0,
-     "rank": 8,
-     "stop": 217.86200592041016,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "P",
-     "signal_date": "2026-10-27",
-     "rs": 97.0,
-     "rank": 9,
-     "stop": 130.7075,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "AMD",
-     "signal_date": "2026-10-27",
-     "rs": 96.0,
-     "rank": 10,
-     "stop": 517.495,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 907.7938952636719,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "CRL",
-     "signal_date": "2026-10-27",
-     "rs": 96.0,
-     "rank": 11,
-     "stop": 347.0368893432617,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "signal_date": "2026-10-28",
+     "rs": 97.0,
+     "rank": 7,
+     "stop": 349.09331420898434,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "PANW",
-     "signal_date": "2026-10-27",
+     "ticker": "AMD",
+     "signal_date": "2026-10-28",
      "rs": 96.0,
-     "rank": 12,
-     "stop": 382.8590118408203,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "INTC",
-     "signal_date": "2026-10-27",
-     "rs": 95.0,
-     "rank": 13,
-     "stop": 89.32729644775391,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "rank": 8,
+     "stop": 547.0023834228515,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "RVTY",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
      "rs": 95.0,
-     "rank": 14,
-     "stop": 156.81989822387695,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "rank": 9,
+     "stop": 157.87719467163086,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "WDC",
-     "signal_date": "2026-10-27",
-     "rs": 93.0,
-     "rank": 15,
-     "stop": 356.3197964477539,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "ticker": "INTC",
+     "signal_date": "2026-10-28",
+     "rs": 94.0,
+     "rank": 10,
+     "stop": 92.13060325622558,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "KEYS",
-     "signal_date": "2026-10-27",
-     "rs": 92.0,
-     "rank": 16,
-     "stop": 322.4425582885742,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "NUE",
-     "signal_date": "2026-10-27",
-     "rs": 92.0,
-     "rank": 17,
-     "stop": 256.68139526367185,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "TXN",
-     "signal_date": "2026-10-27",
-     "rs": 92.0,
-     "rank": 18,
-     "stop": 289.9815118408203,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "ADI",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
-     "rank": 19,
-     "stop": 398.0297964477539,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "EXPD",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
-     "rank": 20,
-     "stop": 193.621700592041,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "ticker": "STX",
+     "signal_date": "2026-10-28",
+     "rs": 94.0,
+     "rank": 11,
+     "stop": 666.4384881591797,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "SWKS",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
-     "rank": 21,
-     "stop": 82.21720207214355,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "signal_date": "2026-10-28",
+     "rs": 93.0,
+     "rank": 12,
+     "stop": 83.24539970397949,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "VTRS",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
-     "rank": 22,
-     "stop": 18.100199851989746,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "ticker": "WDC",
+     "signal_date": "2026-10-28",
+     "rs": 93.0,
+     "rank": 13,
+     "stop": 376.43758697509764,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "WST",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
-     "rank": 23,
-     "stop": 385.2452035522461,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "signal_date": "2026-10-28",
+     "rs": 93.0,
+     "rank": 14,
+     "stop": 386.70991302490233,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "PTC",
-     "signal_date": "2026-10-27",
-     "rs": 90.0,
-     "rank": 24,
-     "stop": 188.77170059204101,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "ticker": "A",
+     "signal_date": "2026-10-28",
+     "rs": 92.0,
+     "rank": 15,
+     "stop": 173.72700592041016,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "WAT",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
+     "rs": 92.0,
+     "rank": 16,
+     "stop": 456.7341857910156,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "TXN",
+     "signal_date": "2026-10-28",
+     "rs": 91.0,
+     "rank": 17,
+     "stop": 300.185901184082,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "ADI",
+     "signal_date": "2026-10-28",
      "rs": 90.0,
-     "rank": 25,
-     "stop": 451.3991857910156,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "rank": 18,
+     "stop": 414.4518893432617,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "AMGN",
+     "signal_date": "2026-10-28",
+     "rs": 90.0,
+     "rank": 19,
+     "stop": 436.30598815917966,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "BE",
+     "signal_date": "2026-10-28",
+     "rs": 89.0,
+     "rank": 20,
+     "stop": 217.44489822387695,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "PTC",
+     "signal_date": "2026-10-28",
+     "rs": 89.0,
+     "rank": 21,
+     "stop": 188.83959289550782,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "LH",
+     "signal_date": "2026-10-28",
+     "rs": 88.0,
+     "rank": 22,
+     "stop": 322.3697964477539,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "TMO",
+     "signal_date": "2026-10-28",
+     "rs": 88.0,
+     "rank": 23,
+     "stop": 679.9602905273438,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "MTD",
+     "signal_date": "2026-10-28",
+     "rs": 87.0,
+     "rank": 24,
+     "stop": 1642.2002905273437,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "CIEN",
-     "signal_date": "2026-10-27",
-     "rs": 87.0,
-     "rank": 26,
-     "stop": 335.9013082885742,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "signal_date": "2026-10-28",
+     "rs": 85.0,
+     "rank": 25,
+     "stop": 342.50700592041017,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "CSCO",
-     "signal_date": "2026-10-27",
-     "rs": 87.0,
-     "rank": 27,
-     "stop": 107.67970207214356,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "ticker": "STLD",
+     "signal_date": "2026-10-28",
+     "rs": 85.0,
+     "rank": 26,
+     "stop": 240.86069763183593,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     }
    ]
   },
@@ -296,22 +308,22 @@
    "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
    "experiment": "cmp-2026-10-20-retest",
    "start": "2026-10-20",
-   "processed_through": "2026-10-27",
-   "equity": 9771.680581007997,
-   "cash": 6789.190590773622,
-   "return_pct": -2.2831941899200348,
+   "processed_through": "2026-10-28",
+   "equity": 9814.906637251894,
+   "cash": 1964.2765331869527,
+   "return_pct": -1.8509336274810662,
    "max_drawdown_pct": -2.4068700623565586,
    "closed_trades": 3,
-   "open_positions": 2,
-   "pending_orders": 11,
-   "costs_paid_usd": 10.912483262023926,
-   "capital_invested_mean_pct": 35.63309091724538,
-   "sessions_with_position_pct": 83.33333333333334,
+   "open_positions": 5,
+   "pending_orders": 12,
+   "costs_paid_usd": 15.732577225646972,
+   "capital_invested_mean_pct": 41.969335598731966,
+   "sessions_with_position_pct": 85.71428571428571,
    "order_outcomes": {
     "daily_entries": 17,
-    "entered": 5,
-    "positions": 5,
-    "ticker_open": 1
+    "positions": 12,
+    "entered": 8,
+    "ticker_open": 2
    },
    "positions": [
     {
@@ -327,107 +339,137 @@
      "entry": 274.989990234375,
      "stop": 255.38159881591795,
      "entry_date": "2026-10-22"
+    },
+    {
+     "ticker": "BIIB",
+     "qty": 7,
+     "entry": 244.92999267578125,
+     "stop": 237.31049407958983,
+     "entry_date": "2026-10-28"
+    },
+    {
+     "ticker": "EXPD",
+     "qty": 8,
+     "entry": 198.86000061035156,
+     "stop": 187.87930236816405,
+     "entry_date": "2026-10-28"
+    },
+    {
+     "ticker": "VTRS",
+     "qty": 82,
+     "entry": 18.472000122070312,
+     "stop": 17.285399703979493,
+     "entry_date": "2026-10-28"
     }
    ],
    "pending": [
     {
-     "ticker": "BIIB",
-     "signal_date": "2026-10-27",
-     "rs": 93.0,
+     "ticker": "APA",
+     "signal_date": "2026-10-28",
+     "rs": 95.0,
      "rank": 1,
-     "stop": 237.31049407958983,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 48.90739822387695,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "NUE",
-     "signal_date": "2026-10-27",
-     "rs": 92.0,
+     "ticker": "VEEV",
+     "signal_date": "2026-10-28",
+     "rs": 95.0,
      "rank": 2,
-     "stop": 243.21780532836914,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 299.245,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "EXPD",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
+     "ticker": "ZBRA",
+     "signal_date": "2026-10-28",
+     "rs": 94.0,
      "rank": 3,
-     "stop": 187.87930236816405,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "VTRS",
-     "signal_date": "2026-10-27",
-     "rs": 91.0,
-     "rank": 4,
-     "stop": 17.285399703979493,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 362.68299407958983,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "A",
-     "signal_date": "2026-10-27",
-     "rs": 90.0,
-     "rank": 5,
+     "signal_date": "2026-10-28",
+     "rs": 92.0,
+     "rank": 4,
      "stop": 164.79329940795898,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
-     "ticker": "BBY",
-     "signal_date": "2026-10-27",
-     "rs": 90.0,
+     "ticker": "COP",
+     "signal_date": "2026-10-28",
+     "rs": 92.0,
+     "rank": 5,
+     "stop": 143.04590118408203,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "IQV",
+     "signal_date": "2026-10-28",
+     "rs": 91.0,
      "rank": 6,
-     "stop": 91.9075,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
-    },
-    {
-     "ticker": "WAT",
-     "signal_date": "2026-10-27",
-     "rs": 90.0,
-     "rank": 7,
-     "stop": 433.2990118408203,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 260.93,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "LLY",
-     "signal_date": "2026-10-27",
-     "rs": 88.0,
-     "rank": 8,
+     "signal_date": "2026-10-28",
+     "rs": 90.0,
+     "rank": 7,
      "stop": 1219.891395263672,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "TMO",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
+     "rs": 88.0,
+     "rank": 8,
+     "stop": 642.625,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "ACN",
+     "signal_date": "2026-10-28",
      "rs": 87.0,
      "rank": 9,
-     "stop": 642.625,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "stop": 225.59280349731443,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "MTD",
-     "signal_date": "2026-10-27",
-     "rs": 86.0,
+     "signal_date": "2026-10-28",
+     "rs": 87.0,
      "rank": 10,
      "stop": 1598.9091857910155,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
+    },
+    {
+     "ticker": "OXY",
+     "signal_date": "2026-10-28",
+     "rs": 86.0,
+     "rank": 11,
+     "stop": 60.634698371887204,
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     },
     {
      "ticker": "GILD",
-     "signal_date": "2026-10-27",
+     "signal_date": "2026-10-28",
      "rs": 85.0,
-     "rank": 11,
+     "rank": 12,
      "stop": 147.15870651245118,
-     "scheduled_for": "2026-10-28",
-     "generated_at": "2026-10-27T22:35:36+00:00"
+     "scheduled_for": "2026-10-29",
+     "generated_at": "2026-10-28T22:37:46+00:00"
     }
    ]
   }
