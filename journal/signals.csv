@@ -1,4 +1,12 @@
 date,mode,ticker,rs,sector,close,level,stop,risk_pct
+2026-10-29,breakout,URI,88,Industrials,1198.68,1189.01,1153.34,3.78
+2026-10-29,breakout,WSM,86,Consumer Discretionary,259.86,254.37,246.74,5.05
+2026-10-29,breakout,DGX,86,Health Care,252.92,249.73,242.24,4.22
+2026-10-29,retest,BIIB,93,Health Care,249.65,244.65,237.31,4.94
+2026-10-29,retest,HAS,91,Consumer Discretionary,119.57,117.77,113.63,4.97
+2026-10-29,retest,TRV,87,Financials,398.27,396.46,379.91,4.61
+2026-10-29,retest,WSM,86,Consumer Discretionary,259.86,243.45,236.15,9.13
+2026-10-29,retest,FDS,85,Financials,320.04,310.0,296.78,7.27
 2026-10-28,breakout,STX,94,Information Technology,697.97,687.05,666.44,4.52
 2026-10-28,breakout,BE,89,Industrials,228.08,224.17,217.44,4.66
 2026-10-28,breakout,TMO,88,Health Care,704.15,700.99,679.96,3.44
