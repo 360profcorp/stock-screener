@@ -1,0 +1,116 @@
+name: Research Event & First-Base Breakout v1 (research branch only)
+
+# research/event_base/PLAN.md. Bars of dataset run 40152515701. Exploratory, research only:
+# never touches paper/, state/, orders or the bot. No schedule.
+on:
+  push:
+    branches: [research/event-base-v1]
+    paths: ["research/event_base/RUN", "research/event_base/RUN_EVENTS", "research/event_base/RUN_REVIEW", "research/event_base/RUN_PACKETS"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-event-base
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/research/event-base-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy "yfinance>=0.2.40" lxml requests matplotlib
+      - name: Which stage
+        id: stage
+        run: |
+          ch=$(git diff --name-only HEAD~1 HEAD)
+          if echo "$ch" | grep -q "research/event_base/RUN_PACKETS"; then echo "s=packets" >> $GITHUB_OUTPUT
+          elif echo "$ch" | grep -q "research/event_base/RUN_REVIEW"; then echo "s=review" >> $GITHUB_OUTPUT
+          elif echo "$ch" | grep -q "research/event_base/RUN_EVENTS"; then echo "s=events" >> $GITHUB_OUTPUT
+          else echo "s=books" >> $GITHUB_OUTPUT; fi
+      - name: Tests
+        run: python -m unittest research.event_base.test_event_base research.crisis.test_crisis research.long_diagnostic.test_diagnostic test_portfolio_bt test_task6_engine
+      - name: Production code identical to pinned main f0c784d
+        run: git diff --exit-code f0c784d HEAD -- trader.py core.py portfolio_bt.py backtest.py paper_run.py daily_scan.py schwab_api.py vault.py $(git ls-files 'paper/*.py')
+      - name: 10-year bars
+        if: steps.stage.outputs.s == 'books' || steps.stage.outputs.s == 'review'
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Books (M reproduction, C, S, index alternatives)
+        if: steps.stage.outputs.s == 'books'
+        run: |
+          set +e
+          python -m research.event_base.run --dataset "${{ runner.temp }}/ds" > r.log 2>&1; rc=$?
+          tail -60 r.log
+          [ $rc -eq 0 ] || python -c "t=open('r.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=event-base::'+t)"
+          exit $rc
+      - name: SEC Forms 3/4/5 symbols (identity source)
+        if: steps.stage.outputs.s == 'events' || steps.stage.outputs.s == 'packets'
+        uses: actions/download-artifact@v4
+        with:
+          name: v2src-40196473096
+          run-id: 40196473096
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/f345
+      - name: Event sources pilot (no returns loaded)
+        if: steps.stage.outputs.s == 'events'
+        run: |
+          set +e
+          RUNDIR=$(ls -d research/results/event_base/runs/*/ | sort | tail -1)
+          echo "candidates from $RUNDIR"
+          python -m research.event_base.events --candidates "${RUNDIR}s_candidates.csv" --calendar "${RUNDIR}equity_C_full_10bps.csv" \
+            --f345 "${{ runner.temp }}/f345" --out research/results/event_base/events --docs "${{ runner.temp }}/docs" --mode "$(cat research/event_base/RUN_EVENTS | head -1)" > e.log 2>&1; rc=$?
+          tail -80 e.log
+          exit $rc
+      - name: Saved pilot documents
+        if: steps.stage.outputs.s == 'review'
+        uses: actions/download-artifact@v4
+        with:
+          name: event-docs-40253859449
+          run-id: 40253859449
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/docs
+      - name: Review packets (text only) and corrected benchmarks
+        if: steps.stage.outputs.s == 'review'
+        run: |
+          set -e
+          python -m research.event_base.review --events research/results/event_base/events/2026-10-26T012220Z --docs "${{ runner.temp }}/docs" --out research/results/event_base/review > v.log 2>&1 || { tail -40 v.log; exit 1; }
+          tail -5 v.log
+          if [ ! -d research/results/event_base/benchmarks_v2 ]; then python -m research.event_base.rebench --dataset "${{ runner.temp }}/ds" --run research/results/event_base/runs/2026-10-26T011603Z; fi
+      - name: Packets for a sample (text only; CIK via Forms 3/4/5)
+        if: steps.stage.outputs.s == 'packets'
+        run: |
+          set -e
+          read SAMPLE OUT < research/event_base/RUN_PACKETS
+          python -m research.event_base.review --sample "$SAMPLE" --f345 "${{ runner.temp }}/f345" --docs "${{ runner.temp }}/docs" --out "$OUT" > p.log 2>&1 || { tail -40 p.log; exit 1; }
+          tail -3 p.log
+      - name: Upload source documents
+        if: always() && (steps.stage.outputs.s == 'events' || steps.stage.outputs.s == 'review' || steps.stage.outputs.s == 'packets')
+        uses: actions/upload-artifact@v4
+        with:
+          name: event-docs-${{ github.run_id }}
+          path: ${{ runner.temp }}/docs
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Live state untouched
+        if: always()
+        run: git diff --exit-code HEAD -- paper state trader.py core.py
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/event_base || true
+          git diff --cached --quiet || git commit -m "Research event-base v1: ${{ steps.stage.outputs.s }} run $(date -u +%F_%H%M)"
+          git pull --rebase -q && git push
