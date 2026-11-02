@@ -2,34 +2,26 @@
  "version": "etf5050-monthly/1.0",
  "experiment": "etf5050-20261027",
  "activation_session": "2026-10-26",
- "processed_through": "2026-10-30",
- "data_date": "2026-10-30",
- "updated_at": "2026-10-30T22:49:07+00:00",
- "revision": 5,
+ "processed_through": "2026-11-02",
+ "data_date": "2026-11-02",
+ "updated_at": "2026-11-02T22:52:29+00:00",
+ "revision": 6,
  "cash": 444.95,
  "shares": {
   "SPY": 6,
   "BIL": 54
  },
- "pending": [
-  {
-   "scheduled_for": "2026-11-02",
-   "reason": "monthly_rebalance",
-   "decided_on": "2026-10-30",
-   "generated_at": "2026-10-30T22:49:07+00:00",
-   "late": false
-  }
- ],
+ "pending": [],
  "fees_total": 1.9106,
  "dividends_received": 0.0,
  "receivables": 0,
  "late_fills": 2,
  "problems": [],
- "equity": 9931.07,
- "return_pct": -0.6893,
- "max_drawdown_pct": -0.971,
- "current_drawdown_pct": -0.971,
- "w_SPY": 0.4566,
- "w_BIL": 0.4986,
+ "equity": 9893.69,
+ "return_pct": -1.0631,
+ "max_drawdown_pct": -1.3438,
+ "current_drawdown_pct": -1.3438,
+ "w_SPY": 0.4561,
+ "w_BIL": 0.4989,
  "cagr_pct": null
 }
