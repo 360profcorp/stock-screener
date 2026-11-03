@@ -4,7 +4,7 @@
  "first_entry_session": "2026-10-21",
  "common_period": {
   "start": "2026-10-20",
-  "through": "2026-11-02"
+  "through": "2026-11-03"
  },
  "books": {
   "breakout": {
@@ -12,17 +12,17 @@
    "strategy_id": "breakout-rs-first/1.0+cfg.644e0eb26cdb",
    "experiment": "cmp-2026-10-20-breakout",
    "start": "2026-10-20",
-   "processed_through": "2026-11-02",
-   "equity": 9554.412231351318,
+   "processed_through": "2026-11-03",
+   "equity": 9634.392150784912,
    "cash": 7523.172180081787,
-   "return_pct": -4.45587768648682,
+   "return_pct": -3.6560784921508827,
    "max_drawdown_pct": -6.4702566666994255,
    "closed_trades": 7,
    "open_positions": 1,
    "pending_orders": 0,
    "costs_paid_usd": 23.320933016357422,
-   "capital_invested_mean_pct": 40.757716494719276,
-   "sessions_with_position_pct": 90.0,
+   "capital_invested_mean_pct": 39.04459405916958,
+   "sessions_with_position_pct": 90.9090909090909,
    "order_outcomes": {
     "positions": 81,
     "daily_entries": 12,
@@ -46,17 +46,17 @@
    "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
    "experiment": "cmp-2026-10-20-retest",
    "start": "2026-10-20",
-   "processed_through": "2026-11-02",
-   "equity": 9800.866457045595,
-   "cash": 1964.2765331869527,
-   "return_pct": -1.99133542954405,
+   "processed_through": "2026-11-03",
+   "equity": 9809.517547403566,
+   "cash": 3239.907619272463,
+   "return_pct": -1.9048245259643437,
    "max_drawdown_pct": -2.4068700623565586,
-   "closed_trades": 3,
-   "open_positions": 5,
+   "closed_trades": 4,
+   "open_positions": 4,
    "pending_orders": 0,
-   "costs_paid_usd": 15.732577225646972,
-   "capital_invested_mean_pct": 53.4003927620992,
-   "sessions_with_position_pct": 90.0,
+   "costs_paid_usd": 17.009485219726564,
+   "capital_invested_mean_pct": 54.634156551674174,
+   "sessions_with_position_pct": 90.9090909090909,
    "order_outcomes": {
     "positions": 39,
     "daily_entries": 17,
@@ -69,13 +69,6 @@
      "qty": 6,
      "entry": 261.6000061035156,
      "stop": 246.05989822387696,
-     "entry_date": "2026-10-22"
-    },
-    {
-     "ticker": "IQV",
-     "qty": 5,
-     "entry": 274.989990234375,
-     "stop": 255.38159881591795,
      "entry_date": "2026-10-22"
     },
     {
