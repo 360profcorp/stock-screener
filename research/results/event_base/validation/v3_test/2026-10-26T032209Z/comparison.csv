@@ -1,0 +1,80 @@
+case,ticker,cik,signal_date,base_start,status,reason,year,new,old,accession,accepted,age,manual,manual_subtype
+0,NFLX,1065280.0,2018-01-02,2017-11-20,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,quarterly_only
+1,AME,1037868.0,2018-01-03,2017-11-27,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+2,DG,29534.0,2018-01-11,2017-11-29,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+3,RL,1037038.0,2018-05-18,2018-04-17,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+4,NKE,320187.0,2018-05-25,2018-04-26,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,none
+5,TRIP,1526520.0,2018-07-17,2018-06-12,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,none
+6,VLO,1035002.0,2018-07-26,2018-06-21,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,none
+7,LLY,59478.0,2018-09-07,2018-07-30,confirmed_raise,confirmed raise,2018,"(23.7, 24.2)","(23.0, 23.5)",0000059478-18-000186,2018-07-24 06:45:20,32.0,confirmed_raise,
+8,ROST,745732.0,2018-09-11,2018-08-13,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2018,,,,,,confirmed_no_suitable_guidance,comps_pct_only
+9,AAPL,320193.0,2018-10-03,2018-09-04,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2018,,,,,,confirmed_no_suitable_guidance,quarterly_only
+10,AWK,1410636.0,2019-02-19,2019-01-17,confirmed_no_suitable_guidance,point estimates only,2019,,,,,,confirmed_no_suitable_guidance,eps_only
+11,AES,874761.0,2019-03-15,2019-02-14,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2019,,,,,,confirmed_no_suitable_guidance,eps_only
+12,A,,2019-03-21,2019-02-15,unknown,identity,2019,,,,,,unknown,issuer_identity
+13,PG,80424.0,2019-04-08,2019-03-11,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2019,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+14,AVGO,1730168.0,2019-04-12,2019-03-15,confirmed_no_raise,latest update not a raise,2019,"(24.5, 24.5)","(24.5, 24.5)",0001193125-19-074832,2019-03-14 16:23:33,,confirmed_no_suitable_guidance,point_only
+15,MA,1141391.0,2019-07-03,2019-06-05,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2019,,,,,,confirmed_no_suitable_guidance,none
+16,FISV,798354.0,2019-09-05,2019-07-26,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2019,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+17,KMX,1170010.0,2019-10-15,2019-09-11,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2019,,,,,,confirmed_no_suitable_guidance,none
+18,GRMN,1121788.0,2019-10-30,2019-09-25,confirmed_no_suitable_guidance,point estimates only,2019,,,,,,confirmed_no_suitable_guidance,point_only
+19,MCO,1059556.0,2019-11-19,2019-10-18,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2019,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+20,LDOS,1336920.0,2020-01-03,2019-12-02,confirmed_no_suitable_guidance,prior_fy_range_only: no range for the fiscal year in progress at the signal (§7.1),2020,,,,,,confirmed_no_suitable_guidance,prior_fy_range_only
+21,AES,874761.0,2020-01-09,2019-12-09,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2020,,,,,,confirmed_no_suitable_guidance,eps_only
+22,CHTR,1091667.0,2020-02-18,2020-01-15,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2020,,,,,,confirmed_no_suitable_guidance,none
+23,BBY,764478.0,2020-02-20,2020-01-17,confirmed_no_suitable_guidance,prior_fy_range_only: no range for the fiscal year in progress at the signal (§7.1),2020,,,,,,confirmed_no_suitable_guidance,prior_fy_range_only
+24,ROL,84839.0,2020-06-02,2020-04-30,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2020,,,,,,confirmed_no_suitable_guidance,none
+25,CRM,1108524.0,2020-08-03,2020-06-30,confirmed_no_raise,latest update is a point estimate,2020,,,,,,confirmed_no_raise,cancelled_by_point
+26,CHTR,1091667.0,2020-09-01,2020-07-23,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2020,,,,,,confirmed_no_suitable_guidance,none
+27,CHRW,1043277.0,2020-09-02,2020-07-29,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2020,,,,,,confirmed_no_suitable_guidance,none
+28,CPRT,900075.0,2020-10-07,2020-09-03,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2020,,,,,,confirmed_no_suitable_guidance,none
+29,IDXX,874716.0,2020-12-17,2020-11-10,confirmed_no_raise,raise older than 60 sessions,2020,"(2.62, 2.655)","(2.61, 2.65)",0001193125-20-020269,2020-01-31 06:36:11,223.0,confirmed_no_raise,withdrawn
+30,EXPE,1324424.0,2021-01-05,2020-12-01,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2021,,,,,,confirmed_no_suitable_guidance,none
+31,IVZ,914208.0,2021-01-06,2020-12-01,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2021,,,,,,confirmed_no_suitable_guidance,none
+32,CARR,1783180.0,2021-05-28,2021-04-29,confirmed_no_suitable_guidance,prior_fy_range_only: no range for the fiscal year in progress at the signal (§7.1),2021,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+33,ZBRA,877212.0,2021-06-04,2021-04-28,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2021,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+34,DXC,1688568.0,2021-08-02,2021-06-29,confirmed_no_raise,initial guidance,2021,"(4.08, 4.13)",,0001688568-21-000025,2021-05-26 16:17:39,,confirmed_no_raise,initial_guidance
+35,GS,886982.0,2021-08-06,2021-06-29,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2021,,,,,,confirmed_no_suitable_guidance,none
+36,CARR,1783180.0,2021-08-27,2021-07-30,confirmed_no_suitable_guidance,prior_fy_range_only: no range for the fiscal year in progress at the signal (§7.1),2021,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+37,NTAP,1002047.0,2021-10-15,2021-09-15,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2021,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+38,GOOGL,,2021-10-27,2021-09-22,unknown,identity,2021,,,,,,unknown,issuer_identity
+39,CBRE,1138118.0,2021-12-16,2021-11-17,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2021,,,,,,confirmed_no_suitable_guidance,none
+40,HPQ,47217.0,2022-01-04,2021-11-26,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2022,,,,,,confirmed_no_suitable_guidance,eps_only
+41,CB,896159.0,2022-03-25,2022-02-25,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2022,,,,,,confirmed_no_suitable_guidance,none
+42,EXC,1109357.0,2022-03-25,2022-02-23,unknown,incomplete_history_no_recent_release,2022,,,,,,confirmed_no_suitable_guidance,eps_only
+43,NOC,1133421.0,2022-04-07,2022-03-09,confirmed_no_suitable_guidance,prior_fy_range_only: no range for the fiscal year in progress at the signal (§7.1),2022,,,,,,confirmed_no_raise,initial_guidance
+44,FMC,37785.0,2022-11-30,2022-10-31,confirmed_no_raise,raise not known before base start,2022,"(5.6, 5.8)","(5.5, 5.7)",0000037785-22-000081,2022-11-01 16:35:50,20.0,confirmed_no_raise,raise_after_base_start
+45,GIS,40704.0,2022-11-30,2022-10-28,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2022,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+46,IT,749251.0,2022-11-30,2022-11-01,unknown,extraction: guidance change stated but no range parsed,2022,,,,,,confirmed_no_suitable_guidance,none
+47,WRB,11544.0,2022-11-30,2022-10-28,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2022,,,,,,confirmed_no_suitable_guidance,none
+48,PWR,1050915.0,2022-12-01,2022-10-25,confirmed_no_raise,raise not known before base start,2022,"(16.8, 17.0)","(16.6, 17.0)",0001193125-22-276351,2022-11-03 06:58:35,19.0,confirmed_no_raise,raise_after_base_start
+49,SBUX,829224.0,2023-02-01,2022-12-30,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2023,,,,,,confirmed_no_suitable_guidance,none
+50,GWW,277135.0,2023-03-03,2023-02-02,confirmed_no_raise,initial guidance,2023,"(16.2, 16.8)",,0000277135-23-000007,2023-02-02 08:16:29,,confirmed_no_raise,initial_guidance
+51,XRAY,818479.0,2023-04-11,2023-02-28,confirmed_no_raise,initial guidance,2023,"(3.85, 3.95)",,0000818479-23-000013,2023-02-28 07:15:49,,confirmed_no_raise,initial_guidance
+52,NVR,906163.0,2023-04-14,2023-03-07,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2023,,,,,,confirmed_no_suitable_guidance,none
+53,AAPL,320193.0,2023-05-30,2023-04-24,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2023,,,,,,confirmed_no_suitable_guidance,none
+54,BSX,885725.0,2023-06-16,2023-05-16,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2023,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+55,PWR,1050915.0,2023-07-25,2023-06-26,confirmed_raise,confirmed raise,2023,"(18.6, 19.1)","(18.4, 18.9)",0001193125-23-134996,2023-05-04 06:59:04,55.0,confirmed_raise,
+56,VRSK,1442145.0,2023-08-29,2023-07-20,confirmed_no_raise,initial guidance,2023,"(2.63, 2.66)",,0001437749-23-021528,2023-08-02 07:17:26,,confirmed_no_raise,raise_after_base_start
+57,CBOE,1374310.0,2023-11-22,2023-10-23,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2023,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+58,HWM,4281.0,2023-12-08,2023-11-02,confirmed_no_raise,raise not known before base start,2023,"(6.53, 6.56)","(6.4, 6.47)",0001157523-23-001618,2023-11-02 07:10:27,25.0,confirmed_no_raise,raise_after_base_start
+59,LLY,59478.0,2024-01-03,2023-12-01,confirmed_no_suitable_guidance,prior_fy_range_only: no range for the fiscal year in progress at the signal (§7.1),2024,,,,,,confirmed_no_suitable_guidance,prior_fy_range_only
+60,LEN,,2024-03-28,2024-02-29,unknown,identity,2024,,,,,,unknown,issuer_identity
+61,AMZN,1018724.0,2024-04-05,2024-03-05,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2024,,,,,,confirmed_no_suitable_guidance,quarterly_only
+62,CFG,759944.0,2024-05-15,2024-04-17,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2024,,,,,,confirmed_no_suitable_guidance,none
+63,RTX,101829.0,2024-08-27,2024-07-25,confirmed_no_raise,raise not known before base start,2024,"(78.75, 79.5)","(78.0, 79.0)",0000101829-24-000026,2024-07-25 06:47:41,23.0,confirmed_no_raise,raise_after_base_start
+64,VTR,740260.0,2024-08-27,2024-07-30,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2024,,,,,,confirmed_no_suitable_guidance,ffo_only
+65,IFF,51253.0,2024-08-28,2024-07-23,confirmed_no_raise,raise not known before base start,2024,"(11.1, 11.3)","(10.8, 11.1)",0000051253-24-000029,2024-08-06 16:30:09,16.0,confirmed_no_raise,raise_after_base_start
+66,NFLX,1065280.0,2024-10-09,2024-09-06,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2024,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+67,ISRG,1035267.0,2024-11-07,2024-09-30,confirmed_no_suitable_guidance,point estimates only,2024,,,,,,confirmed_no_suitable_guidance,none
+68,PKG,75677.0,2024-11-21,2024-10-23,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2024,,,,,,confirmed_no_suitable_guidance,none
+69,ETR,65984.0,2025-02-18,2025-01-14,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2025,,,,,,confirmed_no_suitable_guidance,eps_only
+70,EBAY,1065088.0,2025-05-16,2025-04-17,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2025,,,,,,confirmed_no_suitable_guidance,prior_fy_range_only
+71,RSG,1060391.0,2025-05-30,2025-04-29,confirmed_no_raise,initial guidance,2025,"(16.85, 16.95)",,0001060391-25-000081,2025-02-13 16:07:06,,confirmed_no_raise,initial_guidance
+72,NOC,1133421.0,2025-08-21,2025-07-22,confirmed_no_raise,latest update not a raise,2025,"(42.05, 42.25)","(42.0, 42.5)",0001133421-25-000047,2025-07-22 06:45:40,,confirmed_no_raise,reaffirmed
+73,GLW,24741.0,2025-08-28,2025-07-31,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2025,,,,,,confirmed_no_suitable_guidance,quarterly_only
+74,TTWO,946581.0,2025-09-08,2025-08-07,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2025,,,,,,confirmed_no_raise,update_on_base_start
+75,GS,886982.0,2025-11-11,2025-10-06,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2025,,,,,,confirmed_no_suitable_guidance,none
+76,MS,895421.0,2025-12-03,2025-11-04,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record,2025,,,,,,confirmed_no_suitable_guidance,none
+77,PH,76334.0,2025-12-05,2025-11-06,confirmed_no_suitable_guidance,no full-year USD revenue range in the filed record (quarterly ranges only),2025,,,,,,confirmed_no_suitable_guidance,growth_pct_only
+78,DD,1666700.0,2025-12-11,2025-11-10,confirmed_no_raise,latest update is a point estimate,2025,,,,,,confirmed_no_raise,cancelled_by_point

@@ -1,0 +1,3379 @@
+{
+ "plan": "research/event_base/PLAN.md",
+ "git": "9ba1aa5367878b6dc7b53dee6c995172ae2f5fb4",
+ "dataset_sha256": {
+  "bars.pkl.gz": "98a68ab735d3a2535bdec6aaa22b152a68e9d30f1d94d19cb83524e95b4650ab",
+  "sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54"
+ },
+ "dataset_artifact": "shorts10y-dataset-40152515701 (run 40152515701)",
+ "data": {
+  "tickers_ever_member": 726,
+  "with_prices": 609,
+  "breakout_detections": 230121,
+  "pit_first": "1996-01-02",
+  "pit_last": "2026-08-18"
+ },
+ "windows": {
+  "full": [
+   "2017-11-03",
+   "2026-10-23"
+  ],
+  "y2017_2021": [
+   "2017-11-03",
+   "2021-12-31"
+  ],
+  "y2022_2026": [
+   "2022-01-03",
+   "2026-10-23"
+  ]
+ },
+ "missing_history_by_year": {
+  "2017": {
+   "members": 506.0,
+   "without_price": 104.33,
+   "share_pct": 20.62
+  },
+  "2018": {
+   "members": 505.67,
+   "without_price": 94.83,
+   "share_pct": 18.75
+  },
+  "2019": {
+   "members": 505.0,
+   "without_price": 81.08,
+   "share_pct": 16.06
+  },
+  "2020": {
+   "members": 505.0,
+   "without_price": 65.0,
+   "share_pct": 12.87
+  },
+  "2021": {
+   "members": 505.0,
+   "without_price": 55.42,
+   "share_pct": 10.97
+  },
+  "2022": {
+   "members": 503.83,
+   "without_price": 42.25,
+   "share_pct": 8.39
+  },
+  "2023": {
+   "members": 503.0,
+   "without_price": 29.33,
+   "share_pct": 5.83
+  },
+  "2024": {
+   "members": 503.0,
+   "without_price": 21.67,
+   "share_pct": 4.31
+  },
+  "2025": {
+   "members": 503.0,
+   "without_price": 15.0,
+   "share_pct": 2.98
+  },
+  "2026": {
+   "members": 503.0,
+   "without_price": 5.7,
+   "share_pct": 1.13
+  }
+ },
+ "reproduction_M": {
+  "passed": true,
+  "rows": [
+   {
+    "window": "full",
+    "bps": 10,
+    "return_pct": 47.84208957007847,
+    "ref_return_pct": 47.84208957007847,
+    "max_dd_pct": -32.6854648869341,
+    "ref_max_dd_pct": -32.6854648869341,
+    "trades": 690,
+    "ref_trades": 690,
+    "match": true
+   },
+   {
+    "window": "full",
+    "bps": 25,
+    "return_pct": -3.067658835095022,
+    "ref_return_pct": -3.067658835095022,
+    "max_dd_pct": -42.45362271465737,
+    "ref_max_dd_pct": -42.45362271465737,
+    "trades": 686,
+    "ref_trades": 686,
+    "match": true
+   },
+   {
+    "window": "full",
+    "bps": 50,
+    "return_pct": -53.7444221019314,
+    "ref_return_pct": -53.7444221019314,
+    "max_dd_pct": -58.70805410318303,
+    "ref_max_dd_pct": -58.70805410318303,
+    "trades": 692,
+    "ref_trades": 692,
+    "match": true
+   },
+   {
+    "window": "y2017_2021",
+    "bps": 10,
+    "return_pct": -13.382827847705359,
+    "ref_return_pct": -13.382827847705359,
+    "max_dd_pct": -31.8265273031078,
+    "ref_max_dd_pct": -31.8265273031078,
+    "trades": 335,
+    "ref_trades": 335,
+    "match": true
+   },
+   {
+    "window": "y2017_2021",
+    "bps": 25,
+    "return_pct": -25.637365182294435,
+    "ref_return_pct": -25.637365182294435,
+    "max_dd_pct": -37.13335422733994,
+    "ref_max_dd_pct": -37.13335422733994,
+    "trades": 334,
+    "ref_trades": 334,
+    "match": true
+   },
+   {
+    "window": "y2017_2021",
+    "bps": 50,
+    "return_pct": -42.58387646566686,
+    "ref_return_pct": -42.58387646566686,
+    "max_dd_pct": -44.56195017091912,
+    "ref_max_dd_pct": -44.56195017091912,
+    "trades": 333,
+    "ref_trades": 333,
+    "match": true
+   },
+   {
+    "window": "y2022_2026",
+    "bps": 10,
+    "return_pct": 60.01539784556622,
+    "ref_return_pct": 60.01539784556622,
+    "max_dd_pct": -19.878186103595652,
+    "ref_max_dd_pct": -19.878186103595652,
+    "trades": 361,
+    "ref_trades": 361,
+    "match": true
+   },
+   {
+    "window": "y2022_2026",
+    "bps": 25,
+    "return_pct": 41.65187033485043,
+    "ref_return_pct": 41.65187033485043,
+    "max_dd_pct": -21.972357718375115,
+    "ref_max_dd_pct": -21.972357718375115,
+    "trades": 360,
+    "ref_trades": 360,
+    "match": true
+   },
+   {
+    "window": "y2022_2026",
+    "bps": 50,
+    "return_pct": 4.288631145793453,
+    "ref_return_pct": 4.288631145793453,
+    "max_dd_pct": -25.110418486995624,
+    "ref_max_dd_pct": -25.110418486995624,
+    "trades": 359,
+    "ref_trades": 359,
+    "match": true
+   }
+  ]
+ },
+ "rs_consistency_C": true,
+ "candidates": {
+  "C": 24973,
+  "S": 1075,
+  "S_bases_by_outcome": {
+   "expired": 7762,
+   "signal_filtered_rs": 5889,
+   "cancelled": 5274,
+   "signal_filtered_not_member": 1234,
+   "candidate": 1075,
+   "signal_filtered_market": 316,
+   "open_at_data_end": 9
+  }
+ },
+ "etf_sources": {
+  "SPY": {
+   "source": "dataset bars.pkl.gz",
+   "distributions_in_dataset": true,
+   "sha256": "f69b22ba36f3b46be3c259ec14fc64da330a82716338e652847ede9ff7b66745"
+  },
+  "BIL": {
+   "source": "yfinance BIL auto_adjust=False actions=True",
+   "rows": 2718,
+   "first": "2016-01-04",
+   "last": "2026-10-23",
+   "sha256": "dba1ec9eed6aceaeaf24680217d32c52daf3771fd47acbe9542a7b3972a4eb2e",
+   "distributions_sum": 20.857999999999997
+  }
+ },
+ "benchmarks": {
+  "SPY100|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 31223.586252282716,
+   "return_pct": 212.23586252282715,
+   "cagr_pct": 13.535377359345846,
+   "max_dd_pct": -32.04071653947511,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 17.576578108679875,
+   "yearly_return_pct": {
+    "2017": 3.95,
+    "2018": -4.33,
+    "2019": 29.64,
+    "2020": 17.01,
+    "2021": 26.9,
+    "2022": -17.11,
+    "2023": 23.83,
+    "2024": 22.79,
+    "2025": 16.24,
+    "2026": 11.33
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.06106263066453516,
+   "costs_usd": 1.9590519165039064,
+   "distributions_usd": 2141.9460000000004,
+   "invested_pct": 93.75211223019663
+  },
+  "SPY100|full|5": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 31220.64767440796,
+   "return_pct": 212.20647674407957,
+   "cagr_pct": 13.534185979856673,
+   "max_dd_pct": -32.047682942113,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 17.58025264152926,
+   "yearly_return_pct": {
+    "2017": 3.92,
+    "2018": -4.33,
+    "2019": 29.64,
+    "2020": 17.01,
+    "2021": 26.91,
+    "2022": -17.12,
+    "2023": 23.84,
+    "2024": 22.79,
+    "2025": 16.24,
+    "2026": 11.33
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.061072665200792936,
+   "costs_usd": 4.8976297912597655,
+   "distributions_usd": 2141.9460000000004,
+   "invested_pct": 93.76940991590621
+  },
+  "SPY50_CASH50|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 18736.289862243655,
+   "return_pct": 87.36289862243656,
+   "cagr_pct": 7.251215624661977,
+   "max_dd_pct": -17.065656699120137,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 8.9391879200953,
+   "yearly_return_pct": {
+    "2017": 1.97,
+    "2018": -1.65,
+    "2019": 14.73,
+    "2020": 9.63,
+    "2021": 13.08,
+    "2022": -8.63,
+    "2023": 12.16,
+    "2024": 11.62,
+    "2025": 8.41,
+    "2026": 5.92
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.16190132806026017,
+   "costs_usd": 3.9609839477539066,
+   "distributions_usd": 867.4709999999999,
+   "invested_pct": 48.48850563413586
+  },
+  "SPY50_CASH50|full|5": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 18753.36377410889,
+   "return_pct": 87.53363774108888,
+   "cagr_pct": 7.26210799102156,
+   "max_dd_pct": -17.07021906692715,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 8.93473430603796,
+   "yearly_return_pct": {
+    "2017": 1.96,
+    "2018": -1.66,
+    "2019": 14.73,
+    "2020": 9.63,
+    "2021": 13.08,
+    "2022": -8.64,
+    "2023": 12.16,
+    "2024": 11.62,
+    "2025": 8.41,
+    "2026": 6.05
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.16172411213114732,
+   "costs_usd": 9.890059875488284,
+   "distributions_usd": 865.6739999999999,
+   "invested_pct": 48.46015949616962
+  },
+  "SPY50_BIL50|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 21134.102657269286,
+   "return_pct": 111.34102657269284,
+   "cagr_pct": 8.700943648659365,
+   "max_dd_pct": -16.919246338228444,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 8.91216395214045,
+   "yearly_return_pct": {
+    "2017": 2.03,
+    "2018": -0.79,
+    "2019": 15.92,
+    "2020": 10.22,
+    "2021": 13.29,
+    "2022": -7.68,
+    "2023": 15.02,
+    "2024": 14.58,
+    "2025": 10.37,
+    "2026": 7.41
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.32422980304731264,
+   "costs_usd": 8.365841937255862,
+   "distributions_usd": 2652.0989999999997,
+   "invested_pct": 98.11368411648688
+  },
+  "SPY50_BIL50|full|5": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 21031.186145320895,
+   "return_pct": 110.31186145320895,
+   "cagr_pct": 8.641798067449734,
+   "max_dd_pct": -16.927086761573406,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 8.913976161881527,
+   "yearly_return_pct": {
+    "2017": 2.0,
+    "2018": -0.8,
+    "2019": 15.91,
+    "2020": 10.21,
+    "2021": 13.29,
+    "2022": -7.9,
+    "2023": 14.85,
+    "2024": 14.44,
+    "2025": 10.41,
+    "2026": 7.43
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.30610735778620746,
+   "costs_usd": 19.691314823150638,
+   "distributions_usd": 2642.2980000000002,
+   "invested_pct": 98.10919273970576
+  },
+  "SPY_TIMING50|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 13924.932767663593,
+   "return_pct": 39.249327676635936,
+   "cagr_pct": 3.7604575074570157,
+   "max_dd_pct": -7.736561341794723,
+   "max_dd_trough": "2023-03-30",
+   "vol_pct": 4.839339301884193,
+   "yearly_return_pct": {
+    "2017": 1.87,
+    "2018": -2.78,
+    "2019": 3.13,
+    "2020": 9.24,
+    "2021": 8.14,
+    "2022": -4.56,
+    "2023": 5.52,
+    "2024": 6.5,
+    "2025": 5.89,
+    "2026": 1.61
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 7.580662695066371,
+   "costs_usd": 158.21013223876946,
+   "distributions_usd": 538.183,
+   "invested_pct": 32.125715737106255
+  },
+  "SPY_TIMING50|full|5": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 13717.634657547038,
+   "return_pct": 37.176346575470376,
+   "cagr_pct": 3.5870889890125435,
+   "max_dd_pct": -7.932787428478627,
+   "max_dd_trough": "2023-03-30",
+   "vol_pct": 4.8374369550599186,
+   "yearly_return_pct": {
+    "2017": 1.86,
+    "2018": -3.05,
+    "2019": 2.88,
+    "2020": 8.91,
+    "2021": 8.07,
+    "2022": -4.68,
+    "2023": 5.32,
+    "2024": 6.32,
+    "2025": 5.97,
+    "2026": 1.41
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 7.5315860949690325,
+   "costs_usd": 389.3062655487062,
+   "distributions_usd": 529.551,
+   "invested_pct": 32.02014524378968
+  },
+  "SPY100|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 19143.387040856935,
+   "return_pct": 91.43387040856933,
+   "cagr_pct": 16.89948911224386,
+   "max_dd_pct": -32.04071653947511,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 19.320248408250468,
+   "yearly_return_pct": {
+    "2017": 3.95,
+    "2018": -4.33,
+    "2019": 29.64,
+    "2020": 17.01,
+    "2021": 26.9
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.18105720368004757,
+   "costs_usd": 1.9590519165039064,
+   "distributions_usd": 892.1259999999999,
+   "invested_pct": 95.33488072972276
+  },
+  "SPY100|y2017_2021|5": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 19140.448462982178,
+   "return_pct": 91.40448462982178,
+   "cagr_pct": 16.89517403268226,
+   "max_dd_pct": -32.047682942113,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 19.32515781382928,
+   "yearly_return_pct": {
+    "2017": 3.92,
+    "2018": -4.33,
+    "2019": 29.64,
+    "2020": 17.01,
+    "2021": 26.91
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.18109811264928086,
+   "costs_usd": 4.8976297912597655,
+   "distributions_usd": 892.1259999999999,
+   "invested_pct": 95.35725872735061
+  },
+  "SPY50_CASH50|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 14264.120930145265,
+   "return_pct": 42.641209301452655,
+   "cagr_pct": 8.915293997823603,
+   "max_dd_pct": -17.065656699120137,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.64542672863464,
+   "yearly_return_pct": {
+    "2017": 1.97,
+    "2018": -1.65,
+    "2019": 14.73,
+    "2020": 9.63,
+    "2021": 13.08
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.23474098264464774,
+   "costs_usd": 2.252169952392578,
+   "distributions_usd": 406.58299999999997,
+   "invested_pct": 48.68186827766051
+  },
+  "SPY50_CASH50|y2017_2021|5": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 14260.742675216678,
+   "return_pct": 42.607426752166774,
+   "cagr_pct": 8.909090911976737,
+   "max_dd_pct": -17.07021906692715,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.64774526712315,
+   "yearly_return_pct": {
+    "2017": 1.96,
+    "2018": -1.66,
+    "2019": 14.73,
+    "2020": 9.63,
+    "2021": 13.08
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.2347934875475303,
+   "costs_usd": 5.630424880981447,
+   "distributions_usd": 406.58299999999997,
+   "invested_pct": 48.692621644233654
+  },
+  "SPY50_BIL50|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 14652.194379609682,
+   "return_pct": 46.52194379609682,
+   "cagr_pct": 9.620556332240815,
+   "max_dd_pct": -16.919246338228444,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.617631725927174,
+   "yearly_return_pct": {
+    "2017": 2.03,
+    "2018": -0.79,
+    "2019": 15.92,
+    "2020": 10.22,
+    "2021": 13.29
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.4891043344832208,
+   "costs_usd": 4.77478793182373,
+   "distributions_usd": 638.1489999999999,
+   "invested_pct": 98.27601485306013
+  },
+  "SPY50_BIL50|y2017_2021|5": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 14644.978731983185,
+   "return_pct": 46.44978731983185,
+   "cagr_pct": 9.607573234197432,
+   "max_dd_pct": -16.927086761573406,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.622072243714337,
+   "yearly_return_pct": {
+    "2017": 2.0,
+    "2018": -0.8,
+    "2019": 15.91,
+    "2020": 10.21,
+    "2021": 13.29
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.48556208137586754,
+   "costs_usd": 11.845439830780032,
+   "distributions_usd": 637.9839999999999,
+   "invested_pct": 98.25564002115516
+  },
+  "SPY_TIMING50|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 12066.387394476329,
+   "return_pct": 20.6638739447633,
+   "cagr_pct": 4.6202129319196095,
+   "max_dd_pct": -7.457596014774193,
+   "max_dd_trough": "2019-10-14",
+   "vol_pct": 5.259121282331539,
+   "yearly_return_pct": {
+    "2017": 1.87,
+    "2018": -2.78,
+    "2019": 3.13,
+    "2020": 9.24,
+    "2021": 8.14
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 7.290996245669935,
+   "costs_usd": 64.09319024047852,
+   "distributions_usd": 323.85,
+   "invested_pct": 35.07429050275894
+  },
+  "SPY_TIMING50|y2017_2021|5": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 11958.341241760272,
+   "return_pct": 19.58341241760273,
+   "cagr_pct": 4.394184938757584,
+   "max_dd_pct": -7.874268128947759,
+   "max_dd_trough": "2019-10-14",
+   "vol_pct": 5.2563865164974,
+   "yearly_return_pct": {
+    "2017": 1.86,
+    "2018": -3.05,
+    "2019": 2.88,
+    "2020": 8.91,
+    "2021": 8.07
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 7.302711762768958,
+   "costs_usd": 159.64928558349615,
+   "distributions_usd": 320.70000000000005,
+   "invested_pct": 34.94852206737703
+  },
+  "SPY100|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 16329.294458251952,
+   "return_pct": 63.292944582519524,
+   "cagr_pct": 10.751081599545941,
+   "max_dd_pct": -23.261034184646554,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 16.07922975748994,
+   "yearly_return_pct": {
+    "2022": -17.53,
+    "2023": 24.13,
+    "2024": 23.02,
+    "2025": 16.38,
+    "2026": 11.41
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.1719677139215539,
+   "costs_usd": 1.9051999511718751,
+   "distributions_usd": 657.8000000000001,
+   "invested_pct": 93.25591694453121
+  },
+  "SPY100|y2022_2026|5": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 16326.436658325196,
+   "return_pct": 63.26436658325196,
+   "cagr_pct": 10.747045116770959,
+   "max_dd_pct": -23.26766617937078,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 16.083714753215624,
+   "yearly_return_pct": {
+    "2022": -17.56,
+    "2023": 24.14,
+    "2024": 23.03,
+    "2025": 16.38,
+    "2026": 11.42
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.17201032887941145,
+   "costs_usd": 4.762999877929688,
+   "distributions_usd": 657.8000000000001,
+   "invested_pct": 93.28021544883369
+  },
+  "SPY50_CASH50|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 13056.25000266113,
+   "return_pct": 30.562500026611318,
+   "cagr_pct": 5.710430171070646,
+   "max_dd_pct": -12.020828179612908,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 8.192272333404109,
+   "yearly_return_pct": {
+    "2022": -8.53,
+    "2023": 12.27,
+    "2024": 11.16,
+    "2025": 8.15,
+    "2026": 5.75
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.2033436505270084,
+   "costs_usd": 2.1138459716796882,
+   "distributions_usd": 319.89400000000006,
+   "invested_pct": 47.6639359870864
+  },
+  "SPY50_CASH50|y2022_2026|5": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 13040.907937988282,
+   "return_pct": 30.40907937988282,
+   "cagr_pct": 5.684551262783488,
+   "max_dd_pct": -12.027522490954146,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 8.028222078666532,
+   "yearly_return_pct": {
+    "2022": -8.55,
+    "2023": 12.03,
+    "2024": 11.14,
+    "2025": 8.2,
+    "2026": 5.84
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.234256589801511,
+   "costs_usd": 6.079939941406249,
+   "distributions_usd": 317.988,
+   "invested_pct": 47.29765119144477
+  },
+  "SPY50_BIL50|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 14345.12923504486,
+   "return_pct": 43.4512923504486,
+   "cagr_pct": 7.803254822081951,
+   "max_dd_pct": -11.74758348073468,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 8.12572784381265,
+   "yearly_return_pct": {
+    "2022": -7.9,
+    "2023": 14.68,
+    "2024": 14.19,
+    "2025": 10.47,
+    "2026": 7.66
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.3749650249366303,
+   "costs_usd": 4.07835998687744,
+   "distributions_usd": 1361.3179999999995,
+   "invested_pct": 97.19883969042911
+  },
+  "SPY50_BIL50|y2022_2026|5": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 14196.195307678223,
+   "return_pct": 41.96195307678223,
+   "cagr_pct": 7.56922342243227,
+   "max_dd_pct": -11.759267608385237,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 8.118998038935354,
+   "yearly_return_pct": {
+    "2022": -7.94,
+    "2023": 14.46,
+    "2024": 13.99,
+    "2025": 10.28,
+    "2026": 7.18
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.3373867394497522,
+   "costs_usd": 9.134334960937496,
+   "distributions_usd": 1355.86,
+   "invested_pct": 97.10186011312216
+  },
+  "SPY_TIMING50|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 11523.867772497571,
+   "return_pct": 15.238677724975712,
+   "cagr_pct": 2.997603307991903,
+   "max_dd_pct": -7.210693529724088,
+   "max_dd_trough": "2023-03-30",
+   "vol_pct": 4.384501494734076,
+   "yearly_return_pct": {
+    "2022": -4.87,
+    "2023": 5.73,
+    "2024": 6.39,
+    "2025": 6.02,
+    "2026": 1.58
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 7.753800351643195,
+   "costs_usd": 77.36664400634766,
+   "distributions_usd": 173.395,
+   "invested_pct": 29.102190375257734
+  },
+  "SPY_TIMING50|y2022_2026|5": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 11380.293227996837,
+   "return_pct": 13.802932279968383,
+   "cagr_pct": 2.7290566747712575,
+   "max_dd_pct": -7.518336149749705,
+   "max_dd_trough": "2023-03-30",
+   "vol_pct": 4.369398527407549,
+   "yearly_return_pct": {
+    "2022": -5.03,
+    "2023": 5.26,
+    "2024": 6.3,
+    "2025": 5.64,
+    "2026": 1.38
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 7.712787162936611,
+   "costs_usd": 191.1602300109864,
+   "distributions_usd": 171.63400000000001,
+   "invested_pct": 28.994158798232032
+  }
+ },
+ "benchmarks_price_only": {
+  "SPY100|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 29081.640252282716,
+   "return_pct": 190.81640252282716,
+   "cagr_pct": 12.639343509917156,
+   "max_dd_pct": -33.57519364946505,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 18.570936970915522,
+   "yearly_return_pct": {
+    "2017": 3.43,
+    "2018": -6.22,
+    "2019": 28.18,
+    "2020": 15.9,
+    "2021": 26.65,
+    "2022": -19.27,
+    "2023": 23.95,
+    "2024": 23.05,
+    "2025": 16.21,
+    "2026": 11.36
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.06463488237078395,
+   "costs_usd": 1.9590519165039064,
+   "distributions_usd": 0.0,
+   "invested_pct": 98.67442482040661
+  },
+  "SPY50_CASH50|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 17465.874812243652,
+   "return_pct": 74.65874812243652,
+   "cagr_pct": 6.4149018869607,
+   "max_dd_pct": -17.738594506427997,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.018504155806593,
+   "yearly_return_pct": {
+    "2017": 1.72,
+    "2018": -2.76,
+    "2019": 13.27,
+    "2020": 8.36,
+    "2021": 12.54,
+    "2022": -8.98,
+    "2023": 11.45,
+    "2024": 11.06,
+    "2025": 7.65,
+    "2026": 5.42
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.16678403322924049,
+   "costs_usd": 3.9050339477539056,
+   "distributions_usd": 0.0,
+   "invested_pct": 48.59229475087884
+  },
+  "SPY50_BIL50|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 17519.058040335083,
+   "return_pct": 75.19058040335082,
+   "cagr_pct": 6.450980212289026,
+   "max_dd_pct": -17.64433001307041,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.020751366251952,
+   "yearly_return_pct": {
+    "2017": 1.7,
+    "2018": -2.61,
+    "2019": 13.23,
+    "2020": 8.4,
+    "2021": 12.58,
+    "2022": -8.95,
+    "2023": 11.48,
+    "2024": 11.05,
+    "2025": 7.6,
+    "2026": 5.55
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 0.331600883156385,
+   "costs_usd": 7.781627938842777,
+   "distributions_usd": 0.0,
+   "invested_pct": 98.15984177450122
+  },
+  "SPY_TIMING50|full|2": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 13321.790947180201,
+   "return_pct": 33.21790947180201,
+   "cagr_pct": 3.249467128298855,
+   "max_dd_pct": -8.817197422826585,
+   "max_dd_trough": "2019-10-14",
+   "vol_pct": 4.847589578012241,
+   "yearly_return_pct": {
+    "2017": 1.62,
+    "2018": -3.49,
+    "2019": 2.02,
+    "2020": 8.54,
+    "2021": 7.58,
+    "2022": -4.54,
+    "2023": 5.04,
+    "2024": 5.95,
+    "2025": 5.66,
+    "2026": 1.59
+   },
+   "negative_years": [
+    2018,
+    2022
+   ],
+   "turnover_per_year": 7.495834656710575,
+   "costs_usd": 151.89899422607422,
+   "distributions_usd": 0.0,
+   "invested_pct": 31.952881647674513
+  },
+  "SPY100|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 18251.261040856934,
+   "return_pct": 82.51261040856934,
+   "cagr_pct": 15.56570731129403,
+   "max_dd_pct": -33.57519364946505,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 20.154991065409636,
+   "yearly_return_pct": {
+    "2017": 3.43,
+    "2018": -6.22,
+    "2019": 28.18,
+    "2020": 15.9,
+    "2021": 26.65
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.18716277018671254,
+   "costs_usd": 1.9590519165039064,
+   "distributions_usd": 0.0,
+   "invested_pct": 98.3353517290489
+  },
+  "SPY50_CASH50|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 13662.058766009519,
+   "return_pct": 36.6205876600952,
+   "cagr_pct": 7.79172784079083,
+   "max_dd_pct": -17.738594506427997,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.812961424886973,
+   "yearly_return_pct": {
+    "2017": 1.72,
+    "2018": -2.76,
+    "2019": 13.27,
+    "2020": 8.36,
+    "2021": 12.54
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.22361544875080136,
+   "costs_usd": 2.0913499572753906,
+   "distributions_usd": 0.0,
+   "invested_pct": 48.86014415463928
+  },
+  "SPY50_BIL50|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 13684.426057954408,
+   "return_pct": 36.844260579544084,
+   "cagr_pct": 7.834135596620273,
+   "max_dd_pct": -17.64433001307041,
+   "max_dd_trough": "2020-03-23",
+   "vol_pct": 9.81076638485225,
+   "yearly_return_pct": {
+    "2017": 1.7,
+    "2018": -2.61,
+    "2019": 13.23,
+    "2020": 8.4,
+    "2021": 12.58
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 0.4638480386008102,
+   "costs_usd": 4.344159941101074,
+   "distributions_usd": 0.0,
+   "invested_pct": 98.39553132113643
+  },
+  "SPY_TIMING50|y2017_2021|2": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 11682.07489274293,
+   "return_pct": 16.820748927429307,
+   "cagr_pct": 3.809109929459975,
+   "max_dd_pct": -8.817197422826585,
+   "max_dd_trough": "2019-10-14",
+   "vol_pct": 5.323333007919205,
+   "yearly_return_pct": {
+    "2017": 1.62,
+    "2018": -3.49,
+    "2019": 2.02,
+    "2020": 8.54,
+    "2021": 7.58
+   },
+   "negative_years": [
+    2018
+   ],
+   "turnover_per_year": 7.306961008035332,
+   "costs_usd": 63.085660235595704,
+   "distributions_usd": 0.0,
+   "invested_pct": 35.07269725299506
+  },
+  "SPY100|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 15671.494458251953,
+   "return_pct": 56.714944582519536,
+   "cagr_pct": 9.80685758533404,
+   "max_dd_pct": -24.16645339630198,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 16.45402001797369,
+   "yearly_return_pct": {
+    "2022": -18.79,
+    "2023": 22.87,
+    "2024": 22.2,
+    "2025": 15.72,
+    "2026": 11.06
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.17668922706982348,
+   "costs_usd": 1.9051999511718751,
+   "distributions_usd": 0.0,
+   "invested_pct": 95.59988567950224
+  },
+  "SPY50_CASH50|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 12698.095088183592,
+   "return_pct": 26.98095088183592,
+   "cagr_pct": 5.099910397818119,
+   "max_dd_pct": -12.51946260316361,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 8.086491690728744,
+   "yearly_return_pct": {
+    "2022": -9.22,
+    "2023": 11.22,
+    "2024": 10.57,
+    "2025": 7.56,
+    "2026": 5.76
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.20992000104533814,
+   "costs_usd": 2.144779980468751,
+   "distributions_usd": 0.0,
+   "invested_pct": 47.442632650681496
+  },
+  "SPY50_BIL50|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 12709.998236791993,
+   "return_pct": 27.099982367919928,
+   "cagr_pct": 5.120418485091638,
+   "max_dd_pct": -12.49259778325753,
+   "max_dd_trough": "2022-10-12",
+   "vol_pct": 8.100301412010669,
+   "yearly_return_pct": {
+    "2022": -9.21,
+    "2023": 11.17,
+    "2024": 10.59,
+    "2025": 7.53,
+    "2026": 5.9
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 0.40120298113793945,
+   "costs_usd": 4.101425988769532,
+   "distributions_usd": 0.0,
+   "invested_pct": 96.94082495927057
+  },
+  "SPY_TIMING50|y2022_2026|2": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 11343.477105798349,
+   "return_pct": 13.434771057983497,
+   "cagr_pct": 2.6597627039054217,
+   "max_dd_pct": -7.210693529724088,
+   "max_dd_trough": "2023-03-30",
+   "vol_pct": 4.388554134003178,
+   "yearly_return_pct": {
+    "2022": -4.87,
+    "2023": 5.17,
+    "2024": 6.01,
+    "2025": 5.37,
+    "2026": 1.5
+   },
+   "negative_years": [
+    2022
+   ],
+   "turnover_per_year": 7.736401404916948,
+   "costs_usd": 76.6423400024414,
+   "distributions_usd": 0.0,
+   "invested_pct": 29.094081339182072
+  }
+ },
+ "benchmarks_economic_complete": true,
+ "books": {
+  "C|full|10": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 10621.665399172198,
+   "return_pct": 6.2166539917219765,
+   "cagr_pct": 0.6746862529358078,
+   "max_dd_pct": -19.640434420954513,
+   "max_dd_trough": "2023-03-13",
+   "vol_pct": 7.735662342765462,
+   "yearly_return_pct": {
+    "2017": -1.18,
+    "2018": -12.71,
+    "2019": -2.17,
+    "2020": 12.49,
+    "2021": -5.68,
+    "2022": -6.2,
+    "2023": 7.43,
+    "2024": 12.18,
+    "2025": 0.41,
+    "2026": 4.51
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022
+   ],
+   "trades_executed": 720,
+   "trades_closed": 718,
+   "open_at_end": 2,
+   "profit_factor": 1.035801726518942,
+   "win_rate_pct": 30.22284122562674,
+   "expectancy_r": 0.01727866378930291,
+   "turnover_per_year": 13.079932894540045,
+   "costs_usd": 1090.651781018078,
+   "dividends_usd": 278.586745,
+   "invested_pct": 26.629883164376682,
+   "orders": {
+    "placed": 849,
+    "filled": 707,
+    "filled_at_or_below_stop": 13,
+    "expired_above_limit": 129,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21903,
+    "skip_ticker_open": 1492,
+    "skip_daily_entries": 682,
+    "skip_capital_or_risk": 47
+   },
+   "exit_reasons": {
+    "stop": 457,
+    "time": 248,
+    "entry_at_or_below_stop": 13
+   },
+   "reconciliation": {
+    "final_equity": 10621.665399172198,
+    "expected": 10621.665399172176,
+    "diff": 2.1827872842550278e-11,
+    "matches_cent": true
+   }
+  },
+  "C|full|25": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 8818.839207944911,
+   "return_pct": -11.811607920550882,
+   "cagr_pct": -1.391631415424699,
+   "max_dd_pct": -27.531085978335167,
+   "max_dd_trough": "2023-03-13",
+   "vol_pct": 7.701544525223911,
+   "yearly_return_pct": {
+    "2017": -1.53,
+    "2018": -14.21,
+    "2019": -4.05,
+    "2020": 9.38,
+    "2021": -8.48,
+    "2022": -6.46,
+    "2023": 5.49,
+    "2024": 8.84,
+    "2025": -0.65,
+    "2026": 1.86
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 723,
+   "trades_closed": 719,
+   "open_at_end": 4,
+   "profit_factor": 0.9198029257637788,
+   "win_rate_pct": 29.624478442280942,
+   "expectancy_r": -0.03815704902036919,
+   "turnover_per_year": 12.969150095171946,
+   "costs_usd": 2464.587977071022,
+   "dividends_usd": 247.97239099999996,
+   "invested_pct": 26.175451729821347,
+   "orders": {
+    "placed": 855,
+    "filled": 709,
+    "filled_at_or_below_stop": 14,
+    "expired_above_limit": 132,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21854,
+    "skip_ticker_open": 1477,
+    "skip_daily_entries": 721,
+    "skip_capital_or_risk": 66
+   },
+   "exit_reasons": {
+    "stop": 458,
+    "time": 247,
+    "entry_at_or_below_stop": 14
+   },
+   "reconciliation": {
+    "final_equity": 8818.839207944911,
+    "expected": 8818.839207944904,
+    "diff": 7.275957614183426e-12,
+    "matches_cent": true
+   }
+  },
+  "C|full|50": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 6607.337608403059,
+   "return_pct": -33.926623915969415,
+   "cagr_pct": -4.515193348984736,
+   "max_dd_pct": -37.6406772472304,
+   "max_dd_trough": "2023-04-12",
+   "vol_pct": 7.702566093993231,
+   "yearly_return_pct": {
+    "2017": -2.11,
+    "2018": -16.77,
+    "2019": -6.82,
+    "2020": 6.48,
+    "2021": -12.12,
+    "2022": -7.21,
+    "2023": -0.92,
+    "2024": 6.4,
+    "2025": -3.29,
+    "2026": -1.67
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2025,
+    2026
+   ],
+   "trades_executed": 716,
+   "trades_closed": 713,
+   "open_at_end": 3,
+   "profit_factor": 0.7640364363953644,
+   "win_rate_pct": 28.611500701262273,
+   "expectancy_r": -0.13658506394299974,
+   "turnover_per_year": 12.639907329100119,
+   "costs_usd": 4187.313480938445,
+   "dividends_usd": 213.34753700000005,
+   "invested_pct": 26.245859669938387,
+   "orders": {
+    "placed": 840,
+    "filled": 705,
+    "filled_at_or_below_stop": 11,
+    "expired_above_limit": 124,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21806,
+    "skip_ticker_open": 1474,
+    "skip_daily_entries": 740,
+    "skip_capital_or_risk": 113
+   },
+   "exit_reasons": {
+    "stop": 456,
+    "time": 246,
+    "entry_at_or_below_stop": 11
+   },
+   "reconciliation": {
+    "final_equity": 6607.337608403059,
+    "expected": 6607.337608403064,
+    "diff": -5.4569682106375694e-12,
+    "matches_cent": true
+   }
+  },
+  "C|y2017_2021|10": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 8953.856921338462,
+   "return_pct": -10.461430786615377,
+   "cagr_pct": -2.6220479112058603,
+   "max_dd_pct": -19.082911686260996,
+   "max_dd_trough": "2019-10-02",
+   "vol_pct": 7.5734291593712335,
+   "yearly_return_pct": {
+    "2017": -1.18,
+    "2018": -12.71,
+    "2019": -2.17,
+    "2020": 12.49,
+    "2021": -5.68
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "trades_executed": 343,
+   "trades_closed": 339,
+   "open_at_end": 4,
+   "profit_factor": 0.8442394833993658,
+   "win_rate_pct": 30.08849557522124,
+   "expectancy_r": -0.07520415786420803,
+   "turnover_per_year": 13.840144332258241,
+   "costs_usd": 517.969680060301,
+   "dividends_usd": 125.58962200000002,
+   "invested_pct": 29.29357427089555,
+   "orders": {
+    "placed": 406,
+    "filled": 340,
+    "filled_at_or_below_stop": 3,
+    "expired_above_limit": 63,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 10310,
+    "skip_ticker_open": 694,
+    "skip_daily_entries": 382,
+    "skip_capital_or_risk": 7,
+    "after_window": 5
+   },
+   "exit_reasons": {
+    "stop": 216,
+    "time": 120,
+    "entry_at_or_below_stop": 3
+   },
+   "reconciliation": {
+    "final_equity": 8953.856921338462,
+    "expected": 8953.85692133845,
+    "diff": 1.0913936421275139e-11,
+    "matches_cent": true
+   }
+  },
+  "C|y2017_2021|25": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 8114.51463599511,
+   "return_pct": -18.854853640048898,
+   "cagr_pct": -4.899720275677977,
+   "max_dd_pct": -21.90755173548523,
+   "max_dd_trough": "2019-10-02",
+   "vol_pct": 7.433249546976659,
+   "yearly_return_pct": {
+    "2017": -1.53,
+    "2018": -14.21,
+    "2019": -4.05,
+    "2020": 9.38,
+    "2021": -8.48
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "trades_executed": 343,
+   "trades_closed": 339,
+   "open_at_end": 4,
+   "profit_factor": 0.7409996042521058,
+   "win_rate_pct": 29.793510324483773,
+   "expectancy_r": -0.1334043683528057,
+   "turnover_per_year": 13.615128791243581,
+   "costs_usd": 1220.275622603489,
+   "dividends_usd": 118.92161499999999,
+   "invested_pct": 28.815522194847425,
+   "orders": {
+    "placed": 406,
+    "filled": 340,
+    "filled_at_or_below_stop": 3,
+    "expired_above_limit": 63,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 10310,
+    "skip_ticker_open": 694,
+    "skip_daily_entries": 382,
+    "skip_capital_or_risk": 7,
+    "after_window": 5
+   },
+   "exit_reasons": {
+    "stop": 216,
+    "time": 120,
+    "entry_at_or_below_stop": 3
+   },
+   "reconciliation": {
+    "final_equity": 8114.51463599511,
+    "expected": 8114.51463599509,
+    "diff": 2.000888343900442e-11,
+    "matches_cent": true
+   }
+  },
+  "C|y2017_2021|50": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 7103.420844755864,
+   "return_pct": -28.965791552441356,
+   "cagr_pct": -7.894674734427931,
+   "max_dd_pct": -30.233890302692846,
+   "max_dd_trough": "2021-12-21",
+   "vol_pct": 7.601865592536479,
+   "yearly_return_pct": {
+    "2017": -2.11,
+    "2018": -16.77,
+    "2019": -6.82,
+    "2020": 6.48,
+    "2021": -12.12
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "trades_executed": 343,
+   "trades_closed": 339,
+   "open_at_end": 4,
+   "profit_factor": 0.6248525235536339,
+   "win_rate_pct": 28.31858407079646,
+   "expectancy_r": -0.23040471916713487,
+   "turnover_per_year": 13.545271349300704,
+   "costs_usd": 2281.104043269636,
+   "dividends_usd": 110.452608,
+   "invested_pct": 28.907402058183497,
+   "orders": {
+    "placed": 406,
+    "filled": 340,
+    "filled_at_or_below_stop": 3,
+    "expired_above_limit": 63,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 10310,
+    "skip_ticker_open": 694,
+    "skip_daily_entries": 382,
+    "skip_capital_or_risk": 7,
+    "after_window": 5
+   },
+   "exit_reasons": {
+    "stop": 216,
+    "time": 120,
+    "entry_at_or_below_stop": 3
+   },
+   "reconciliation": {
+    "final_equity": 7103.420844755864,
+    "expected": 7103.4208447558685,
+    "diff": -4.547473508864641e-12,
+    "matches_cent": true
+   }
+  },
+  "C|y2022_2026|10": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 12294.942667413787,
+   "return_pct": 22.94942667413786,
+   "cagr_pct": 4.39615333344654,
+   "max_dd_pct": -9.406370804133502,
+   "max_dd_trough": "2024-09-06",
+   "vol_pct": 7.9275478359638925,
+   "yearly_return_pct": {
+    "2022": -4.4,
+    "2023": 8.19,
+    "2024": 11.52,
+    "2025": 0.39,
+    "2026": 6.17
+   },
+   "negative_years": [
+    2022
+   ],
+   "trades_executed": 374,
+   "trades_closed": 370,
+   "open_at_end": 4,
+   "profit_factor": 1.2488054651445835,
+   "win_rate_pct": 31.08108108108108,
+   "expectancy_r": 0.11735292183833308,
+   "turnover_per_year": 12.450907686148696,
+   "costs_usd": 647.9720652598962,
+   "dividends_usd": 169.66799999999998,
+   "invested_pct": 24.360426032910297,
+   "orders": {
+    "placed": 438,
+    "filled": 365,
+    "filled_at_or_below_stop": 9,
+    "expired_above_limit": 64,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 11573,
+    "skip_ticker_open": 805,
+    "skip_daily_entries": 321,
+    "skip_capital_or_risk": 32
+   },
+   "exit_reasons": {
+    "stop": 233,
+    "time": 128,
+    "entry_at_or_below_stop": 9
+   },
+   "reconciliation": {
+    "final_equity": 12294.942667413787,
+    "expected": 12294.942667413781,
+    "diff": 5.4569682106375694e-12,
+    "matches_cent": true
+   }
+  },
+  "C|y2022_2026|25": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 10964.02643767242,
+   "return_pct": 9.640264376724206,
+   "cagr_pct": 1.934993784972816,
+   "max_dd_pct": -10.028651496717222,
+   "max_dd_trough": "2024-09-06",
+   "vol_pct": 7.803242271871573,
+   "yearly_return_pct": {
+    "2022": -4.98,
+    "2023": 5.6,
+    "2024": 8.53,
+    "2025": -1.92,
+    "2026": 2.65
+   },
+   "negative_years": [
+    2022,
+    2025
+   ],
+   "trades_executed": 377,
+   "trades_closed": 374,
+   "open_at_end": 3,
+   "profit_factor": 1.0988557797816372,
+   "win_rate_pct": 29.67914438502674,
+   "expectancy_r": 0.051093904447932915,
+   "turnover_per_year": 12.29285874970077,
+   "costs_usd": 1527.1839124049648,
+   "dividends_usd": 164.10747,
+   "invested_pct": 24.1025233273688,
+   "orders": {
+    "placed": 442,
+    "filled": 367,
+    "filled_at_or_below_stop": 10,
+    "expired_above_limit": 65,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 11572,
+    "skip_ticker_open": 798,
+    "skip_daily_entries": 320,
+    "skip_capital_or_risk": 37
+   },
+   "exit_reasons": {
+    "stop": 237,
+    "time": 127,
+    "entry_at_or_below_stop": 10
+   },
+   "reconciliation": {
+    "final_equity": 10964.02643767242,
+    "expected": 10964.026437672423,
+    "diff": -1.8189894035458565e-12,
+    "matches_cent": true
+   }
+  },
+  "C|y2022_2026|50": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 9503.496460738605,
+   "return_pct": -4.965035392613959,
+   "cagr_pct": -1.0548570814785774,
+   "max_dd_pct": -12.863790266572671,
+   "max_dd_trough": "2026-10-22",
+   "vol_pct": 8.018873745038922,
+   "yearly_return_pct": {
+    "2022": -5.81,
+    "2023": 2.58,
+    "2024": 5.04,
+    "2025": -4.93,
+    "2026": -1.51
+   },
+   "negative_years": [
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 380,
+   "trades_closed": 377,
+   "open_at_end": 3,
+   "profit_factor": 0.9430197742230395,
+   "win_rate_pct": 28.912466843501328,
+   "expectancy_r": -0.05180240643505446,
+   "turnover_per_year": 12.301532954709518,
+   "costs_usd": 2894.7652010529514,
+   "dividends_usd": 150.84697,
+   "invested_pct": 24.20392204511591,
+   "orders": {
+    "placed": 447,
+    "filled": 368,
+    "filled_at_or_below_stop": 12,
+    "expired_above_limit": 67,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 11527,
+    "skip_ticker_open": 790,
+    "skip_daily_entries": 361,
+    "skip_capital_or_risk": 44
+   },
+   "exit_reasons": {
+    "stop": 239,
+    "time": 126,
+    "entry_at_or_below_stop": 12
+   },
+   "reconciliation": {
+    "final_equity": 9503.496460738605,
+    "expected": 9503.496460738608,
+    "diff": -3.637978807091713e-12,
+    "matches_cent": true
+   }
+  },
+  "C|full|10|stop_slip": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 8782.718021095523,
+   "return_pct": -12.172819789044775,
+   "cagr_pct": -1.4367444734403656,
+   "max_dd_pct": -28.024602866888415,
+   "max_dd_trough": "2023-03-13",
+   "vol_pct": 7.796281268407734,
+   "yearly_return_pct": {
+    "2017": -1.49,
+    "2018": -14.49,
+    "2019": -4.04,
+    "2020": 9.69,
+    "2021": -8.71,
+    "2022": -6.69,
+    "2023": 5.65,
+    "2024": 9.05,
+    "2025": -0.6,
+    "2026": 1.54
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 723,
+   "trades_closed": 719,
+   "open_at_end": 4,
+   "profit_factor": 0.9197290366257962,
+   "win_rate_pct": 30.180806675938804,
+   "expectancy_r": -0.04062717753374542,
+   "turnover_per_year": 12.958044471456185,
+   "costs_usd": 982.8694971603063,
+   "dividends_usd": 247.88439099999997,
+   "invested_pct": 26.185140291595175,
+   "orders": {
+    "placed": 855,
+    "filled": 709,
+    "filled_at_or_below_stop": 14,
+    "expired_above_limit": 132,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21854,
+    "skip_ticker_open": 1477,
+    "skip_daily_entries": 721,
+    "skip_capital_or_risk": 66
+   },
+   "exit_reasons": {
+    "stop": 458,
+    "time": 247,
+    "entry_at_or_below_stop": 14
+   },
+   "reconciliation": {
+    "final_equity": 8782.718021095523,
+    "expected": 8782.718021095508,
+    "diff": 1.4551915228366852e-11,
+    "matches_cent": true
+   }
+  },
+  "C|full|25|stop_slip": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 6930.120999407376,
+   "return_pct": -30.698790005926234,
+   "cagr_pct": -4.006070931892214,
+   "max_dd_pct": -33.22392968161336,
+   "max_dd_trough": "2023-03-13",
+   "vol_pct": 7.712729921158498,
+   "yearly_return_pct": {
+    "2017": -1.84,
+    "2018": -16.07,
+    "2019": -5.64,
+    "2020": 7.93,
+    "2021": -9.71,
+    "2022": -7.09,
+    "2023": -0.05,
+    "2024": 6.3,
+    "2025": -2.19,
+    "2026": -5.25
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2025,
+    2026
+   ],
+   "trades_executed": 725,
+   "trades_closed": 722,
+   "open_at_end": 3,
+   "profit_factor": 0.8020429040683044,
+   "win_rate_pct": 28.80886426592798,
+   "expectancy_r": -0.10928239982018464,
+   "turnover_per_year": 12.813515834720958,
+   "costs_usd": 2227.685281363364,
+   "dividends_usd": 220.58253699999995,
+   "invested_pct": 26.193802155767287,
+   "orders": {
+    "placed": 853,
+    "filled": 714,
+    "filled_at_or_below_stop": 11,
+    "expired_above_limit": 128,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21798,
+    "skip_ticker_open": 1474,
+    "skip_daily_entries": 741,
+    "skip_capital_or_risk": 107
+   },
+   "exit_reasons": {
+    "stop": 469,
+    "time": 242,
+    "entry_at_or_below_stop": 11
+   },
+   "reconciliation": {
+    "final_equity": 6930.120999407376,
+    "expected": 6930.120999407369,
+    "diff": 7.275957614183426e-12,
+    "matches_cent": true
+   }
+  },
+  "C|full|10|intrabar_worst": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 6081.896360615243,
+   "return_pct": -39.18103639384757,
+   "cagr_pct": -5.393291653302401,
+   "max_dd_pct": -42.854464639897195,
+   "max_dd_trough": "2024-09-06",
+   "vol_pct": 8.284475535858537,
+   "yearly_return_pct": {
+    "2017": -1.76,
+    "2018": -18.27,
+    "2019": -6.48,
+    "2020": 5.27,
+    "2021": -14.89,
+    "2022": -8.15,
+    "2023": -1.8,
+    "2024": 3.91,
+    "2025": -3.18,
+    "2026": -0.36
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2025,
+    2026
+   ],
+   "trades_executed": 715,
+   "trades_closed": 711,
+   "open_at_end": 4,
+   "profit_factor": 0.7431703232315919,
+   "win_rate_pct": 30.239099859353026,
+   "expectancy_r": -0.1649451051028298,
+   "turnover_per_year": 12.653396129039297,
+   "costs_usd": 800.9317930154801,
+   "dividends_usd": 203.82969000000003,
+   "invested_pct": 26.418104186156526,
+   "orders": {
+    "placed": 843,
+    "filled": 704,
+    "filled_at_or_below_stop": 11,
+    "expired_above_limit": 128,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21806,
+    "skip_ticker_open": 1485,
+    "skip_daily_entries": 717,
+    "skip_capital_or_risk": 122
+   },
+   "exit_reasons": {
+    "stop": 452,
+    "time": 248,
+    "entry_at_or_below_stop": 11
+   },
+   "reconciliation": {
+    "final_equity": 6081.896360615243,
+    "expected": 6081.896360615242,
+    "diff": 9.094947017729282e-13,
+    "matches_cent": true
+   }
+  },
+  "C|full|25|intrabar_worst": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 5300.164489456261,
+   "return_pct": -46.99835510543738,
+   "cagr_pct": -6.833392399865179,
+   "max_dd_pct": -48.89299764317537,
+   "max_dd_trough": "2024-09-06",
+   "vol_pct": 8.282182821352134,
+   "yearly_return_pct": {
+    "2017": -2.11,
+    "2018": -19.66,
+    "2019": -8.12,
+    "2020": 3.08,
+    "2021": -16.18,
+    "2022": -8.79,
+    "2023": -3.4,
+    "2024": 2.31,
+    "2025": -4.67,
+    "2026": -1.22
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2025,
+    2026
+   ],
+   "trades_executed": 709,
+   "trades_closed": 705,
+   "open_at_end": 4,
+   "profit_factor": 0.6794110279551517,
+   "win_rate_pct": 29.78723404255319,
+   "expectancy_r": -0.2270255572916281,
+   "turnover_per_year": 12.414150740641501,
+   "costs_usd": 1830.9115007567411,
+   "dividends_usd": 189.66733600000003,
+   "invested_pct": 26.27509789436737,
+   "orders": {
+    "placed": 836,
+    "filled": 698,
+    "filled_at_or_below_stop": 11,
+    "expired_above_limit": 127,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 21797,
+    "skip_ticker_open": 1488,
+    "skip_daily_entries": 709,
+    "skip_capital_or_risk": 143
+   },
+   "exit_reasons": {
+    "stop": 448,
+    "time": 246,
+    "entry_at_or_below_stop": 11
+   },
+   "reconciliation": {
+    "final_equity": 5300.164489456261,
+    "expected": 5300.16448945625,
+    "diff": 1.1823431123048067e-11,
+    "matches_cent": true
+   }
+  },
+  "C|full|10|tight_limit": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 11789.626241479356,
+   "return_pct": 17.89626241479356,
+   "cagr_pct": 1.8525086727059437,
+   "max_dd_pct": -17.294974832882048,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 8.047518502498734,
+   "yearly_return_pct": {
+    "2017": -0.66,
+    "2018": 3.4,
+    "2019": -1.77,
+    "2020": 2.54,
+    "2021": -2.76,
+    "2022": -6.88,
+    "2023": 0.65,
+    "2024": 12.36,
+    "2025": -5.59,
+    "2026": 17.87
+   },
+   "negative_years": [
+    2017,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 695,
+   "trades_closed": 693,
+   "open_at_end": 2,
+   "profit_factor": 1.1052173182940008,
+   "win_rate_pct": 26.83982683982684,
+   "expectancy_r": 0.07406019850259345,
+   "turnover_per_year": 13.185377239566693,
+   "costs_usd": 1194.4731212830593,
+   "dividends_usd": 176.507512,
+   "invested_pct": 24.86797178179859,
+   "orders": {
+    "placed": 1524,
+    "filled": 678,
+    "filled_at_or_below_stop": 17,
+    "expired_above_limit": 829,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 20604,
+    "skip_daily_entries": 1502,
+    "skip_ticker_open": 1275,
+    "skip_capital_or_risk": 68
+   },
+   "exit_reasons": {
+    "stop": 470,
+    "time": 206,
+    "entry_at_or_below_stop": 17
+   },
+   "reconciliation": {
+    "final_equity": 11789.626241479356,
+    "expected": 11789.626241479362,
+    "diff": -5.4569682106375694e-12,
+    "matches_cent": true
+   }
+  },
+  "C|full|25|tight_limit": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 10021.971903860262,
+   "return_pct": 0.219719038602606,
+   "cagr_pct": 0.024473184336537557,
+   "max_dd_pct": -22.841846385102006,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 8.147716947811908,
+   "yearly_return_pct": {
+    "2017": -1.04,
+    "2018": 1.67,
+    "2019": -3.53,
+    "2020": 0.6,
+    "2021": -4.79,
+    "2022": -6.97,
+    "2023": -1.42,
+    "2024": 9.71,
+    "2025": -6.65,
+    "2026": 14.79
+   },
+   "negative_years": [
+    2017,
+    2019,
+    2021,
+    2022,
+    2023,
+    2025
+   ],
+   "trades_executed": 695,
+   "trades_closed": 693,
+   "open_at_end": 2,
+   "profit_factor": 0.9959171898419946,
+   "win_rate_pct": 26.406926406926406,
+   "expectancy_r": 0.0024453252364003337,
+   "turnover_per_year": 13.115367182317883,
+   "costs_usd": 2748.775862460527,
+   "dividends_usd": 162.69086900000005,
+   "invested_pct": 24.849718393364345,
+   "orders": {
+    "placed": 1523,
+    "filled": 679,
+    "filled_at_or_below_stop": 16,
+    "expired_above_limit": 828,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 20595,
+    "skip_daily_entries": 1501,
+    "skip_ticker_open": 1275,
+    "skip_capital_or_risk": 79
+   },
+   "exit_reasons": {
+    "stop": 471,
+    "time": 206,
+    "entry_at_or_below_stop": 16
+   },
+   "reconciliation": {
+    "final_equity": 10021.971903860262,
+    "expected": 10021.971903860265,
+    "diff": -3.637978807091713e-12,
+    "matches_cent": true
+   }
+  },
+  "C|full|10|nonfill20": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 10785.138332645987,
+   "return_pct": 7.851383326459871,
+   "cagr_pct": 0.8462671392034604,
+   "max_dd_pct": -18.45511343810292,
+   "max_dd_trough": "2019-12-09",
+   "vol_pct": 7.572230145758383,
+   "yearly_return_pct": {
+    "2017": -1.27,
+    "2018": -10.37,
+    "2019": -4.16,
+    "2020": 13.36,
+    "2021": -2.87,
+    "2022": -4.43,
+    "2023": 5.38,
+    "2024": 10.92,
+    "2025": -1.74,
+    "2026": 5.2
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 687,
+   "trades_closed": 685,
+   "open_at_end": 2,
+   "profit_factor": 1.0523063686214298,
+   "win_rate_pct": 31.24087591240876,
+   "expectancy_r": 0.0364011661389216,
+   "turnover_per_year": 12.501427839318739,
+   "costs_usd": 1071.3379305903925,
+   "dividends_usd": 265.576405,
+   "invested_pct": 26.095107356771152,
+   "orders": {
+    "placed": 1020,
+    "filled": 674,
+    "filled_at_or_below_stop": 13,
+    "expired_above_limit": 162,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 171
+   },
+   "skips": {
+    "skip_positions": 21489,
+    "skip_ticker_open": 1456,
+    "skip_daily_entries": 952,
+    "skip_capital_or_risk": 56
+   },
+   "exit_reasons": {
+    "stop": 433,
+    "time": 239,
+    "entry_at_or_below_stop": 13
+   },
+   "reconciliation": {
+    "final_equity": 10785.138332645987,
+    "expected": 10785.13833264597,
+    "diff": 1.6370904631912708e-11,
+    "matches_cent": true
+   }
+  },
+  "C|full|25|nonfill20": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 9170.681756560267,
+   "return_pct": -8.293182434397329,
+   "cagr_pct": -0.960587290002568,
+   "max_dd_pct": -22.493399774407607,
+   "max_dd_trough": "2023-03-13",
+   "vol_pct": 7.70777640530931,
+   "yearly_return_pct": {
+    "2017": -1.63,
+    "2018": -11.89,
+    "2019": -6.26,
+    "2020": 11.86,
+    "2021": -5.53,
+    "2022": -5.09,
+    "2023": 1.68,
+    "2024": 6.0,
+    "2025": -3.21,
+    "2026": 7.89
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 691,
+   "trades_closed": 689,
+   "open_at_end": 2,
+   "profit_factor": 0.9439434214623695,
+   "win_rate_pct": 30.478955007256893,
+   "expectancy_r": -0.024333423417406908,
+   "turnover_per_year": 12.45914512525606,
+   "costs_usd": 2433.747664230941,
+   "dividends_usd": 243.713704,
+   "invested_pct": 25.99903775959697,
+   "orders": {
+    "placed": 1030,
+    "filled": 676,
+    "filled_at_or_below_stop": 15,
+    "expired_above_limit": 166,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 173
+   },
+   "skips": {
+    "skip_positions": 21553,
+    "skip_ticker_open": 1450,
+    "skip_daily_entries": 851,
+    "skip_capital_or_risk": 89
+   },
+   "exit_reasons": {
+    "stop": 436,
+    "time": 238,
+    "entry_at_or_below_stop": 15
+   },
+   "reconciliation": {
+    "final_equity": 9170.681756560267,
+    "expected": 9170.681756560252,
+    "diff": 1.4551915228366852e-11,
+    "matches_cent": true
+   }
+  },
+  "S|full|10": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 8798.686429546464,
+   "return_pct": -12.01313570453536,
+   "cagr_pct": -1.4167806585912435,
+   "max_dd_pct": -19.482281571740835,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 4.512537618028389,
+   "yearly_return_pct": {
+    "2017": 0.68,
+    "2018": -6.18,
+    "2019": -4.76,
+    "2020": 5.1,
+    "2021": -5.81,
+    "2022": -4.13,
+    "2023": 4.75,
+    "2024": 1.56,
+    "2025": -2.04,
+    "2026": -1.11
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 425,
+   "trades_closed": 421,
+   "open_at_end": 4,
+   "profit_factor": 0.8439570845151732,
+   "win_rate_pct": 37.29216152019003,
+   "expectancy_r": -0.06825446009932874,
+   "turnover_per_year": 8.113083987847508,
+   "costs_usd": 660.6402502808045,
+   "dividends_usd": 185.82532900000004,
+   "invested_pct": 20.031025199710108,
+   "orders": {
+    "placed": 453,
+    "filled": 424,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 28,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 578,
+    "skip_daily_entries": 19,
+    "skip_capital_or_risk": 13,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 242,
+    "time": 178,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 8798.686429546464,
+    "expected": 8798.686429546444,
+    "diff": 2.000888343900442e-11,
+    "matches_cent": true
+   }
+  },
+  "S|full|25": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 8002.18046341479,
+   "return_pct": -19.978195365852102,
+   "cagr_pct": -2.4542304790734493,
+   "max_dd_pct": -24.104503993841487,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 4.518584498818777,
+   "yearly_return_pct": {
+    "2017": 0.47,
+    "2018": -7.27,
+    "2019": -6.13,
+    "2020": 3.97,
+    "2021": -7.0,
+    "2022": -4.61,
+    "2023": 3.59,
+    "2024": 0.36,
+    "2025": -3.34,
+    "2026": -1.3
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 425,
+   "trades_closed": 421,
+   "open_at_end": 4,
+   "profit_factor": 0.7511889005192,
+   "win_rate_pct": 35.62945368171022,
+   "expectancy_r": -0.1340196529422529,
+   "turnover_per_year": 8.080220312321941,
+   "costs_usd": 1563.4089187158938,
+   "dividends_usd": 178.69481600000003,
+   "invested_pct": 19.941472890074483,
+   "orders": {
+    "placed": 453,
+    "filled": 424,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 28,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 577,
+    "skip_daily_entries": 19,
+    "skip_capital_or_risk": 14,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 243,
+    "time": 177,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 8002.18046341479,
+    "expected": 8002.180463414773,
+    "diff": 1.7280399333685637e-11,
+    "matches_cent": true
+   }
+  },
+  "S|full|50": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 6577.530772359761,
+   "return_pct": -34.22469227640239,
+   "cagr_pct": -4.563315159704695,
+   "max_dd_pct": -36.46495896984278,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.547792537692595,
+   "yearly_return_pct": {
+    "2017": 0.14,
+    "2018": -9.33,
+    "2019": -8.67,
+    "2020": 2.5,
+    "2021": -9.35,
+    "2022": -5.1,
+    "2023": 1.19,
+    "2024": -2.69,
+    "2025": -5.33,
+    "2026": -3.49
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2024,
+    2025,
+    2026
+   ],
+   "trades_executed": 424,
+   "trades_closed": 420,
+   "open_at_end": 4,
+   "profit_factor": 0.5971058999439781,
+   "win_rate_pct": 33.33333333333333,
+   "expectancy_r": -0.24413787206811835,
+   "turnover_per_year": 8.054860092354183,
+   "costs_usd": 2852.108665365051,
+   "dividends_usd": 163.94396999999998,
+   "invested_pct": 19.74454967872827,
+   "orders": {
+    "placed": 452,
+    "filled": 423,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 28,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 572,
+    "skip_capital_or_risk": 20,
+    "skip_daily_entries": 19,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 244,
+    "time": 175,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 6577.530772359761,
+    "expected": 6577.5307723597725,
+    "diff": -1.1823431123048067e-11,
+    "matches_cent": true
+   }
+  },
+  "S|y2017_2021|10": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 8905.425857210848,
+   "return_pct": -10.94574142789152,
+   "cagr_pct": -2.7489594138861984,
+   "max_dd_pct": -14.526944426312415,
+   "max_dd_trough": "2019-12-03",
+   "vol_pct": 4.756160713161645,
+   "yearly_return_pct": {
+    "2017": 0.68,
+    "2018": -6.18,
+    "2019": -4.76,
+    "2020": 5.1,
+    "2021": -5.81
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021
+   ],
+   "trades_executed": 218,
+   "trades_closed": 213,
+   "open_at_end": 5,
+   "profit_factor": 0.7309509302683174,
+   "win_rate_pct": 36.15023474178404,
+   "expectancy_r": -0.12728449529172134,
+   "turnover_per_year": 9.11796819266611,
+   "costs_usd": 351.57536048929694,
+   "dividends_usd": 122.793837,
+   "invested_pct": 22.02156694942009,
+   "orders": {
+    "placed": 231,
+    "filled": 217,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 13,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 337,
+    "skip_ticker_open": 9,
+    "skip_daily_entries": 5,
+    "skip_capital_or_risk": 3,
+    "after_window": 2
+   },
+   "exit_reasons": {
+    "stop": 126,
+    "time": 86,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 8905.425857210848,
+    "expected": 8905.425857210832,
+    "diff": 1.6370904631912708e-11,
+    "matches_cent": true
+   }
+  },
+  "S|y2017_2021|25": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 8457.480756895173,
+   "return_pct": -15.425192431048274,
+   "cagr_pct": -3.9483579131918356,
+   "max_dd_pct": -18.412420301291586,
+   "max_dd_trough": "2021-12-03",
+   "vol_pct": 4.815484967185192,
+   "yearly_return_pct": {
+    "2017": 0.47,
+    "2018": -7.27,
+    "2019": -6.13,
+    "2020": 3.97,
+    "2021": -7.0
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021
+   ],
+   "trades_executed": 218,
+   "trades_closed": 213,
+   "open_at_end": 5,
+   "profit_factor": 0.645364027813971,
+   "win_rate_pct": 35.2112676056338,
+   "expectancy_r": -0.19026657206748923,
+   "turnover_per_year": 9.10503374318635,
+   "costs_usd": 856.0542479946258,
+   "dividends_usd": 119.09550400000002,
+   "invested_pct": 22.003991218779163,
+   "orders": {
+    "placed": 231,
+    "filled": 217,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 13,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 337,
+    "skip_ticker_open": 9,
+    "skip_daily_entries": 5,
+    "skip_capital_or_risk": 3,
+    "after_window": 2
+   },
+   "exit_reasons": {
+    "stop": 126,
+    "time": 86,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 8457.480756895173,
+    "expected": 8457.48075689517,
+    "diff": 3.637978807091713e-12,
+    "matches_cent": true
+   }
+  },
+  "S|y2017_2021|50": {
+   "start": "2017-11-03",
+   "end": "2021-12-31",
+   "final_equity": 7704.311784260539,
+   "return_pct": -22.95688215739461,
+   "cagr_pct": -6.078574986418561,
+   "max_dd_pct": -25.101294260088057,
+   "max_dd_trough": "2021-12-20",
+   "vol_pct": 4.879239586603335,
+   "yearly_return_pct": {
+    "2017": 0.14,
+    "2018": -9.33,
+    "2019": -8.67,
+    "2020": 2.5,
+    "2021": -9.35
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021
+   ],
+   "trades_executed": 218,
+   "trades_closed": 213,
+   "open_at_end": 5,
+   "profit_factor": 0.5212143552761499,
+   "win_rate_pct": 32.3943661971831,
+   "expectancy_r": -0.29523670002710234,
+   "turnover_per_year": 9.099443497044511,
+   "costs_usd": 1636.3448121859785,
+   "dividends_usd": 113.37417099999999,
+   "invested_pct": 21.89753615808988,
+   "orders": {
+    "placed": 231,
+    "filled": 217,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 13,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 337,
+    "skip_ticker_open": 9,
+    "skip_daily_entries": 5,
+    "skip_capital_or_risk": 3,
+    "after_window": 2
+   },
+   "exit_reasons": {
+    "stop": 126,
+    "time": 86,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 7704.311784260539,
+    "expected": 7704.311784260545,
+    "diff": -6.366462912410498e-12,
+    "matches_cent": true
+   }
+  },
+  "S|y2022_2026|10": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 10200.422422830432,
+   "return_pct": 2.00422422830433,
+   "cagr_pct": 0.4140839174089139,
+   "max_dd_pct": -10.145083996085003,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.360909603243623,
+   "yearly_return_pct": {
+    "2022": -2.3,
+    "2023": 5.95,
+    "2024": 1.5,
+    "2025": -2.18,
+    "2026": -0.76
+   },
+   "negative_years": [
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 209,
+   "trades_closed": 205,
+   "open_at_end": 4,
+   "profit_factor": 1.0232881620845031,
+   "win_rate_pct": 38.53658536585366,
+   "expectancy_r": 0.015264105220519563,
+   "turnover_per_year": 7.403433933891138,
+   "costs_usd": 361.01177119153976,
+   "dividends_usd": 125.42985199999998,
+   "invested_pct": 18.734307520391276,
+   "orders": {
+    "placed": 224,
+    "filled": 209,
+    "filled_at_or_below_stop": 0,
+    "expired_above_limit": 15,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 239,
+    "skip_daily_entries": 14,
+    "skip_capital_or_risk": 8,
+    "skip_ticker_open": 3
+   },
+   "exit_reasons": {
+    "stop": 114,
+    "time": 91
+   },
+   "reconciliation": {
+    "final_equity": 10200.422422830432,
+    "expected": 10200.422422830421,
+    "diff": 1.0913936421275139e-11,
+    "matches_cent": true
+   }
+  },
+  "S|y2022_2026|25": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 9727.801884057146,
+   "return_pct": -2.7219811594285437,
+   "cagr_pct": -0.5730299354120838,
+   "max_dd_pct": -12.574840639918838,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.3609060229706085,
+   "yearly_return_pct": {
+    "2022": -2.65,
+    "2023": 4.66,
+    "2024": 0.1,
+    "2025": -2.95,
+    "2026": -1.72
+   },
+   "negative_years": [
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 209,
+   "trades_closed": 205,
+   "open_at_end": 4,
+   "profit_factor": 0.9201677066331208,
+   "win_rate_pct": 36.58536585365854,
+   "expectancy_r": -0.046434859124967476,
+   "turnover_per_year": 7.368837390997302,
+   "costs_usd": 879.0139003445383,
+   "dividends_usd": 124.01385199999997,
+   "invested_pct": 18.678778432700224,
+   "orders": {
+    "placed": 224,
+    "filled": 209,
+    "filled_at_or_below_stop": 0,
+    "expired_above_limit": 15,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 239,
+    "skip_daily_entries": 14,
+    "skip_capital_or_risk": 8,
+    "skip_ticker_open": 3
+   },
+   "exit_reasons": {
+    "stop": 114,
+    "time": 91
+   },
+   "reconciliation": {
+    "final_equity": 9727.801884057146,
+    "expected": 9727.801884057135,
+    "diff": 1.0913936421275139e-11,
+    "matches_cent": true
+   }
+  },
+  "S|y2022_2026|50": {
+   "start": "2022-01-03",
+   "end": "2026-10-23",
+   "final_equity": 8882.1088961635,
+   "return_pct": -11.178911038365003,
+   "cagr_pct": -2.4383631388080085,
+   "max_dd_pct": -16.761426444855807,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.367918085487675,
+   "yearly_return_pct": {
+    "2022": -3.25,
+    "2023": 2.3,
+    "2024": -2.54,
+    "2025": -4.86,
+    "2026": -3.21
+   },
+   "negative_years": [
+    2022,
+    2024,
+    2025,
+    2026
+   ],
+   "trades_executed": 208,
+   "trades_closed": 204,
+   "open_at_end": 4,
+   "profit_factor": 0.7530796428888764,
+   "win_rate_pct": 35.78431372549019,
+   "expectancy_r": -0.15078671266925023,
+   "turnover_per_year": 7.274112680028405,
+   "costs_usd": 1664.8964299560082,
+   "dividends_usd": 119.963672,
+   "invested_pct": 18.607853572812154,
+   "orders": {
+    "placed": 223,
+    "filled": 208,
+    "filled_at_or_below_stop": 0,
+    "expired_above_limit": 15,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 238,
+    "skip_daily_entries": 14,
+    "skip_capital_or_risk": 10,
+    "skip_ticker_open": 3
+   },
+   "exit_reasons": {
+    "stop": 113,
+    "time": 91
+   },
+   "reconciliation": {
+    "final_equity": 8882.1088961635,
+    "expected": 8882.108896163498,
+    "diff": 1.8189894035458565e-12,
+    "matches_cent": true
+   }
+  },
+  "S|full|10|stop_slip": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 8054.351121671858,
+   "return_pct": -19.456488783281422,
+   "cagr_pct": -2.383530674898948,
+   "max_dd_pct": -24.346482129905755,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 4.595652950087821,
+   "yearly_return_pct": {
+    "2017": 0.55,
+    "2018": -7.49,
+    "2019": -5.98,
+    "2020": 4.14,
+    "2021": -7.01,
+    "2022": -4.77,
+    "2023": 3.76,
+    "2024": 0.7,
+    "2025": -3.11,
+    "2026": -1.35
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 425,
+   "trades_closed": 421,
+   "open_at_end": 4,
+   "profit_factor": 0.7659904614987096,
+   "win_rate_pct": 37.05463182897862,
+   "expectancy_r": -0.12967964269989452,
+   "turnover_per_year": 8.090940802472408,
+   "costs_usd": 627.3016822512278,
+   "dividends_usd": 179.07481600000003,
+   "invested_pct": 19.98248949716464,
+   "orders": {
+    "placed": 453,
+    "filled": 424,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 28,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 577,
+    "skip_daily_entries": 19,
+    "skip_capital_or_risk": 14,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 243,
+    "time": 177,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 8054.351121671858,
+    "expected": 8054.351121671849,
+    "diff": 9.094947017729282e-12,
+    "matches_cent": true
+   }
+  },
+  "S|full|25|stop_slip": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 7166.136313420792,
+   "return_pct": -28.338636865792076,
+   "cagr_pct": -3.64697698236105,
+   "max_dd_pct": -31.073498071350826,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.5981883007581175,
+   "yearly_return_pct": {
+    "2017": 0.34,
+    "2018": -8.53,
+    "2019": -7.61,
+    "2020": 3.48,
+    "2021": -8.48,
+    "2022": -5.13,
+    "2023": 2.28,
+    "2024": -0.98,
+    "2025": -4.82,
+    "2026": -2.43
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2024,
+    2025,
+    2026
+   ],
+   "trades_executed": 424,
+   "trades_closed": 420,
+   "open_at_end": 4,
+   "profit_factor": 0.6715400512799207,
+   "win_rate_pct": 35.23809523809524,
+   "expectancy_r": -0.1987087816663025,
+   "turnover_per_year": 8.021752958570186,
+   "costs_usd": 1477.0852878786045,
+   "dividends_usd": 169.00448299999996,
+   "invested_pct": 19.687185340278084,
+   "orders": {
+    "placed": 452,
+    "filled": 423,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 28,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 572,
+    "skip_capital_or_risk": 20,
+    "skip_daily_entries": 19,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 244,
+    "time": 175,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 7166.136313420792,
+    "expected": 7166.136313420789,
+    "diff": 3.637978807091713e-12,
+    "matches_cent": true
+   }
+  },
+  "S|full|10|intrabar_worst": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 6900.012642330903,
+   "return_pct": -30.999873576690973,
+   "cagr_pct": -4.052659145085991,
+   "max_dd_pct": -33.522252985982306,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.8251571157839495,
+   "yearly_return_pct": {
+    "2017": 0.01,
+    "2018": -9.01,
+    "2019": -8.81,
+    "2020": 3.02,
+    "2021": -9.19,
+    "2022": -5.14,
+    "2023": 2.54,
+    "2024": -0.82,
+    "2025": -5.36,
+    "2026": -2.64
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2024,
+    2025,
+    2026
+   ],
+   "trades_executed": 424,
+   "trades_closed": 420,
+   "open_at_end": 4,
+   "profit_factor": 0.657390320698264,
+   "win_rate_pct": 36.666666666666664,
+   "expectancy_r": -0.22133828236485106,
+   "turnover_per_year": 8.030000590758226,
+   "costs_usd": 576.6061583728786,
+   "dividends_usd": 165.47396999999998,
+   "invested_pct": 19.757061794420384,
+   "orders": {
+    "placed": 452,
+    "filled": 423,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 28,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 572,
+    "skip_capital_or_risk": 20,
+    "skip_daily_entries": 19,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 244,
+    "time": 175,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 6900.012642330903,
+    "expected": 6900.012642330887,
+    "diff": 1.6370904631912708e-11,
+    "matches_cent": true
+   }
+  },
+  "S|full|25|intrabar_worst": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 6203.185768828289,
+   "return_pct": -37.96814231171711,
+   "cagr_pct": -5.184777595781743,
+   "max_dd_pct": -40.03489520021137,
+   "max_dd_trough": "2026-10-13",
+   "vol_pct": 4.870592857556343,
+   "yearly_return_pct": {
+    "2017": -0.2,
+    "2018": -10.28,
+    "2019": -9.96,
+    "2020": 2.56,
+    "2021": -10.91,
+    "2022": -5.5,
+    "2023": 1.03,
+    "2024": -1.79,
+    "2025": -6.85,
+    "2026": -3.58
+   },
+   "negative_years": [
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2024,
+    2025,
+    2026
+   ],
+   "trades_executed": 424,
+   "trades_closed": 420,
+   "open_at_end": 4,
+   "profit_factor": 0.5868409450181326,
+   "win_rate_pct": 35.23809523809524,
+   "expectancy_r": -0.2826212387315624,
+   "turnover_per_year": 8.044485459583903,
+   "costs_usd": 1375.0081838572019,
+   "dividends_usd": 161.064304,
+   "invested_pct": 19.740069029385353,
+   "orders": {
+    "placed": 451,
+    "filled": 423,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 27,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 566,
+    "skip_daily_entries": 23,
+    "skip_capital_or_risk": 23,
+    "skip_ticker_open": 12
+   },
+   "exit_reasons": {
+    "stop": 244,
+    "time": 175,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 6203.185768828289,
+    "expected": 6203.185768828282,
+    "diff": 7.275957614183426e-12,
+    "matches_cent": true
+   }
+  },
+  "S|full|10|tight_limit": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 10678.598891563634,
+   "return_pct": 6.785988915636332,
+   "cagr_pct": 0.7347081764953467,
+   "max_dd_pct": -9.775395439592083,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 3.833962777777048,
+   "yearly_return_pct": {
+    "2017": 1.67,
+    "2018": -2.59,
+    "2019": 0.32,
+    "2020": 2.03,
+    "2021": -0.93,
+    "2022": -2.9,
+    "2023": 4.97,
+    "2024": 4.69,
+    "2025": -1.71,
+    "2026": 1.39
+   },
+   "negative_years": [
+    2018,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 330,
+   "trades_closed": 329,
+   "open_at_end": 1,
+   "profit_factor": 1.0974302685240571,
+   "win_rate_pct": 38.60182370820669,
+   "expectancy_r": 0.0695965047121031,
+   "turnover_per_year": 6.472116058958694,
+   "costs_usd": 594.0826319118223,
+   "dividends_usd": 162.39775999999995,
+   "invested_pct": 15.343417661745077,
+   "orders": {
+    "placed": 713,
+    "filled": 329,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 383,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 315,
+    "skip_daily_entries": 25,
+    "skip_capital_or_risk": 15,
+    "skip_ticker_open": 7
+   },
+   "exit_reasons": {
+    "stop": 189,
+    "time": 139,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 10678.598891563634,
+    "expected": 10678.598891563624,
+    "diff": 9.094947017729282e-12,
+    "matches_cent": true
+   }
+  },
+  "S|full|25|tight_limit": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 9740.341660632854,
+   "return_pct": -2.596583393671459,
+   "cagr_pct": -0.2928951599567631,
+   "max_dd_pct": -13.10948906222812,
+   "max_dd_trough": "2023-04-26",
+   "vol_pct": 3.829267077227877,
+   "yearly_return_pct": {
+    "2017": 1.48,
+    "2018": -3.69,
+    "2019": -0.93,
+    "2020": 0.84,
+    "2021": -1.56,
+    "2022": -3.23,
+    "2023": 3.83,
+    "2024": 3.37,
+    "2025": -2.46,
+    "2026": 0.04
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 330,
+   "trades_closed": 329,
+   "open_at_end": 1,
+   "profit_factor": 0.9584991967543565,
+   "win_rate_pct": 37.99392097264438,
+   "expectancy_r": -0.008653176891480055,
+   "turnover_per_year": 6.448763291240976,
+   "costs_usd": 1413.695503815973,
+   "dividends_usd": 155.59058,
+   "invested_pct": 15.274159904729759,
+   "orders": {
+    "placed": 713,
+    "filled": 329,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 383,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 0
+   },
+   "skips": {
+    "skip_positions": 315,
+    "skip_daily_entries": 25,
+    "skip_capital_or_risk": 15,
+    "skip_ticker_open": 7
+   },
+   "exit_reasons": {
+    "stop": 189,
+    "time": 139,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 9740.341660632854,
+    "expected": 9740.341660632866,
+    "diff": -1.2732925824820995e-11,
+    "matches_cent": true
+   }
+  },
+  "S|full|10|nonfill20": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 10079.282485825011,
+   "return_pct": 0.7928248582501185,
+   "cagr_pct": 0.08808437064360408,
+   "max_dd_pct": -12.058278316209414,
+   "max_dd_trough": "2023-04-13",
+   "vol_pct": 4.298034640058962,
+   "yearly_return_pct": {
+    "2017": 0.99,
+    "2018": -1.8,
+    "2019": -2.93,
+    "2020": 8.38,
+    "2021": -5.58,
+    "2022": -4.08,
+    "2023": 8.07,
+    "2024": 1.92,
+    "2025": -3.56,
+    "2026": 0.4
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2025
+   ],
+   "trades_executed": 390,
+   "trades_closed": 386,
+   "open_at_end": 4,
+   "profit_factor": 0.9976150970542274,
+   "win_rate_pct": 37.82383419689119,
+   "expectancy_r": -0.0008962677628015028,
+   "turnover_per_year": 7.5272353727315355,
+   "costs_usd": 674.5055028886314,
+   "dividends_usd": 251.6507350000001,
+   "invested_pct": 18.474039159658496,
+   "orders": {
+    "placed": 524,
+    "filled": 389,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 34,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 100
+   },
+   "skips": {
+    "skip_positions": 509,
+    "skip_daily_entries": 20,
+    "skip_ticker_open": 11,
+    "skip_capital_or_risk": 11
+   },
+   "exit_reasons": {
+    "stop": 219,
+    "time": 166,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 10079.282485825011,
+    "expected": 10079.282485825008,
+    "diff": 3.637978807091713e-12,
+    "matches_cent": true
+   }
+  },
+  "S|full|25|nonfill20": {
+   "start": "2017-11-03",
+   "end": "2026-10-23",
+   "final_equity": 9091.981069064179,
+   "return_pct": -9.080189309358211,
+   "cagr_pct": -1.0557118913520847,
+   "max_dd_pct": -16.548496775330047,
+   "max_dd_trough": "2023-05-24",
+   "vol_pct": 4.274933220995016,
+   "yearly_return_pct": {
+    "2017": 0.78,
+    "2018": -2.84,
+    "2019": -4.73,
+    "2020": 6.7,
+    "2021": -6.84,
+    "2022": -4.53,
+    "2023": 7.36,
+    "2024": 0.21,
+    "2025": -4.18,
+    "2026": -0.38
+   },
+   "negative_years": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2025,
+    2026
+   ],
+   "trades_executed": 388,
+   "trades_closed": 384,
+   "open_at_end": 4,
+   "profit_factor": 0.8751132603045891,
+   "win_rate_pct": 36.45833333333333,
+   "expectancy_r": -0.0639420759657146,
+   "turnover_per_year": 7.441150059443945,
+   "costs_usd": 1575.0017846050869,
+   "dividends_usd": 241.21088900000012,
+   "invested_pct": 18.326556555550617,
+   "orders": {
+    "placed": 521,
+    "filled": 387,
+    "filled_at_or_below_stop": 1,
+    "expired_above_limit": 33,
+    "expired_no_bar": 0,
+    "simulated_nonfill": 100
+   },
+   "skips": {
+    "skip_positions": 508,
+    "skip_daily_entries": 20,
+    "skip_capital_or_risk": 15,
+    "skip_ticker_open": 11
+   },
+   "exit_reasons": {
+    "stop": 216,
+    "time": 167,
+    "entry_at_or_below_stop": 1
+   },
+   "reconciliation": {
+    "final_equity": 9091.981069064179,
+    "expected": 9091.981069064172,
+    "diff": 7.275957614183426e-12,
+    "matches_cent": true
+   }
+  }
+ },
+ "decision": {
+  "C": {
+   "checks": {
+    "1_drawdown": false,
+    "2_result": false,
+    "4_vs_5050_bil": false,
+    "5_no_simpler_dominates": false,
+    "6_sample": true
+   },
+   "dominated_by": [
+    "SPY50_CASH50 dominates at 10 bps",
+    "SPY50_CASH50 dominates at 25 bps",
+    "SPY50_BIL50 dominates at 10 bps",
+    "SPY50_BIL50 dominates at 25 bps",
+    "SPY_TIMING50 dominates at 10 bps",
+    "SPY_TIMING50 dominates at 25 bps"
+   ],
+   "closed_trades_full": 718,
+   "closed_trades_min_half": 339,
+   "verdict": "NOT_A_CANDIDATE"
+  },
+  "S": {
+   "checks": {
+    "1_drawdown": false,
+    "2_result": false,
+    "3_signal_benefit": false,
+    "4_vs_5050_bil": false,
+    "5_no_simpler_dominates": false,
+    "6_sample": true
+   },
+   "dominated_by": [
+    "SPY50_CASH50 dominates at 10 bps",
+    "SPY50_CASH50 dominates at 25 bps",
+    "SPY50_BIL50 dominates at 10 bps",
+    "SPY50_BIL50 dominates at 25 bps",
+    "SPY_TIMING50 dominates at 10 bps",
+    "SPY_TIMING50 dominates at 25 bps"
+   ],
+   "closed_trades_full": 421,
+   "closed_trades_min_half": 205,
+   "verdict": "NOT_A_CANDIDATE"
+  },
+  "E": {
+   "verdict": "INSUFFICIENT_DATA",
+   "reason": "event data did not pass the pilot / coverage gate (see events coverage); no E return computed"
+  }
+ },
+ "bootstrap": {
+  "note": "exploratory; monthly blocks; no multiplicity correction",
+  "results": {
+   "S-C|10": {
+    "mean_annual_pct": -2.302245079815373,
+    "ci90_pct": [
+     -6.383437065222153,
+     1.350102821295928
+    ],
+    "share_above_0": 0.1385,
+    "months": 108,
+    "resamples": 2000,
+    "seed": 20261025
+   },
+   "S-SPY50_BIL50|10": {
+    "mean_annual_pct": -10.093967292607969,
+    "ci90_pct": [
+     -14.06240506052843,
+     -6.237582614583133
+    ],
+    "share_above_0": 0.0,
+    "months": 108,
+    "resamples": 2000,
+    "seed": 20261025
+   },
+   "S-C|25": {
+    "mean_annual_pct": -1.2806262847914494,
+    "ci90_pct": [
+     -5.57903073446791,
+     2.4058292806980273
+    ],
+    "share_above_0": 0.276,
+    "months": 108,
+    "resamples": 2000,
+    "seed": 20261025
+   },
+   "S-SPY50_BIL50|25": {
+    "mean_annual_pct": -11.154461290063418,
+    "ci90_pct": [
+     -15.185831335838262,
+     -7.333748693343392
+    ],
+    "share_above_0": 0.0,
+    "months": 108,
+    "resamples": 2000,
+    "seed": 20261025
+   }
+  }
+ }
+}

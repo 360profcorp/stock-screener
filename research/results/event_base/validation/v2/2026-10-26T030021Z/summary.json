@@ -1,0 +1,44 @@
+{
+ "version": "extract-v2/1.0",
+ "packets": "research/results/event_base/validation/packets/2026-10-26T024909Z",
+ "git": "ff25b6acdce670cb85a9719a408d2d1af76a1d19",
+ "status_counts": {
+  "confirmed_no_suitable_guidance": 63,
+  "confirmed_no_raise": 13,
+  "unknown": 3,
+  "confirmed_raise": 1
+ },
+ "comparison": {
+  "cases": 80,
+  "agree": 71,
+  "agree_pct": 88.8,
+  "false_raise": 0,
+  "missed_raise": 0,
+  "confusion": {
+   "confirmed_no_raise": {
+    "confirmed_no_raise": 8,
+    "confirmed_no_suitable_guidance": 5,
+    "confirmed_raise": 0,
+    "unknown": 0
+   },
+   "confirmed_no_suitable_guidance": {
+    "confirmed_no_raise": 2,
+    "confirmed_no_suitable_guidance": 61,
+    "confirmed_raise": 0,
+    "unknown": 0
+   },
+   "confirmed_raise": {
+    "confirmed_no_raise": 0,
+    "confirmed_no_suitable_guidance": 0,
+    "confirmed_raise": 1,
+    "unknown": 0
+   },
+   "unknown": {
+    "confirmed_no_raise": 0,
+    "confirmed_no_suitable_guidance": 2,
+    "confirmed_raise": 0,
+    "unknown": 1
+   }
+  }
+ }
+}

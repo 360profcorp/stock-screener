@@ -1,0 +1,39 @@
+{
+ "files": {
+  "research/results/event_base/runs/2026-10-26T011603Z/s_candidates.csv": "4ec1cec60882ec0e2a55c3d7909c844b27abcb2f51a89f11bc39712e5e09f097",
+  "research/results/event_base/runs/2026-10-26T011603Z/trades_C_full_10bps.csv": "9b7070ab814dabfd96b02742a1f07bc051219f821295681016619fae5cc874e9",
+  "research/results/event_base/runs/2026-10-26T011603Z/orders_C_full_10bps.csv": "b68262e9e6c4124b7a3ee5038a8c9868fea1d78c8d499bb340391dda295b95cf",
+  "research/results/event_base/runs/2026-10-26T011603Z/equity_C_full_10bps.csv": "4a99f6145965c52817f698c65ac3da19dc84c07a53841265af569f5433cedb43",
+  "research/results/event_base/runs/2026-10-26T011603Z/trades_C_full_25bps.csv": "a1a6ec803aa2c51dc792aa7a7e258d11c3d64adfffab24f0d2987cd97a772563",
+  "research/results/event_base/runs/2026-10-26T011603Z/trades_S_full_10bps.csv": "ba7480b67222b89024326922600af7dc85f5a66bd228808f0e3911a552047967",
+  "research/results/event_base/runs/2026-10-26T011603Z/orders_S_full_10bps.csv": "6c8c420f669a5cda7ea67934a918bd93658087395f4e6f8d6c0ff464ce625a91",
+  "research/results/event_base/runs/2026-10-26T011603Z/equity_S_full_10bps.csv": "17cb22d59c1ccd5bb56cd5a9e7d096de8db96b9d0fa6b5dd7fa2517d8db58f30",
+  "research/results/event_base/runs/2026-10-26T011603Z/trades_S_full_25bps.csv": "e1786d80df1d5e799d50c7008d75f5bef48abc281f0858231c77e33677c716e5",
+  "research/results/event_base/runs/2026-10-26T011603Z/bil_prices.csv": "815dbc5ab5e86b47e746789ba0dde6c386bcdf6455a69dbc78fa3e3f43427286",
+  "research/results/event_base/runs/2026-10-26T011603Z/equity_bench_SPY100.csv": "3e8c8e661c4c93157016f5375fba119f006aa10cf3baaa98feb97f6ecabf609f",
+  "research/results/event_base/runs/2026-10-26T011603Z/equity_bench_SPY50_CASH50.csv": "1f4d185c4adb8b81afabf571400e52f339485d2e408699a7372e3f398f721b87",
+  "research/results/event_base/runs/2026-10-26T011603Z/equity_bench_SPY50_BIL50.csv": "5514ab9de1055a9e74dd6e2e5aa7ed521e70710add0aef2b79bf97f143ee8431",
+  "research/results/event_base/runs/2026-10-26T011603Z/equity_bench_SPY_TIMING50.csv": "fafe01bb15210411f7a21d76ced3d81c03063c0ec20517c8dd75498aa360d689",
+  "research/results/event_base/runs/2026-10-26T011603Z/results.json": "e6d13887e147424405799228c7d4670968f9a7cb4faf2e3eb448c0a35060b54f",
+  "research/results/event_base/runs/2026-10-26T011603Z/REPORT.md": "0c8cf7711548189a95935db800aeb38659461168250afb11456ac4fac3d839cb"
+ },
+ "dataset": {
+  "bars.pkl.gz": "98a68ab735d3a2535bdec6aaa22b152a68e9d30f1d94d19cb83524e95b4650ab",
+  "sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54"
+ },
+ "etf": {
+  "SPY": {
+   "source": "dataset bars.pkl.gz",
+   "distributions_in_dataset": true,
+   "sha256": "f69b22ba36f3b46be3c259ec14fc64da330a82716338e652847ede9ff7b66745"
+  },
+  "BIL": {
+   "source": "yfinance BIL auto_adjust=False actions=True",
+   "rows": 2718,
+   "first": "2016-01-04",
+   "last": "2026-10-23",
+   "sha256": "dba1ec9eed6aceaeaf24680217d32c52daf3771fd47acbe9542a7b3972a4eb2e",
+   "distributions_sum": 20.857999999999997
+  }
+ }
+}
