@@ -1,11 +1,11 @@
 {
- "updated": "2026-11-03T22:40:44+00:00",
+ "updated": "2026-11-04T22:46:19+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 11,
- "processed_through": "2026-11-03",
+ "revision": 12,
+ "processed_through": "2026-11-04",
  "cash": 3239.907619272463,
  "open_positions": 4,
  "pending_orders": 0,
@@ -13,32 +13,32 @@
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-11-03",
+   "genuine_through": "2026-11-04",
    "reason": null,
    "metrics": {
-    "days": 11,
-    "final_equity": 9809.517547403566,
-    "return_pct": -1.9048245259643437,
+    "days": 12,
+    "final_equity": 9786.147651468507,
+    "return_pct": -2.138523485314925,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.4068700623565586,
-    "current_drawdown_pct": -1.9048245259643437,
-    "exposure_pct": 90.9090909090909,
-    "spy_price_return_pct": -1.9114508081870762,
-    "excess_vs_spy_price_pct": 0.006626282222732538
+    "current_drawdown_pct": -2.138523485314925,
+    "exposure_pct": 91.66666666666666,
+    "spy_price_return_pct": -0.29126718287889597,
+    "excess_vs_spy_price_pct": -1.847256302436029
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 11,
-    "final_equity": 9809.517547403566,
-    "return_pct": -1.9048245259643437,
+    "days": 12,
+    "final_equity": 9786.147651468507,
+    "return_pct": -2.138523485314925,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.4068700623565586,
-    "current_drawdown_pct": -1.9048245259643437,
-    "exposure_pct": 90.9090909090909,
-    "spy_price_return_pct": -1.9114508081870762,
-    "excess_vs_spy_price_pct": 0.006626282222732538
+    "current_drawdown_pct": -2.138523485314925,
+    "exposure_pct": 91.66666666666666,
+    "spy_price_return_pct": -0.29126718287889597,
+    "excess_vs_spy_price_pct": -1.847256302436029
    }
   },
   "timely": {
