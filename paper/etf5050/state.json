@@ -16,7 +16,7 @@
  "experiment": "etf5050-20261027",
  "created_at": "2026-10-27T02:47:54+00:00",
  "activation_session": "2026-10-26",
- "processed_through": "2026-11-04",
+ "processed_through": "2026-11-05",
  "cash": 444.94912842101985,
  "shares": {
   "SPY": 6,
@@ -128,6 +128,19 @@
    "drawdown_pct": -0.4583,
    "SPY_close": 766.8099975585938,
    "BIL_close": 91.41999816894531
+  },
+  {
+   "date": "2026-11-05",
+   "equity": 9780.1691,
+   "cash": 444.9491,
+   "SPY_value": 4398.0,
+   "BIL_value": 4937.22,
+   "receivable": 0,
+   "w_SPY": 0.4497,
+   "w_BIL": 0.5048,
+   "drawdown_pct": -2.4758,
+   "SPY_close": 733.0,
+   "BIL_close": 91.43000030517578
   }
  ],
  "fills": [
@@ -188,15 +201,15 @@
  "fees_total": 1.9106280487060547,
  "dividends_received": 0.0,
  "last_close": {
-  "SPY": 766.8099975585938,
-  "BIL": 91.41999816894531
+  "SPY": 733.0,
+  "BIL": 91.43000030517578
  },
- "revision": 8,
+ "revision": 9,
  "problems": [],
  "held_prev_close": {
   "SPY": 6,
   "BIL": 54
  },
- "updated_at": "2026-11-04T22:57:54+00:00",
- "data_date": "2026-11-04"
+ "updated_at": "2026-11-05T22:57:42+00:00",
+ "data_date": "2026-11-05"
 }
