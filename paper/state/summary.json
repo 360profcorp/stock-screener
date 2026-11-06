@@ -1,23 +1,23 @@
 {
- "updated": "2026-11-05T22:28:33+00:00",
+ "updated": "2026-11-06T22:23:14+00:00",
  "kind": "forward",
  "experiment": "forward-retest-rs-first-1.0+cfg.d4b20dc660ae",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "17454c61f631",
- "revision": 18,
- "run_id": "20261105T222833Z",
- "data_date": "2026-11-05",
+ "revision": 19,
+ "run_id": "20261106T222314Z",
+ "data_date": "2026-11-06",
  "sessions": [
   {
-   "day": "2026-11-05",
-   "raw": 8,
+   "day": "2026-11-06",
+   "raw": 53,
    "queued": 0,
    "late": false,
    "processed_late": false
   }
  ],
  "events": [],
- "processed_through": "2026-11-05",
+ "processed_through": "2026-11-06",
  "cash": 4424.830393890381,
  "open_positions": 5,
  "pending_orders": 0,
@@ -25,32 +25,32 @@
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-11-05",
+   "genuine_through": "2026-11-06",
    "reason": null,
    "metrics": {
-    "days": 17,
-    "final_equity": 9902.22037802124,
-    "return_pct": -0.9777962197875967,
+    "days": 18,
+    "final_equity": 9977.330393890381,
+    "return_pct": -0.22669606109618767,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.032033059959859,
-    "current_drawdown_pct": -2.032033059959859,
-    "exposure_pct": 94.11764705882352,
-    "spy_price_return_pct": -4.755714234277619,
-    "excess_vs_spy_price_pct": 3.777918014490022
+    "current_drawdown_pct": -1.2889294659551909,
+    "exposure_pct": 94.44444444444444,
+    "spy_price_return_pct": -4.458159907355985,
+    "excess_vs_spy_price_pct": 4.231463846259798
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 17,
-    "final_equity": 9902.22037802124,
-    "return_pct": -0.9777962197875967,
+    "days": 18,
+    "final_equity": 9977.330393890381,
+    "return_pct": -0.22669606109618767,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.032033059959859,
-    "current_drawdown_pct": -2.032033059959859,
-    "exposure_pct": 94.11764705882352,
-    "spy_price_return_pct": -4.755714234277619,
-    "excess_vs_spy_price_pct": 3.777918014490022
+    "current_drawdown_pct": -1.2889294659551909,
+    "exposure_pct": 94.44444444444444,
+    "spy_price_return_pct": -4.458159907355985,
+    "excess_vs_spy_price_pct": 4.231463846259798
    }
   },
   "timely": {
