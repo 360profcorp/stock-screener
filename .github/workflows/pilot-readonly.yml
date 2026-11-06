@@ -1,0 +1,50 @@
+name: Schwab pilot read-only check (pilot branch only)
+
+# READ-ONLY. Uses the bot's saved Schwab login; every HTTP call passes pilot.broker.ReadOnlyHTTP
+# (GET + token refresh only), so nothing can be ordered, replaced or cancelled. Never writes
+# state/trader.enc. Details are encrypted with a one-off public key; logs show only ok flags,
+# counts and the last 4 digits of account numbers.
+on:
+  push:
+    branches: [feature/schwab-pilot]
+    paths: ["pilot/probe/REQUEST"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pilot-readonly
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/feature/schwab-pilot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use main's current bot state (read-only copy)
+        run: |
+          git fetch -q origin main
+          git show origin/main:state/trader.enc > state/trader.enc
+          echo "::notice title=State source::main $(git rev-parse --short origin/main); last state commit $(git log -1 --format='%h %cI %s' origin/main -- state/trader.enc); sha256 $(sha256sum state/trader.enc | cut -c1-12)"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install cryptography requests "pandas>=2.0"
+      - name: Read-only Schwab check
+        env:
+          STATE_PASSWORD: ${{ secrets.STATE_PASSWORD }}
+          SCHWAB_APP_KEY: ${{ secrets.SCHWAB_APP_KEY }}
+          SCHWAB_APP_SECRET: ${{ secrets.SCHWAB_APP_SECRET }}
+        run: python pilot/readonly_check.py --pub pilot/probe/pub.pem --out pilot/probe/out.bin
+      - name: State file unchanged
+        if: always()
+        run: git fetch -q origin main && git show origin/main:state/trader.enc | cmp - state/trader.enc && echo "state/trader.enc unchanged"
+      - name: Commit the encrypted result to this branch only
+        if: always()
+        run: |
+          git checkout -- state/trader.enc
+          test -f pilot/probe/out.bin || exit 0
+          git config user.name "visar-audit"; git config user.email "visar-audit@users.noreply.github.com"
+          git add pilot/probe/out.bin && git commit -m "pilot: encrypted read-only Schwab check" && git pull --rebase -q && git push origin HEAD:feature/schwab-pilot
