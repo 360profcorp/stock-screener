@@ -243,12 +243,17 @@
   "SPY": 749.9199829101562,
   "BIL": 91.48999786376953
  },
- "revision": 12,
- "problems": [],
+ "revision": 13,
+ "problems": [
+  {
+   "day": "2026-11-11",
+   "problem": "invalid or missing bar; stopped"
+  }
+ ],
  "held_prev_close": {
   "SPY": 6,
   "BIL": 54
  },
- "updated_at": "2026-11-10T22:54:05+00:00",
- "data_date": "2026-11-10"
+ "updated_at": "2026-11-11T23:01:25+00:00",
+ "data_date": "2026-11-11"
 }

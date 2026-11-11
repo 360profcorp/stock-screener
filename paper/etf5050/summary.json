@@ -3,9 +3,9 @@
  "experiment": "etf5050-20261027",
  "activation_session": "2026-10-26",
  "processed_through": "2026-11-10",
- "data_date": "2026-11-10",
- "updated_at": "2026-11-10T22:54:05+00:00",
- "revision": 12,
+ "data_date": "2026-11-11",
+ "updated_at": "2026-11-11T23:01:25+00:00",
+ "revision": 13,
  "cash": 444.95,
  "shares": {
   "SPY": 6,
@@ -16,7 +16,12 @@
  "dividends_received": 0.0,
  "receivables": 0,
  "late_fills": 2,
- "problems": [],
+ "problems": [
+  {
+   "day": "2026-11-11",
+   "problem": "invalid or missing bar; stopped"
+  }
+ ],
  "equity": 9884.93,
  "return_pct": -1.1507,
  "max_drawdown_pct": -2.4758,
