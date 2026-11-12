@@ -1,0 +1,366 @@
+{
+ "sources": {
+  "f13_lists": [
+   {
+    "list": "2015q1",
+    "status": "ok",
+    "mapped_cusips_listed": 651
+   },
+   {
+    "list": "2015q2",
+    "status": "ok",
+    "mapped_cusips_listed": 661
+   },
+   {
+    "list": "2015q3",
+    "status": "ok",
+    "mapped_cusips_listed": 666
+   },
+   {
+    "list": "2015q4",
+    "status": "ok",
+    "mapped_cusips_listed": 675
+   },
+   {
+    "list": "2016q1",
+    "status": "ok",
+    "mapped_cusips_listed": 680
+   },
+   {
+    "list": "2016q2",
+    "status": "ok",
+    "mapped_cusips_listed": 677
+   },
+   {
+    "list": "2016q3",
+    "status": "ok",
+    "mapped_cusips_listed": 672
+   },
+   {
+    "list": "2016q4",
+    "status": "ok",
+    "mapped_cusips_listed": 669
+   },
+   {
+    "list": "2017q1",
+    "status": "ok",
+    "mapped_cusips_listed": 674
+   },
+   {
+    "list": "2017q2",
+    "status": "ok",
+    "mapped_cusips_listed": 671
+   },
+   {
+    "list": "2017q3",
+    "status": "ok",
+    "mapped_cusips_listed": 673
+   },
+   {
+    "list": "2017q4",
+    "status": "ok",
+    "mapped_cusips_listed": 673
+   },
+   {
+    "list": "2018q1",
+    "status": "ok",
+    "mapped_cusips_listed": 670
+   },
+   {
+    "list": "2018q2",
+    "status": "ok",
+    "mapped_cusips_listed": 673
+   },
+   {
+    "list": "2018q3",
+    "status": "ok",
+    "mapped_cusips_listed": 670
+   },
+   {
+    "list": "2018q4",
+    "status": "ok",
+    "mapped_cusips_listed": 671
+   },
+   {
+    "list": "2019q1",
+    "status": "ok",
+    "mapped_cusips_listed": 667
+   },
+   {
+    "list": "2019q2",
+    "status": "ok",
+    "mapped_cusips_listed": 666
+   },
+   {
+    "list": "2019q3",
+    "status": "ok",
+    "mapped_cusips_listed": 669
+   },
+   {
+    "list": "2019q4",
+    "status": "ok",
+    "mapped_cusips_listed": 663
+   },
+   {
+    "list": "2020q1",
+    "status": "ok",
+    "mapped_cusips_listed": 662
+   },
+   {
+    "list": "2020q2",
+    "status": "ok",
+    "mapped_cusips_listed": 660
+   },
+   {
+    "list": "2020q3",
+    "status": "ok",
+    "mapped_cusips_listed": 658
+   },
+   {
+    "list": "2020q4",
+    "status": "ok",
+    "mapped_cusips_listed": 658
+   },
+   {
+    "list": "2021q1",
+    "status": "ok",
+    "mapped_cusips_listed": 660
+   },
+   {
+    "list": "2021q2",
+    "status": "ok",
+    "mapped_cusips_listed": 657
+   },
+   {
+    "list": "2021q3",
+    "status": "ok",
+    "mapped_cusips_listed": 656
+   },
+   {
+    "list": "2021q4",
+    "status": "ok",
+    "mapped_cusips_listed": 654
+   },
+   {
+    "list": "2022q1",
+    "status": "ok",
+    "mapped_cusips_listed": 653
+   },
+   {
+    "list": "2022q2",
+    "status": "ok",
+    "mapped_cusips_listed": 648
+   },
+   {
+    "list": "2022q3",
+    "status": "ok",
+    "mapped_cusips_listed": 647
+   },
+   {
+    "list": "2022q4",
+    "status": "ok",
+    "mapped_cusips_listed": 644
+   },
+   {
+    "list": "2023q1",
+    "status": "ok",
+    "mapped_cusips_listed": 640
+   },
+   {
+    "list": "2023q2",
+    "status": "ok",
+    "mapped_cusips_listed": 639
+   },
+   {
+    "list": "2023q3",
+    "status": "ok",
+    "mapped_cusips_listed": 639
+   },
+   {
+    "list": "2023q4",
+    "status": "ok",
+    "mapped_cusips_listed": 638
+   },
+   {
+    "list": "2024q1",
+    "status": "ok",
+    "mapped_cusips_listed": 642
+   },
+   {
+    "list": "2024q2",
+    "status": "ok",
+    "mapped_cusips_listed": 639
+   },
+   {
+    "list": "2024q3",
+    "status": "ok",
+    "mapped_cusips_listed": 642
+   },
+   {
+    "list": "2024q4",
+    "status": "ok",
+    "mapped_cusips_listed": 642
+   },
+   {
+    "list": "2025q1",
+    "status": "ok",
+    "mapped_cusips_listed": 634
+   },
+   {
+    "list": "2025q2",
+    "status": "ok",
+    "mapped_cusips_listed": 636
+   },
+   {
+    "list": "2025q3",
+    "status": "ok",
+    "mapped_cusips_listed": 635
+   },
+   {
+    "list": "2025q4",
+    "status": "ok",
+    "mapped_cusips_listed": 631
+   },
+   {
+    "list": "2026q1",
+    "status": "ok",
+    "mapped_cusips_listed": 633
+   },
+   {
+    "list": "2026q2",
+    "status": "ok",
+    "mapped_cusips_listed": 634
+   },
+   {
+    "list": "2026q3",
+    "status": "ok",
+    "mapped_cusips_listed": 629
+   },
+   {
+    "list": "2026q4",
+    "status": "missing"
+   }
+  ],
+  "edgar_ciks_requested": 772,
+  "edgar_ciks_ok": 772,
+  "failed_downloads": [
+   {
+    "url": "https://www.sec.gov/files/investment/13flist2026q4.pdf",
+    "status": 404
+   },
+   {
+    "url": "https://www.sec.gov/divisions/investment/13f/13flist2026q4.pdf",
+    "status": 404
+   }
+  ]
+ },
+ "A0_reproduction": {
+  "build_rows": 27790,
+  "audit_rows": 27790,
+  "mismatched_rows": 0,
+  "usable_from_is_period_plus_46": true
+ },
+ "A1_identity": {
+  "single issuer": 686,
+  "issuer CIK changed, names linked": 31,
+  "issuer CIK changed, names differ": 18,
+  "no Form 3/4/5 under this symbol": 10
+ },
+ "A2_validity": {
+  "cusip_ticker_rows": 894,
+  "holding_rows_by_status": {
+   "ftd": 27976,
+   "unverified": 2475,
+   "conflict": 929,
+   "name": 114
+  },
+  "holder_weight_by_status": {
+   "conflict": 326696,
+   "ftd": 22214616,
+   "name": 128208,
+   "unverified": 27853
+  },
+  "member_quarters_by_status": {
+   "ftd": 21764,
+   "unverified": 1075,
+   "conflict": 323,
+   "name": 70
+  }
+ },
+ "A2_mapping": {
+  "rows": 915,
+  "symbol_differs_from_ticker": 83,
+  "cusips_with_several_tickers": 13
+ },
+ "A3_cusip_several_issuers": 66,
+ "A4_cusips_valid_for_several_tickers": 193,
+ "A4_impact": {
+  "breakout": {
+   "strict": {
+    "f2_changed": 2115,
+    "f2_changed_by_more_than_1pt": 378,
+    "days": 1588,
+    "days_with_br_order_change": 471,
+    "days_with_top3_change": 101
+   },
+   "lenient": {
+    "f2_changed": 659,
+    "f2_changed_by_more_than_1pt": 342,
+    "days": 1588,
+    "days_with_br_order_change": 349,
+    "days_with_top3_change": 85
+   }
+  },
+  "retest": {
+   "strict": {
+    "f2_changed": 1046,
+    "f2_changed_by_more_than_1pt": 210,
+    "days": 1565,
+    "days_with_br_order_change": 201,
+    "days_with_top3_change": 84
+   },
+   "lenient": {
+    "f2_changed": 327,
+    "f2_changed_by_more_than_1pt": 186,
+    "days": 1565,
+    "days_with_br_order_change": 150,
+    "days_with_top3_change": 62
+   }
+  }
+ },
+ "B3_f2_recompute": {
+  "breakout": {
+   "rows": 26928,
+   "differs_from_stored": 0,
+   "quarter_not_yet_public": 0
+  },
+  "retest": {
+   "rows": 13609,
+   "differs_from_stored": 0,
+   "quarter_not_yet_public": 0
+  }
+ },
+ "A5_form4": {
+  "purchase_rows": 15454,
+  "issuer_matches_dated_cik": 15253,
+  "mismatched": 201
+ },
+ "B1_13f": {
+  "sampled": 320,
+  "fetched": 320,
+  "filing_date_mismatch": 0,
+  "period_mismatch": 0,
+  "accepted_on_or_after_usable_from": 1,
+  "min_margin_days": 1
+ },
+ "B2_form4": {
+  "used_purchases": 1112,
+  "sampled": 276,
+  "fetched": 276,
+  "filing_date_mismatch": 0,
+  "accepted_on_or_after_signal_day": 0,
+  "min_gap_days": 1
+ },
+ "pass_A": false,
+ "pass_B": false
+}

@@ -1,0 +1,62 @@
+name: Research institutional v1 — SEC data build (research branch only)
+
+# PREREG_INSTITUTIONAL.md §3. Official SEC data sets only; no orders, no paper/state writes.
+on:
+  push:
+    branches: [research/institutional-ai-v1]
+    paths: ["research/institutional/sec_data.py", ".github/workflows/research-institutional-sec.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: research-institutional-sec
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/research/institutional-ai-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pandas>=2.0" numpy requests "yfinance>=0.2.40" lxml
+      - name: Tests
+        run: python -m unittest research.institutional.test_sec_data
+      - name: PIT membership file of the 10-year dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: shorts10y-dataset-40152515701
+          run-id: 40152515701
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ds
+      - name: Build SEC tables
+        run: |
+          set +e
+          PIT=$(find "${{ runner.temp }}/ds" -name sp500_pit_fja05680.csv | head -1)
+          python -m research.institutional.sec_data --pit "$PIT" --out dist/sec > b.log 2>&1; rc=$?
+          tail -60 b.log
+          [ $rc -eq 0 ] || python -c "t=open('b.log').read()[-3000:].replace('%','%25').replace('\n','%0A'); print('::error title=sec::'+t)"
+          exit $rc
+      - name: Upload SEC tables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-inst-${{ github.run_id }}
+          path: dist/sec
+          retention-days: 90
+      - name: Commit the build summary (small files only)
+        if: always()
+        run: |
+          d=research/results/institutional/sec/${{ github.run_id }}
+          mkdir -p $d
+          cp dist/sec/lags.json dist/sec/f13_periods.csv $d/ 2>/dev/null || true
+          python -c "import json; j=json.load(open('dist/sec/sources.json')); json.dump(dict(info=j['info'], downloads=len(j['downloads']), failed=[x for x in j['downloads'] if 'status' in x]), open('$d/summary.json','w'), indent=1, default=str)" || true
+          git config user.name "visar-research"; git config user.email "visar-research@users.noreply.github.com"
+          git add research/results/institutional || true
+          git diff --cached --quiet || git commit -m "Institutional v1: SEC build summary ${{ github.run_id }}"
+          git pull --rebase -q && git push
