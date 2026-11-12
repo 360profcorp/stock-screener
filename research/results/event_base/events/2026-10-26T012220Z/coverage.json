@@ -1,0 +1,70 @@
+{
+ "by_year": {
+  "2018": {
+   "candidates": 10,
+   "known": 0,
+   "raise_": 0,
+   "coverage_pct": 0.0
+  },
+  "2019": {
+   "candidates": 10,
+   "known": 0,
+   "raise_": 0,
+   "coverage_pct": 0.0
+  },
+  "2020": {
+   "candidates": 10,
+   "known": 2,
+   "raise_": 2,
+   "coverage_pct": 20.0
+  },
+  "2021": {
+   "candidates": 10,
+   "known": 2,
+   "raise_": 0,
+   "coverage_pct": 20.0
+  },
+  "2022": {
+   "candidates": 10,
+   "known": 0,
+   "raise_": 0,
+   "coverage_pct": 0.0
+  },
+  "2023": {
+   "candidates": 10,
+   "known": 1,
+   "raise_": 0,
+   "coverage_pct": 10.0
+  },
+  "2024": {
+   "candidates": 10,
+   "known": 0,
+   "raise_": 0,
+   "coverage_pct": 0.0
+  },
+  "2025": {
+   "candidates": 10,
+   "known": 0,
+   "raise_": 0,
+   "coverage_pct": 0.0
+  }
+ },
+ "all_years_ge_80": false,
+ "unknown_reasons": {
+  "guidance_for_period_not_found_in_latest_release": 64,
+  "fiscal_year_mapping_ambiguous": 7,
+  "release_not_retrieved": 4
+ },
+ "status_counts": {
+  "unknown": 75,
+  "known_no_raise": 3,
+  "raise": 2
+ },
+ "mode": "pilot",
+ "extractor": "guidance-regex/1.0",
+ "f345_source": "f345_sub.csv.gz",
+ "f345_sha256": "22398200461ea939157579124ade79a6b2376a2b80c5075befb42f20c09247de",
+ "full_collection_passed": false,
+ "requests": 1342,
+ "failed_requests": 0
+}

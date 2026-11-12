@@ -1,0 +1,10 @@
+{
+ "files": {
+  "research/results/event_base/benchmarks_v2/2026-10-26T015601Z/equity_bench_v2_SPY100.csv": "0882d2b30ea8bfe3f7936ecc45303d40d6a9c5d814003b6c2c602f09fc32d9c7",
+  "research/results/event_base/benchmarks_v2/2026-10-26T015601Z/equity_bench_v2_SPY50_CASH50.csv": "e2f817946f27ed2d92ab6dbf7a7183db64d480a5f6ee106dfee59debfee698b9",
+  "research/results/event_base/benchmarks_v2/2026-10-26T015601Z/equity_bench_v2_SPY50_BIL50.csv": "b52b799fc140e36e97c7acd06263a66d647fc389858f703ee241b447ae3bb266",
+  "research/results/event_base/benchmarks_v2/2026-10-26T015601Z/equity_bench_v2_SPY_TIMING50.csv": "39f69913130d8025cfaab8ad2fcbe9b4fec60bb9b1502922b44c2a408cf85fff",
+  "research/results/event_base/benchmarks_v2/2026-10-26T015601Z/results.json": "96567851065b2d31d4d24ee1f187c767fb15f1fbba837923674862a7b5b849dc",
+  "research/results/event_base/benchmarks_v2/2026-10-26T015601Z/REPORT.md": "a36c3a940556d4513818ce8b3f807448461c46eee2d80fef5366ac33a86cc983"
+ }
+}

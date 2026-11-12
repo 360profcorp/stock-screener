@@ -1,0 +1,128 @@
+{
+ "packets": "research/results/event_base/review/2026-10-26T015919Z/",
+ "labels": "research/event_base/manual_labels_v1.py",
+ "git": "9bc66e1d55a6f9db733b1696bca3bd14dc9bf5c1",
+ "status_counts": {
+  "confirmed_no_suitable_guidance": 53,
+  "confirmed_no_raise": 15,
+  "confirmed_raise": 7,
+  "unknown": 5
+ },
+ "subtype_counts_no_suitable": {
+  "none": 19,
+  "growth_pct_only": 9,
+  "quarterly_only": 5,
+  "organic_growth_pct_only": 3,
+  "point_only": 3,
+  "procedure_growth_only": 2,
+  "eps_only": 2,
+  "growth_pct_and_quarterly_only": 2,
+  "comps_pct_and_eps_only": 1,
+  "quarterly_and_pct_only": 1,
+  "core_growth_pct_only": 1,
+  "comps_pct_only": 1,
+  "comps_only_or_withheld": 1,
+  "ffo_eps_only": 1,
+  "segment_only": 1,
+  "nii_only": 1
+ },
+ "coverage_by_year": {
+  "2018": {
+   "cases": 10,
+   "known": 8,
+   "coverage_pct": 80.0,
+   "raise_": 3,
+   "no_raise": 4,
+   "no_suitable_guidance": 1,
+   "unknown": 2
+  },
+  "2019": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0,
+   "raise_": 0,
+   "no_raise": 0,
+   "no_suitable_guidance": 10,
+   "unknown": 0
+  },
+  "2020": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0,
+   "raise_": 3,
+   "no_raise": 1,
+   "no_suitable_guidance": 6,
+   "unknown": 0
+  },
+  "2021": {
+   "cases": 10,
+   "known": 9,
+   "coverage_pct": 90.0,
+   "raise_": 0,
+   "no_raise": 3,
+   "no_suitable_guidance": 6,
+   "unknown": 1
+  },
+  "2022": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0,
+   "raise_": 0,
+   "no_raise": 2,
+   "no_suitable_guidance": 8,
+   "unknown": 0
+  },
+  "2023": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0,
+   "raise_": 0,
+   "no_raise": 3,
+   "no_suitable_guidance": 7,
+   "unknown": 0
+  },
+  "2024": {
+   "cases": 10,
+   "known": 8,
+   "coverage_pct": 80.0,
+   "raise_": 0,
+   "no_raise": 1,
+   "no_suitable_guidance": 7,
+   "unknown": 2
+  },
+  "2025": {
+   "cases": 10,
+   "known": 10,
+   "coverage_pct": 100.0,
+   "raise_": 1,
+   "no_raise": 1,
+   "no_suitable_guidance": 8,
+   "unknown": 0
+  }
+ },
+ "all_years_ge_80": true,
+ "automated_vs_manual": {
+  "confirmed_no_raise": {
+   "known_no_raise": 3,
+   "raise": 0,
+   "unknown": 12
+  },
+  "confirmed_no_suitable_guidance": {
+   "known_no_raise": 0,
+   "raise": 0,
+   "unknown": 53
+  },
+  "confirmed_raise": {
+   "known_no_raise": 0,
+   "raise": 2,
+   "unknown": 5
+  },
+  "unknown": {
+   "known_no_raise": 0,
+   "raise": 0,
+   "unknown": 5
+  }
+ },
+ "automated_raise_correct_for_right_reason": 0,
+ "automated_known": 5
+}

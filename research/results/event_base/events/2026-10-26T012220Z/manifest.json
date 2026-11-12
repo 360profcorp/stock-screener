@@ -1,0 +1,10 @@
+{
+ "files": {
+  "research/results/event_base/events/2026-10-26T012220Z/sample.csv": "674e66e7f77842a4791a955400dd860506c541beae4140b609686b10135c4419",
+  "research/results/event_base/events/2026-10-26T012220Z/event_status.csv": "488fd47bbe931b7b44b23d608cc97e8d60afece77474ed12dfec350cb00a5eba",
+  "research/results/event_base/events/2026-10-26T012220Z/source_registry.csv": "e5717f017ff95571616e82d245b4af01b7bb7402c1581131a31e3768aad02e98",
+  "research/results/event_base/events/2026-10-26T012220Z/extractions.csv": "cc76232c368f151d97be4904b63b3c04cccce2a857104911c156dbe209b39e38",
+  "research/results/event_base/events/2026-10-26T012220Z/fetch_log.csv": "699f25f696d5bf05aec24ba65378040cbdf34b23a7d9918fa45bec5517b81a8e",
+  "research/results/event_base/events/2026-10-26T012220Z/coverage.json": "fef29c0038b01c7d7f2904c55a252069a1a9de69078ff30608a85f0e725b9a3d"
+ }
+}
