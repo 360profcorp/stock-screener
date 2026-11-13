@@ -1,72 +1,71 @@
 {
- "updated": "2026-11-12T22:26:56+00:00",
+ "updated": "2026-11-13T22:26:47+00:00",
  "kind": "forward",
  "experiment": "forward-retest-rs-first-1.0+cfg.d4b20dc660ae",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "17454c61f631",
- "revision": 23,
- "run_id": "20261112T222656Z",
- "data_date": "2026-11-12",
+ "revision": 24,
+ "run_id": "20261113T222647Z",
+ "data_date": "2026-11-13",
  "sessions": [
   {
-   "day": "2026-11-12",
-   "raw": 34,
+   "day": "2026-11-13",
+   "raw": 125,
    "queued": 0,
    "late": false,
    "processed_late": false
   }
  ],
  "events": [
-  "SELL HUM @ 443.68 (time) pnl +38.42",
-  "SELL NUE @ 260.75 (time) pnl +13.45",
-  "SELL MRK @ 146.95 (time) pnl -24.37"
+  "SELL VEEV @ 301.53 (time) pnl -38.08",
+  "SELL BIIB @ 253.40 (time) pnl +102.84"
  ],
- "processed_through": "2026-11-12",
- "cash": 7970.920707550049,
- "open_positions": 2,
+ "processed_through": "2026-11-13",
+ "cash": 10092.257208526611,
+ "open_positions": 0,
  "pending_orders": 0,
  "forward": {
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-11-12",
+   "genuine_through": "2026-11-13",
    "reason": null,
    "metrics": {
-    "days": 22,
-    "final_equity": 10078.640708770752,
-    "return_pct": 0.7864070877075191,
+    "days": 23,
+    "final_equity": 10092.257208526611,
+    "return_pct": 0.9225720852661157,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.032033059959859,
-    "current_drawdown_pct": -0.37620585732313083,
-    "exposure_pct": 95.45454545454545,
-    "spy_price_return_pct": -1.6216191352200093,
-    "excess_vs_spy_price_pct": 2.4080262229275284
+    "current_drawdown_pct": -0.24161157940219002,
+    "exposure_pct": 91.30434782608695,
+    "spy_price_return_pct": -1.9789476288840313,
+    "excess_vs_spy_price_pct": 2.901519714150147
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 22,
-    "final_equity": 10078.640708770752,
-    "return_pct": 0.7864070877075191,
+    "days": 23,
+    "final_equity": 10092.257208526611,
+    "return_pct": 0.9225720852661157,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.032033059959859,
-    "current_drawdown_pct": -0.37620585732313083,
-    "exposure_pct": 95.45454545454545,
-    "spy_price_return_pct": -1.6216191352200093,
-    "excess_vs_spy_price_pct": 2.4080262229275284
+    "current_drawdown_pct": -0.24161157940219002,
+    "exposure_pct": 91.30434782608695,
+    "spy_price_return_pct": -1.9789476288840313,
+    "excess_vs_spy_price_pct": 2.901519714150147
    }
   },
   "timely": {
    "trades": {
-    "closed": 3,
-    "win_rate_pct": 66.66666666666667,
-    "profit_factor": 2.1280946984396465,
-    "expectancy_r": 0.10278660614765434,
-    "expectancy_usd": 9.165092549642091,
-    "total_pnl_usd": 27.495277648926276
+    "closed": 5,
+    "win_rate_pct": 60.0,
+    "profit_factor": 2.477150835028984,
+    "expectancy_r": 0.17959336788575977,
+    "expectancy_usd": 18.451441705322416,
+    "total_pnl_usd": 92.25720852661209
    },
-   "open_positions": 2,
+   "open_positions": 0,
    "note": "trade-level statistics, not a counterfactual portfolio return"
   },
   "reconstructed": {
