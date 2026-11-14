@@ -1,0 +1,11 @@
+{
+ "files": {
+  "research/results/retest_robustness/data/2026-10-26T174412Z/coverage.json": "2be21a6245d27640cf3c701c61f83ca47951362ac88811b1573d706091288164",
+  "research/results/retest_robustness/data/2026-10-26T174412Z/members.csv": "805696ecb448e9c304331bef848db0fecd4253c3dedf21e8964162bf3ea12918",
+  "research/results/retest_robustness/data/2026-10-26T174412Z/download_report.csv": "d3fb1ad6559962f4300249e85553e51ffaf13d4ab10a316d313b1f91e13fb940"
+ },
+ "dataset": {
+  "bars.pkl.gz": "5fe270bf3b80a0fc0c1f7496aa5a8a5c1a12ef0f290372ee2266bfeb50ebb22a",
+  "sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54"
+ }
+}

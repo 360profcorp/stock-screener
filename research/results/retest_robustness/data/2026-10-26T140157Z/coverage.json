@@ -1,0 +1,112 @@
+{
+ "pit_source": "https://raw.githubusercontent.com/fja05680/sp500/master/S%26P%20500%20Historical%20Components%20%26%20Changes%20(Updated).csv",
+ "pit_first": "1996-01-02",
+ "pit_last": "2026-08-18",
+ "tickers_ever_member": 762,
+ "with_data": 454,
+ "spy_first": "2005-12-01",
+ "spy_last": "2016-10-24",
+ "bil_first": "2007-05-30",
+ "sha256": {
+  "bars.pkl.gz": "2ec256b50059529430a7426120b0beb9d8647308194bf735f3d001a5f834cca2",
+  "sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54"
+ },
+ "coverage_by_year": {
+  "2007": {
+   "member_days": 73555,
+   "covered": 43240,
+   "coverage_pct": 58.79,
+   "stayed_days": 48954,
+   "stayed_cov_pct": 78.52,
+   "removed_days": 24601,
+   "removed_cov_pct": 19.51
+  },
+  "2008": {
+   "member_days": 125841,
+   "covered": 76670,
+   "coverage_pct": 60.93,
+   "stayed_days": 87853,
+   "stayed_cov_pct": 77.79,
+   "removed_days": 37988,
+   "removed_cov_pct": 21.93
+  },
+  "2009": {
+   "member_days": 125690,
+   "covered": 79431,
+   "coverage_pct": 63.2,
+   "stayed_days": 94254,
+   "stayed_cov_pct": 77.55,
+   "removed_days": 31436,
+   "removed_cov_pct": 20.16
+  },
+  "2010": {
+   "member_days": 125537,
+   "covered": 82257,
+   "coverage_pct": 65.52,
+   "stayed_days": 97941,
+   "stayed_cov_pct": 77.7,
+   "removed_days": 27596,
+   "removed_cov_pct": 22.33
+  },
+  "2011": {
+   "member_days": 125242,
+   "covered": 83173,
+   "coverage_pct": 66.41,
+   "stayed_days": 100288,
+   "stayed_cov_pct": 77.64,
+   "removed_days": 24954,
+   "removed_cov_pct": 21.29
+  },
+  "2012": {
+   "member_days": 124242,
+   "covered": 85142,
+   "coverage_pct": 68.53,
+   "stayed_days": 102745,
+   "stayed_cov_pct": 78.2,
+   "removed_days": 21497,
+   "removed_cov_pct": 22.31
+  },
+  "2013": {
+   "member_days": 125241,
+   "covered": 88485,
+   "coverage_pct": 70.65,
+   "stayed_days": 107174,
+   "stayed_cov_pct": 78.52,
+   "removed_days": 18067,
+   "removed_cov_pct": 23.95
+  },
+  "2014": {
+   "member_days": 125534,
+   "covered": 90022,
+   "coverage_pct": 71.71,
+   "stayed_days": 112030,
+   "stayed_cov_pct": 78.08,
+   "removed_days": 13504,
+   "removed_cov_pct": 18.91
+  },
+  "2015": {
+   "member_days": 126147,
+   "covered": 92692,
+   "coverage_pct": 73.48,
+   "stayed_days": 117131,
+   "stayed_cov_pct": 77.73,
+   "removed_days": 9016,
+   "removed_cov_pct": 18.23
+  },
+  "2016": {
+   "member_days": 103068,
+   "covered": 78601,
+   "coverage_pct": 76.26,
+   "stayed_days": 100880,
+   "stayed_cov_pct": 77.62,
+   "removed_days": 2188,
+   "removed_cov_pct": 13.44
+  }
+ },
+ "coverage_gate_passed": false,
+ "threshold_pct": 85.0,
+ "members_without_data": 272,
+ "removed_members_without_data": 160,
+ "bars_end_before_membership": 0,
+ "git": "abbe7db89e2313db659b85a2f4f5ef7875b19cf7"
+}

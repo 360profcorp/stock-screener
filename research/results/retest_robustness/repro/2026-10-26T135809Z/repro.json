@@ -1,0 +1,162 @@
+{
+ "passed": true,
+ "reference": "research/results/crisis/runs/2026-10-25T0255Z/results.json",
+ "dataset_sha256": {
+  "bars.pkl.gz": "98a68ab735d3a2535bdec6aaa22b152a68e9d30f1d94d19cb83524e95b4650ab",
+  "sp500_pit_fja05680.csv": "36326709d46d6cd25834de5df457b16f5f96fad3a06b9beac28f7b88aa0b0d54"
+ },
+ "data": {
+  "tickers_ever_member": 726,
+  "with_prices": 609,
+  "detections": 341084,
+  "pit_first": "1996-01-02",
+  "pit_last": "2026-08-18"
+ },
+ "git": "2e3eaa41cfd350df319957dd1c51a95f58a9dce0",
+ "books": [
+  {
+   "book": "retest|M|full|10bps",
+   "ref_return": -4.399485137120451,
+   "got_return": -4.399485137120451,
+   "ref_dd": -45.34430845228072,
+   "got_dd": -45.34430845228072,
+   "ref_trades": 557,
+   "got_trades": 557,
+   "ok": true,
+   "cagr": -0.5003715695124922,
+   "profit_factor": 0.982490967862553
+  },
+  {
+   "book": "retest|M|full|25bps",
+   "ref_return": -33.85794290852924,
+   "got_return": -33.85794290852924,
+   "ref_dd": -53.76833201078233,
+   "got_dd": -53.76833201078233,
+   "ref_trades": 559,
+   "got_trades": 559,
+   "ok": true,
+   "cagr": -4.5041324532884115,
+   "profit_factor": 0.835202067857967
+  },
+  {
+   "book": "retest|M|development|10bps",
+   "ref_return": -24.268868034652446,
+   "got_return": -24.268868034652446,
+   "ref_dd": -30.850018207720144,
+   "got_dd": -30.850018207720144,
+   "ref_trades": 283,
+   "got_trades": 283,
+   "ok": true,
+   "cagr": -6.465672411897949,
+   "profit_factor": 0.7643004193483736
+  },
+  {
+   "book": "retest|M|development|25bps",
+   "ref_return": -34.133711093940946,
+   "got_return": -34.133711093940946,
+   "ref_dd": -39.45387360045372,
+   "got_dd": -39.45387360045372,
+   "ref_trades": 283,
+   "got_trades": 283,
+   "ok": true,
+   "cagr": -9.552452543378054,
+   "profit_factor": 0.6840231939357672
+  },
+  {
+   "book": "retest|M|holdout|10bps",
+   "ref_return": 49.6964065987332,
+   "got_return": 49.6964065987332,
+   "ref_dd": -22.052093493587456,
+   "got_dd": -22.052093493587456,
+   "ref_trades": 276,
+   "got_trades": 276,
+   "ok": true,
+   "cagr": 8.764137723646126,
+   "profit_factor": 1.3709544164297827
+  },
+  {
+   "book": "retest|M|holdout|25bps",
+   "ref_return": 31.00484448937795,
+   "got_return": 31.00484448937795,
+   "ref_dd": -24.396893146824738,
+   "got_dd": -24.396893146824738,
+   "ref_trades": 276,
+   "got_trades": 276,
+   "ok": true,
+   "cagr": 5.784910040505342,
+   "profit_factor": 1.2336176370161505
+  },
+  {
+   "book": "retest|C|full|10bps",
+   "ref_return": 1.262305465622271,
+   "got_return": 1.262305465622271,
+   "ref_dd": -48.04986854708088,
+   "got_dd": -48.04986854708088,
+   "ref_trades": 592,
+   "got_trades": 592,
+   "ok": true,
+   "cagr": 0.139954791712249,
+   "profit_factor": 1.0093184168279095
+  },
+  {
+   "book": "retest|C|full|25bps",
+   "ref_return": -20.060579821036796,
+   "got_return": -20.060579821036796,
+   "ref_dd": -53.82015367991539,
+   "got_dd": -53.82015367991539,
+   "ref_trades": 597,
+   "got_trades": 597,
+   "ok": true,
+   "cagr": -2.465432346284868,
+   "profit_factor": 0.9090205813745527
+  },
+  {
+   "book": "retest|C|development|10bps",
+   "ref_return": -30.37894854598042,
+   "got_return": -30.37894854598042,
+   "ref_dd": -36.28153359594255,
+   "got_dd": -36.28153359594255,
+   "ref_trades": 293,
+   "got_trades": 293,
+   "ok": true,
+   "cagr": -8.338638410999765,
+   "profit_factor": 0.7179114114404869
+  },
+  {
+   "book": "retest|C|development|25bps",
+   "ref_return": -37.120693630416625,
+   "got_return": -37.120693630416625,
+   "ref_dd": -41.87781017645955,
+   "got_dd": -41.87781017645955,
+   "ref_trades": 293,
+   "got_trades": 293,
+   "ok": true,
+   "cagr": -10.556181625713402,
+   "profit_factor": 0.6654943801988991
+  },
+  {
+   "book": "retest|C|holdout|10bps",
+   "ref_return": 70.72943801647722,
+   "got_return": 70.72943801647722,
+   "ref_dd": -22.846486805163135,
+   "got_dd": -22.846486805163135,
+   "ref_trades": 301,
+   "got_trades": 301,
+   "ok": true,
+   "cagr": 11.782935785656123,
+   "profit_factor": 1.4721535596260427
+  },
+  {
+   "book": "retest|C|holdout|25bps",
+   "ref_return": 48.45528482044019,
+   "got_return": 48.45528482044019,
+   "ref_dd": -25.515891035004213,
+   "got_dd": -25.515891035004213,
+   "ref_trades": 302,
+   "got_trades": 302,
+   "ok": true,
+   "cagr": 8.575738300268165,
+   "profit_factor": 1.3243342772393925
+  }
+ ]
+}
