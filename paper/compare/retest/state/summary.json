@@ -1,11 +1,11 @@
 {
- "updated": "2026-11-13T22:42:10+00:00",
+ "updated": "2026-11-17T04:25:38+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 19,
- "processed_through": "2026-11-13",
+ "revision": 20,
+ "processed_through": "2026-11-16",
  "cash": 6216.322033752748,
  "open_positions": 2,
  "pending_orders": 0,
@@ -13,32 +13,32 @@
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-11-13",
+   "genuine_through": "2026-11-16",
    "reason": null,
    "metrics": {
-    "days": 19,
-    "final_equity": 9697.361966003726,
-    "return_pct": -3.026380339962742,
+    "days": 20,
+    "final_equity": 9678.55197225983,
+    "return_pct": -3.21448027740171,
     "cagr_pct": NaN,
     "max_drawdown_pct": -5.111994974105816,
-    "current_drawdown_pct": -3.026380339962742,
-    "exposure_pct": 94.73684210526315,
-    "spy_price_return_pct": -1.908847657342816,
-    "excess_vs_spy_price_pct": -1.117532682619926
+    "current_drawdown_pct": -3.21448027740171,
+    "exposure_pct": 95.0,
+    "spy_price_return_pct": -3.7838860994522605,
+    "excess_vs_spy_price_pct": 0.5694058220505505
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 19,
-    "final_equity": 9697.361966003726,
-    "return_pct": -3.026380339962742,
+    "days": 20,
+    "final_equity": 9678.55197225983,
+    "return_pct": -3.21448027740171,
     "cagr_pct": NaN,
     "max_drawdown_pct": -5.111994974105816,
-    "current_drawdown_pct": -3.026380339962742,
-    "exposure_pct": 94.73684210526315,
-    "spy_price_return_pct": -1.908847657342816,
-    "excess_vs_spy_price_pct": -1.117532682619926
+    "current_drawdown_pct": -3.21448027740171,
+    "exposure_pct": 95.0,
+    "spy_price_return_pct": -3.7838860994522605,
+    "excess_vs_spy_price_pct": 0.5694058220505505
    }
   },
   "timely": {
