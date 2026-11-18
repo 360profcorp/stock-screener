@@ -1,23 +1,23 @@
 {
- "updated": "2026-11-17T04:11:50+00:00",
+ "updated": "2026-11-18T03:08:46+00:00",
  "kind": "forward",
  "experiment": "forward-retest-rs-first-1.0+cfg.d4b20dc660ae",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "17454c61f631",
- "revision": 25,
- "run_id": "20261117T041150Z",
- "data_date": "2026-11-16",
+ "revision": 26,
+ "run_id": "20261118T030846Z",
+ "data_date": "2026-11-17",
  "sessions": [
   {
-   "day": "2026-11-16",
-   "raw": 65,
+   "day": "2026-11-17",
+   "raw": 11,
    "queued": 0,
    "late": false,
    "processed_late": false
   }
  ],
  "events": [],
- "processed_through": "2026-11-16",
+ "processed_through": "2026-11-17",
  "cash": 10092.257208526611,
  "open_positions": 0,
  "pending_orders": 0,
@@ -25,32 +25,32 @@
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-11-16",
+   "genuine_through": "2026-11-17",
    "reason": null,
    "metrics": {
-    "days": 24,
+    "days": 25,
     "final_equity": 10092.257208526611,
     "return_pct": 0.9225720852661157,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.032033059959859,
     "current_drawdown_pct": -0.24161157940219002,
-    "exposure_pct": 87.5,
-    "spy_price_return_pct": -3.8526460914102945,
-    "excess_vs_spy_price_pct": 4.77521817667641
+    "exposure_pct": 84.0,
+    "spy_price_return_pct": -4.828478992120477,
+    "excess_vs_spy_price_pct": 5.751051077386593
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 24,
+    "days": 25,
     "final_equity": 10092.257208526611,
     "return_pct": 0.9225720852661157,
     "cagr_pct": NaN,
     "max_drawdown_pct": -2.032033059959859,
     "current_drawdown_pct": -0.24161157940219002,
-    "exposure_pct": 87.5,
-    "spy_price_return_pct": -3.8526460914102945,
-    "excess_vs_spy_price_pct": 4.77521817667641
+    "exposure_pct": 84.0,
+    "spy_price_return_pct": -4.828478992120477,
+    "excess_vs_spy_price_pct": 5.751051077386593
    }
   },
   "timely": {
