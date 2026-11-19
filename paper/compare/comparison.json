@@ -4,7 +4,7 @@
  "first_entry_session": "2026-10-21",
  "common_period": {
   "start": "2026-10-20",
-  "through": "2026-11-17"
+  "through": "2026-11-18"
  },
  "books": {
   "breakout": {
@@ -12,17 +12,17 @@
    "strategy_id": "breakout-rs-first/1.0+cfg.644e0eb26cdb",
    "experiment": "cmp-2026-10-20-breakout",
    "start": "2026-10-20",
-   "processed_through": "2026-11-17",
-   "equity": 9516.132202054443,
-   "cash": 7523.172180081787,
-   "return_pct": -4.838677979455575,
+   "processed_through": "2026-11-18",
+   "equity": 9520.672680081787,
+   "cash": 9520.672680081787,
+   "return_pct": -4.793273199182135,
    "max_drawdown_pct": -7.969175167695097,
-   "closed_trades": 7,
-   "open_positions": 1,
+   "closed_trades": 8,
+   "open_positions": 0,
    "pending_orders": 0,
-   "costs_paid_usd": 23.320933016357422,
-   "capital_invested_mean_pct": 30.526138034076606,
-   "sessions_with_position_pct": 95.23809523809523,
+   "costs_paid_usd": 25.32043301635742,
+   "capital_invested_mean_pct": 29.138586305254936,
+   "sessions_with_position_pct": 90.9090909090909,
    "order_outcomes": {
     "positions": 81,
     "daily_entries": 12,
@@ -30,15 +30,7 @@
     "ticker_open": 5,
     "no_trade_open_below_stop": 2
    },
-   "positions": [
-    {
-     "ticker": "CRL",
-     "qty": 6,
-     "entry": 313.8299865722656,
-     "stop": 300.19561065673827,
-     "entry_date": "2026-10-21"
-    }
-   ],
+   "positions": [],
    "pending": []
   },
   "retest": {
@@ -46,17 +38,17 @@
    "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
    "experiment": "cmp-2026-10-20-retest",
    "start": "2026-10-20",
-   "processed_through": "2026-11-17",
-   "equity": 9648.752049316714,
+   "processed_through": "2026-11-18",
+   "equity": 9639.152115692446,
    "cash": 6216.322033752748,
-   "return_pct": -3.512479506832855,
+   "return_pct": -3.6084788430755355,
    "max_drawdown_pct": -5.111994974105816,
    "closed_trades": 6,
    "open_positions": 2,
    "pending_orders": 0,
    "costs_paid_usd": 19.988879028015138,
-   "capital_invested_mean_pct": 47.80871428869759,
-   "sessions_with_position_pct": 95.23809523809523,
+   "capital_invested_mean_pct": 47.24966633761246,
+   "sessions_with_position_pct": 95.45454545454545,
    "order_outcomes": {
     "positions": 39,
     "daily_entries": 17,
