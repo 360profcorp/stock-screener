@@ -2,10 +2,10 @@
  "version": "etf5050-monthly/1.0",
  "experiment": "etf5050-20261027",
  "activation_session": "2026-10-26",
- "processed_through": "2026-11-18",
- "data_date": "2026-11-18",
- "updated_at": "2026-11-19T03:30:07+00:00",
- "revision": 18,
+ "processed_through": "2026-11-19",
+ "data_date": "2026-11-19",
+ "updated_at": "2026-11-20T03:18:12+00:00",
+ "revision": 19,
  "cash": 444.95,
  "shares": {
   "SPY": 6,
@@ -22,11 +22,11 @@
    "problem": "invalid or missing bar; stopped"
   }
  ],
- "equity": 9770.39,
- "return_pct": -2.2961,
- "max_drawdown_pct": -2.5733,
- "current_drawdown_pct": -2.5733,
- "w_SPY": 0.4484,
- "w_BIL": 0.506,
+ "equity": 9684.95,
+ "return_pct": -3.1505,
+ "max_drawdown_pct": -3.4253,
+ "current_drawdown_pct": -3.4253,
+ "w_SPY": 0.4435,
+ "w_BIL": 0.5106,
  "cagr_pct": null
 }
