@@ -1,56 +1,56 @@
 {
- "updated": "2026-11-25T04:51:39+00:00",
+ "updated": "2026-11-26T04:04:23+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 25,
- "processed_through": "2026-11-24",
- "cash": 6216.322033752748,
- "open_positions": 2,
+ "revision": 26,
+ "processed_through": "2026-11-25",
+ "cash": 9669.005904575655,
+ "open_positions": 0,
  "pending_orders": 0,
  "forward": {
   "genuine_forward": {
    "available": true,
    "contaminated_since": null,
-   "genuine_through": "2026-11-24",
+   "genuine_through": "2026-11-25",
    "reason": null,
    "metrics": {
-    "days": 26,
-    "final_equity": 9727.791962494204,
-    "return_pct": -2.722080375057956,
+    "days": 27,
+    "final_equity": 9669.005904575655,
+    "return_pct": -3.309940954243451,
     "cagr_pct": NaN,
     "max_drawdown_pct": -5.111994974105816,
-    "current_drawdown_pct": -2.722080375057956,
-    "exposure_pct": 96.15384615384616,
-    "spy_price_return_pct": -6.536630816464772,
-    "excess_vs_spy_price_pct": 3.814550441406816
+    "current_drawdown_pct": -3.309940954243451,
+    "exposure_pct": 92.5925925925926,
+    "spy_price_return_pct": -6.8070966018961006,
+    "excess_vs_spy_price_pct": 3.4971556476526495
    }
   },
   "observed_portfolio": {
    "contains_reconstructed": false,
    "metrics": {
-    "days": 26,
-    "final_equity": 9727.791962494204,
-    "return_pct": -2.722080375057956,
+    "days": 27,
+    "final_equity": 9669.005904575655,
+    "return_pct": -3.309940954243451,
     "cagr_pct": NaN,
     "max_drawdown_pct": -5.111994974105816,
-    "current_drawdown_pct": -2.722080375057956,
-    "exposure_pct": 96.15384615384616,
-    "spy_price_return_pct": -6.536630816464772,
-    "excess_vs_spy_price_pct": 3.814550441406816
+    "current_drawdown_pct": -3.309940954243451,
+    "exposure_pct": 92.5925925925926,
+    "spy_price_return_pct": -6.8070966018961006,
+    "excess_vs_spy_price_pct": 3.4971556476526495
    }
   },
   "timely": {
    "trades": {
-    "closed": 6,
-    "win_rate_pct": 0.0,
-    "profit_factor": 0.0,
-    "expectancy_r": -1.0310869258792938,
-    "expectancy_usd": -91.87246559137975,
-    "total_pnl_usd": -551.2347935482785
+    "closed": 8,
+    "win_rate_pct": 25.0,
+    "profit_factor": 0.39954063259732014,
+    "expectancy_r": -0.37175014730767003,
+    "expectancy_usd": -41.37426192804326,
+    "total_pnl_usd": -330.9940954243461
    },
-   "open_positions": 2,
+   "open_positions": 0,
    "note": "trade-level statistics, not a counterfactual portfolio return"
   },
   "reconstructed": {

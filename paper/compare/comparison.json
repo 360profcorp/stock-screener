@@ -4,7 +4,7 @@
  "first_entry_session": "2026-10-21",
  "common_period": {
   "start": "2026-10-20",
-  "through": "2026-11-24"
+  "through": "2026-11-25"
  },
  "books": {
   "breakout": {
@@ -12,7 +12,7 @@
    "strategy_id": "breakout-rs-first/1.0+cfg.644e0eb26cdb",
    "experiment": "cmp-2026-10-20-breakout",
    "start": "2026-10-20",
-   "processed_through": "2026-11-24",
+   "processed_through": "2026-11-25",
    "equity": 9520.672680081787,
    "cash": 9520.672680081787,
    "return_pct": -4.793273199182135,
@@ -21,8 +21,8 @@
    "open_positions": 0,
    "pending_orders": 0,
    "costs_paid_usd": 25.32043301635742,
-   "capital_invested_mean_pct": 24.655726873677253,
-   "sessions_with_position_pct": 76.92307692307693,
+   "capital_invested_mean_pct": 23.7425518042818,
+   "sessions_with_position_pct": 74.07407407407408,
    "order_outcomes": {
     "positions": 81,
     "daily_entries": 12,
@@ -38,39 +38,24 @@
    "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
    "experiment": "cmp-2026-10-20-retest",
    "start": "2026-10-20",
-   "processed_through": "2026-11-24",
-   "equity": 9727.791962494204,
-   "cash": 6216.322033752748,
-   "return_pct": -2.722080375057956,
+   "processed_through": "2026-11-25",
+   "equity": 9669.005904575655,
+   "cash": 9669.005904575655,
+   "return_pct": -3.309940954243451,
    "max_drawdown_pct": -5.111994974105816,
-   "closed_trades": 6,
-   "open_positions": 2,
+   "closed_trades": 8,
+   "open_positions": 0,
    "pending_orders": 0,
-   "costs_paid_usd": 19.988879028015138,
-   "capital_invested_mean_pct": 45.428993840819935,
-   "sessions_with_position_pct": 96.15384615384616,
+   "costs_paid_usd": 23.445019038848876,
+   "capital_invested_mean_pct": 43.74643851338217,
+   "sessions_with_position_pct": 92.5925925925926,
    "order_outcomes": {
     "positions": 39,
     "daily_entries": 17,
     "entered": 8,
     "ticker_open": 6
    },
-   "positions": [
-    {
-     "ticker": "BIIB",
-     "qty": 7,
-     "entry": 244.92999267578125,
-     "stop": 237.31049407958983,
-     "entry_date": "2026-10-28"
-    },
-    {
-     "ticker": "VTRS",
-     "qty": 82,
-     "entry": 18.472000122070312,
-     "stop": 17.285399703979493,
-     "entry_date": "2026-10-28"
-    }
-   ],
+   "positions": [],
    "pending": []
   }
  },
