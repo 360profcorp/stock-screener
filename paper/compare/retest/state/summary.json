@@ -1,10 +1,10 @@
 {
- "updated": "2026-11-26T04:04:23+00:00",
+ "updated": "2026-11-27T04:04:06+00:00",
  "book": "retest",
  "comparison": "cmp-2026-10-20",
  "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
  "code_fingerprint": "d74e0327e1d0",
- "revision": 26,
+ "revision": 27,
  "processed_through": "2026-11-25",
  "cash": 9669.005904575655,
  "open_positions": 0,
