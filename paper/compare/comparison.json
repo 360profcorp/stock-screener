@@ -4,7 +4,7 @@
  "first_entry_session": "2026-10-21",
  "common_period": {
   "start": "2026-10-20",
-  "through": "2026-11-25"
+  "through": "2026-11-27"
  },
  "books": {
   "breakout": {
@@ -12,7 +12,7 @@
    "strategy_id": "breakout-rs-first/1.0+cfg.644e0eb26cdb",
    "experiment": "cmp-2026-10-20-breakout",
    "start": "2026-10-20",
-   "processed_through": "2026-11-25",
+   "processed_through": "2026-11-27",
    "equity": 9520.672680081787,
    "cash": 9520.672680081787,
    "return_pct": -4.793273199182135,
@@ -21,8 +21,8 @@
    "open_positions": 0,
    "pending_orders": 0,
    "costs_paid_usd": 25.32043301635742,
-   "capital_invested_mean_pct": 23.7425518042818,
-   "sessions_with_position_pct": 74.07407407407408,
+   "capital_invested_mean_pct": 22.89460352555745,
+   "sessions_with_position_pct": 71.42857142857143,
    "order_outcomes": {
     "positions": 81,
     "daily_entries": 12,
@@ -38,7 +38,7 @@
    "strategy_id": "retest-rs-first/1.0+cfg.d4b20dc660ae",
    "experiment": "cmp-2026-10-20-retest",
    "start": "2026-10-20",
-   "processed_through": "2026-11-25",
+   "processed_through": "2026-11-27",
    "equity": 9669.005904575655,
    "cash": 9669.005904575655,
    "return_pct": -3.309940954243451,
@@ -47,8 +47,8 @@
    "open_positions": 0,
    "pending_orders": 0,
    "costs_paid_usd": 23.445019038848876,
-   "capital_invested_mean_pct": 43.74643851338217,
-   "sessions_with_position_pct": 92.5925925925926,
+   "capital_invested_mean_pct": 42.1840657093328,
+   "sessions_with_position_pct": 89.28571428571429,
    "order_outcomes": {
     "positions": 39,
     "daily_entries": 17,
